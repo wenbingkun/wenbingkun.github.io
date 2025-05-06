@@ -1,3 +1,2 @@
-# wenbingkun.github.io
 
 hello
