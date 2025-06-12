@@ -270,41 +270,72 @@ oooooooooooooooooooooooooo</textarea>
                 }
             };
             
-            async function startLottery() {
-                const winnerCount = parseInt(dom.winnerCountInput.value);
-                if (winnerCount > allSeats.length || winnerCount < 1) {
-                    alert('中奖人数无效！');
-                    return;
-                }
-                dom.drawBtn.disabled = true;
-                dom.generateBtn.disabled = true;
-                Object.values(seatElements).forEach(seat => seat.classList.remove('selected', 'selected-preview', 'flashing'));
-                const availableSeats = [...allSeats];
-                const winners = [];
-                for (let i = 0; i < winnerCount; i++) {
-                    const randomIndex = Math.floor(Math.random() * availableSeats.length);
-                    winners.push(availableSeats.splice(randomIndex, 1)[0]);
-                }
-                const allSeatElements = Object.values(seatElements);
-                for (const winnerId of winners) {
-                    const flashDuration = 1500;
-                    const flashInterval = 75;
-                    let lastFlashedSeat = null;
-                    const flashEndTime = Date.now() + flashDuration;
-                    while (Date.now() < flashEndTime) {
-                        if (lastFlashedSeat) lastFlashedSeat.classList.remove('flashing');
-                        const randomSeat = allSeatElements[Math.floor(Math.random() * allSeatElements.length)];
-                        randomSeat.classList.add('flashing');
-                        lastFlashedSeat = randomSeat;
-                        await sleep(flashInterval);
-                    }
-                    if (lastFlashedSeat) lastFlashedSeat.classList.remove('flashing');
-                    const winnerElement = seatElements[winnerId];
-                    winnerElement.classList.add('selected-preview');
-                    await sleep(1000);
-                }
-                displayFinalResults(winners);
+            // -- 请用这个更快、更刺激的函数，替换旧的 startLottery 函数 --
+
+async function startLottery() {
+    const winnerCount = parseInt(dom.winnerCountInput.value);
+    if (winnerCount > allSeats.length || winnerCount < 1) {
+        alert('中奖人数无效！');
+        return;
+    }
+
+    // 1. 初始化和准备
+    dom.drawBtn.disabled = true;
+    dom.generateBtn.disabled = true;
+    Object.values(seatElements).forEach(seat => seat.classList.remove('selected', 'selected-preview', 'flashing'));
+    
+    // 提前选出所有中奖者
+    const availableSeats = [...allSeats];
+    const winners = [];
+    for (let i = 0; i < winnerCount; i++) {
+        const randomIndex = Math.floor(Math.random() * availableSeats.length);
+        winners.push(availableSeats.splice(randomIndex, 1)[0]);
+    }
+
+    const allSeatElements = Object.values(seatElements);
+    let lastFlashedSeats = [];
+
+    // 2. 开始持续的、混乱的闪烁动画 (在后台运行)
+    const chaosInterval = setInterval(() => {
+        // 清除上一轮的闪烁
+        lastFlashedSeats.forEach(seat => seat.classList.remove('flashing'));
+        lastFlashedSeats = [];
+
+        // 随机选出 N 个座位进行闪烁，N可以根据总座位数调整
+        const flashCount = Math.min(allSeatElements.length, 15);
+        for (let i = 0; i < flashCount; i++) {
+            const randomSeat = allSeatElements[Math.floor(Math.random() * allSeatElements.length)];
+            // 确保不闪烁已经被选中的座位
+            if (!randomSeat.classList.contains('selected-preview')) {
+                randomSeat.classList.add('flashing');
+                lastFlashedSeats.push(randomSeat);
             }
+        }
+    }, 100); // 每100毫秒换一批闪烁座位
+
+    // 3. 在闪烁的同时，逐个揭晓中奖者
+    // 根据中奖人数动态调整揭晓速度
+    const revealDelay = winnerCount > 10 ? 300 : 600; // 人多就快点，人少就慢点增加悬念
+    for (const winnerId of winners) {
+        await sleep(revealDelay); // 等待一小段时间
+        const winnerElement = seatElements[winnerId];
+        if (winnerElement) {
+            winnerElement.classList.remove('flashing'); // 确保它停止闪烁
+            winnerElement.classList.add('selected-preview'); // "锁定"中奖者
+        }
+    }
+
+    // 4. 清理并结束
+    clearInterval(chaosInterval); // 停止混乱的闪烁
+    await sleep(500); // 短暂停顿
+    
+    // 清理所有残留的闪烁样式
+    document.querySelectorAll('.seat.flashing').forEach(seat => seat.classList.remove('flashing'));
+    await sleep(1000); // 最终锁定后，再停留1秒
+
+    // 5. 显示最终结果弹窗
+    displayFinalResults(winners);
+}
 
             function displayFinalResults(winners) {
                 Object.values(seatElements).forEach(seat => seat.classList.remove('selected-preview'));
