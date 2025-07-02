@@ -1,0 +1,1507 @@
+#==========================================
+# @ConfigName        全球精品机场融合配置
+# @Author            基于墨鱼配置 + 全球机场订阅优化
+# @UpdateTime        2025年7月融合版
+# @Function          支持229个全球节点、智能分流、游戏加速、家宽优选
+# @ConfigVersion     3.0.0
+# @Features          🌍全球6大洲节点 | 🎮游戏专线 | 🏠家宽优选 | 🚀星链网络 | 📱5G加速
+#==========================================
+
+# 基础配置
+port: 7890
+socks-port: 7891
+redir-port: 7892
+mixed-port: 7893
+allow-lan: true
+bind-address: "*"
+mode: rule
+log-level: info
+ipv6: false
+external-controller: 127.0.0.1:9090
+
+# 实验性功能
+experimental:
+  ignore-resolve-fail: true
+  sniff-tls-sni: true
+
+# 全局配置
+global-client-fingerprint: chrome
+
+# DNS 配置优化（增强容错性）
+dns:
+  enable: true
+  ipv6: false
+  listen: 0.0.0.0:53
+  enhanced-mode: fake-ip
+  fake-ip-range: 198.18.0.1/16
+  respect-rules: true
+  fake-ip-filter:
+    - "*.lan"
+    - "*.localdomain"
+    - "*.example"
+    - "*.invalid"
+    - "*.localhost"
+    - "*.test"
+    - "*.local"
+    - "*.home.arpa"
+    - time.*.com
+    - time.*.gov
+    - time.*.edu.cn
+    - time.*.apple.com
+    - time1.*.com
+    - time2.*.com
+    - time3.*.com
+    - time4.*.com
+    - time5.*.com
+    - time6.*.com
+    - time7.*.com
+    - ntp.*.com
+    - ntp1.*.com
+    - ntp2.*.com
+    - ntp3.*.com
+    - ntp4.*.com
+    - ntp5.*.com
+    - ntp6.*.com
+    - ntp7.*.com
+    - "*.time.edu.cn"
+    - "*.ntp.org.cn"
+    - +.pool.ntp.org
+    - localhost.ptlogin2.qq.com
+    - +.srv.nintendo.net
+    - +.stun.playstation.net
+    - +.msftconnecttest.com
+    - +.msftncsi.com
+    - +.xboxlive.com
+    - msftconnecttest.com
+    - xbox.*.microsoft.com
+    - "*.battlenet.com.cn"
+    - "*.battlenet.com"
+    - "*.blzstatic.cn"
+    - "*.battle.net"
+  nameserver:
+    - https://223.5.5.5/dns-query
+    - https://119.29.29.29/dns-query
+    - 223.5.5.5
+    - 119.29.29.29
+  fallback:
+    - https://1.1.1.1/dns-query
+    - https://8.8.8.8/dns-query
+    - tls://1.1.1.1:853
+  fallback-filter:
+    geoip: true
+    geoip-code: CN
+    ipcidr:
+      - 240.0.0.0/4
+      - 0.0.0.0/32
+      - 127.0.0.1/32
+    domain:
+      - +.google.com
+      - +.facebook.com
+      - +.youtube.com
+      - +.twitter.com
+      - +.github.com
+
+# 建立锚点（增强容错性）
+pr:   &a3 {type: select,   proxies: [♻️ 自动选择, 🚀 手动切换, 🇭🇰 香港节点, 🇯🇵 日本节点, 🇺🇲 美国节点, 🇨🇳 台湾节点, 🇸🇬 狮城节点, 🇰🇷 韩国节点, 🇬🇧 英国节点, 🇫🇷 法国节点, 🇩🇪 德国节点, 🇨🇦 加拿大节点, 🇦🇺 澳洲节点, 🌐 故障转移, DIRECT] }
+p:    &a1 {type: http,     interval: 86400,  health-check: {enable: true, url: http://www.gstatic.com/generate_204, interval: 1800, timeout: 5000} }
+auto: &a4 {type: url-test, lazy: true,  url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub] }
+use:  &a2 {type: select,   use: [Sub] }
+fallback: &a8 {type: fallback, url: http://www.gstatic.com/generate_204, interval: 300, timeout: 5000, use: [Sub] }
+loadbalance: &a9 {type: load-balance, strategy: round-robin, url: http://www.gstatic.com/generate_204, interval: 600, timeout: 5000, use: [Sub] }
+c:    &a6 {type: http,     behavior: classical, interval: 86400}
+d:    &a5 {type: http,     behavior: domain,    interval: 86400}
+i:    &a7 {type: http,     behavior: ipcidr,    interval: 86400}
+
+# 代理提供者（增强容错机制）
+proxy-providers:
+  Sub:
+    <<: *a1
+    url: https://你的机场订阅链接.yaml  # 请替换为你的实际订阅链接
+    path: ./proxy_providers/sub.yaml
+    health-check:
+      enable: true
+      interval: 600
+      lazy: true
+      url: http://www.gstatic.com/generate_204
+      timeout: 5000
+    override:
+      additional-prefix: "[机场]"
+      additional-suffix: ""
+    exclude-filter: "(?i)剩余|到期|过期|官网|产品|平台|网站|备用|频道|群|测试|实验"
+    include-all: true
+
+# 代理组配置
+proxy-groups:
+  # 手动选择
+  - {name: 🚀 手动切换, <<: *a2}
+  
+  # 分流策略组（增加备用选项）
+  - {name: 🌏 全球加速, type: select, proxies: [♻️ 自动选择, 🚀 手动切换, 🇭🇰 香港节点, 🇯🇵 日本节点, 🇺🇲 美国节点, 🇨🇳 台湾节点, 🇸🇬 狮城节点, 🇰🇷 韩国节点, 🇬🇧 英国节点, 🇫🇷 法国节点, 🇩🇪 德国节点, 🇨🇦 加拿大节点, 🇦🇺 澳洲节点, 🌐 故障转移, 🔄 备用线路, DIRECT]}
+  - {name: 🍎 苹果服务, type: select, proxies: [DIRECT, 🇺🇲 美国节点, 🇭🇰 香港节点, 🇯🇵 日本节点, 🇸🇬 狮城节点, 🔄 备用线路]}
+  - {name: 📺 哔哩哔哩, type: select, proxies: [DIRECT, 🇭🇰 香港节点, 🇨🇳 台湾节点, 🇲🇴 澳门节点, 🔄 备用线路]}
+  - {name: 🤖 人工智能, type: select, proxies: [🇺🇲 美国节点, 🇯🇵 日本节点, 🇸🇬 狮城节点, 🇬🇧 英国节点, 🇫🇷 法国节点, 🔄 备用线路]}
+  - {name: 🎬 国际媒体, type: select, proxies: [🇺🇲 美国节点, 🇬🇧 英国节点, 🇯🇵 日本节点, 🇸🇬 狮城节点, 🇨🇦 加拿大节点, 🔄 备用线路]}
+  - {name: 🎥 Netflix, type: select, proxies: [🇺🇲 美国节点, 🇬🇧 英国节点, 🇯🇵 日本节点, 🇸🇬 狮城节点, 🇨🇦 加拿大节点, 🇰🇷 韩国节点, 🔄 备用线路]}
+  - {name: 🎭 Disney+, type: select, proxies: [🇺🇲 美国节点, 🇬🇧 英国节点, 🇯🇵 日本节点, 🇸🇬 狮城节点, 🇨🇦 加拿大节点, 🔄 备用线路]}
+  - {name: 🎞️ Prime Video, type: select, proxies: [🇺🇲 美国节点, 🇬🇧 英国节点, 🇯🇵 日本节点, 🇸🇬 狮城节点, 🇩🇪 德国节点, 🔄 备用线路]}
+  - {name: 🎪 HBO Max, type: select, proxies: [🇺🇲 美国节点, 🇬🇧 英国节点, 🇸🇬 狮城节点, 🔄 备用线路]}
+  - {name: 🎨 Hulu, type: select, proxies: [🇺🇲 美国节点, 🇯🇵 日本节点, 🔄 备用线路]}
+  - {name: 🎵 Spotify, type: select, proxies: [🇺🇲 美国节点, 🇬🇧 英国节点, 🇸🇬 狮城节点, 🇯🇵 日本节点, 🔄 备用线路, DIRECT]}
+  - {name: 🎤 TikTok, type: select, proxies: [🇺🇲 美国节点, 🇯🇵 日本节点, 🇸🇬 狮城节点, 🇬🇧 英国节点, 🔄 备用线路]}
+  - {name: 🎮 Twitch直播, type: select, proxies: [🇺🇲 美国节点, 🇬🇧 英国节点, 🇩🇪 德国节点, 🇸🇬 狮城节点, 🔄 备用线路]}
+  - {name: 📺 YouTube, type: select, proxies: [🇺🇲 美国节点, 🇬🇧 英国节点, 🇯🇵 日本节点, 🇸🇬 狮城节点, 🔄 备用线路]}
+  - {name: 🌌 谷歌服务, type: select, proxies: [🇺🇲 美国节点, 🇯🇵 日本节点, 🇸🇬 狮城节点, 🇭🇰 香港节点, 🔄 备用线路]}
+  - {name: 🐧 腾讯服务, type: select, proxies: [DIRECT, 🇭🇰 香港节点, 🇸🇬 狮城节点, 🔄 备用线路]}
+  - {name: 📟 电报消息, type: select, proxies: [🇸🇬 狮城节点, 🇺🇲 美国节点, 🇭🇰 香港节点, 🇳🇱 荷兰节点, 🔄 备用线路]}
+  - {name: 🐦 推特服务, type: select, proxies: [🇺🇲 美国节点, 🇯🇵 日本节点, 🇸🇬 狮城节点, 🇬🇧 英国节点, 🔄 备用线路]}
+  - {name: 🎮 游戏平台, type: select, proxies: [DIRECT, 🎯 游戏专线, 🇭🇰 香港节点, 🇯🇵 日本节点, 🇸🇬 狮城节点, 🇺🇲 美国节点, 🔄 备用线路]}
+  - {name: 🎯 Steam, type: select, proxies: [DIRECT, 🎯 游戏专线, 🇭🇰 香港节点, 🇯🇵 日本节点, 🇸🇬 狮城节点, 🇺🇲 美国节点, 🔄 备用线路]}
+  - {name: 🎲 Epic Games, type: select, proxies: [🇺🇲 美国节点, 🇪🇺 欧洲节点, 🇯🇵 日本节点, 🇸🇬 狮城节点, 🔄 备用线路]}
+  - {name: 🕹️ PlayStation, type: select, proxies: [DIRECT, 🇯🇵 日本节点, 🇺🇲 美国节点, 🇭🇰 香港节点, 🔄 备用线路]}
+  - {name: 🕹️ Xbox Live, type: select, proxies: [DIRECT, 🇺🇲 美国节点, 🇭🇰 香港节点, 🇯🇵 日本节点, 🔄 备用线路]}
+  - {name: 🎮 Nintendo Switch, type: select, proxies: [DIRECT, 🇯🇵 日本节点, 🇺🇲 美国节点, 🇭🇰 香港节点, 🔄 备用线路]}
+  - {name: ⚔️ 暴雪战网, type: select, proxies: [DIRECT, 🇺🇲 美国节点, 🇰🇷 韩国节点, 🇸🇬 狮城节点, 🔄 备用线路]}
+  - {name: 🎯 英雄联盟, type: select, proxies: [DIRECT, 🇺🇲 美国节点, 🇰🇷 韩国节点, 🇯🇵 日本节点, 🇸🇬 狮城节点, 🔄 备用线路]}
+  - {name: 🏎️ EA Origin, type: select, proxies: [🇺🇲 美国节点, 🇪🇺 欧洲节点, 🇸🇬 狮城节点, 🔄 备用线路]}
+  - {name: 🗡️ 育碧游戏, type: select, proxies: [🇺🇲 美国节点, 🇪🇺 欧洲节点, 🇸🇬 狮城节点, 🔄 备用线路]}
+  # 开发者专用策略组
+  - {name: 👨‍💻 开发加速, type: select, proxies: [🇺🇲 美国节点, 🇸🇬 狮城节点, 🇯🇵 日本节点, 🇭🇰 香港节点, 🇬🇧 英国节点, DIRECT]}
+  - {name: 🐙 GitHub, type: select, proxies: [👨‍💻 开发加速, 🇺🇲 美国节点, 🇸🇬 狮城节点, 🇯🇵 日本节点]}
+  - {name: 🦊 GitLab, type: select, proxies: [👨‍💻 开发加速, 🇺🇲 美国节点, 🇪🇺 欧洲节点]}
+  - {name: 🐳 Docker Hub, type: select, proxies: [👨‍💻 开发加速, 🇺🇲 美国节点, 🇸🇬 狮城节点]}
+  - {name: 📚 技术社区, type: select, proxies: [👨‍💻 开发加速, 🇺🇲 美国节点, 🇸🇬 狮城节点, DIRECT]}
+  - {name: ⚡ 开发工具, type: select, proxies: [👨‍💻 开发加速, 🇺🇲 美国节点, 🇸🇬 狮城节点, DIRECT]}
+  - {name: 📦 包管理器, type: select, proxies: [👨‍💻 开发加速, 🇺🇲 美国节点, 🇸🇬 狮城节点, DIRECT]}
+  # 国内服务策略组（优化体验）
+  - {name: 🇨🇳 国内服务, type: select, proxies: [DIRECT, 🇭🇰 香港节点, 🇨🇳 台湾节点]}
+  - {name: 💰 数字支付, type: select, proxies: [DIRECT]}
+  - {name: 💬 微信服务, type: select, proxies: [DIRECT]}
+  - {name: 📺 国内媒体, type: select, proxies: [DIRECT, 🇭🇰 香港节点, 🇨🇳 台湾节点]}
+  - {name: 🏢 国产软件, type: select, proxies: [DIRECT]}
+  - {name: Ⓜ️ 微软服务, type: select, proxies: [DIRECT, 🇺🇲 美国节点, 🇭🇰 香港节点, 🇸🇬 狮城节点]}
+  - {name: 🍃 应用净化, type: select, proxies: [REJECT, DIRECT]}
+  - {name: 🆎 广告拦截, type: select, proxies: [REJECT, DIRECT]}
+  - {name: 🛡️ 隐私防护, type: select, proxies: [REJECT, DIRECT]}
+  - {name: 🚫 恶意网站, type: select, proxies: [REJECT, DIRECT]}
+  - {name: 🔒 追踪保护, type: select, proxies: [REJECT, DIRECT]}
+  - {name: 🛑 钓鱼防护, type: select, proxies: [REJECT, DIRECT]}
+  - {name: 🚨 挖矿拦截, type: select, proxies: [REJECT, DIRECT]}
+  - {name: 🐟 兜底分流, <<: *a3}
+  
+  # 特殊功能组（增强容错性）
+  - {name: 🎯 游戏专线, type: fallback, url: http://www.gstatic.com/generate_204, interval: 300, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)游戏|game|gaming", proxies: [DIRECT]}
+  - {name: 🏠 家宽优选, type: fallback, url: http://www.gstatic.com/generate_204, interval: 300, tolerance: 30, timeout: 5000, use: [Sub], filter: "(?i)家宽|住宅|residential", proxies: [DIRECT]}
+  - {name: 🚀 星链网络, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 100, timeout: 8000, use: [Sub], filter: "(?i)星链|starlink", proxies: [🇺🇲 美国节点]}
+  - {name: 📱 5G网络, type: fallback, url: http://www.gstatic.com/generate_204, interval: 300, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)5g|五代", proxies: [♻️ 自动选择]}
+  
+  # 故障转移组
+  - {name: 🌐 故障转移, <<: *a8, filter: ".*"}
+  - {name: ⚖️ 负载均衡, <<: *a9, filter: ".*"}
+  
+  # 备用节点组
+  - {name: 🔄 备用线路, type: select, proxies: [♻️ 自动选择, 🌐 故障转移, ⚖️ 负载均衡, DIRECT]}
+  
+  # 云服务和托管平台
+  - {name: ☁️ 云服务, type: select, proxies: [👨‍💻 开发加速, 🇺🇲 美国节点, 🇸🇬 狮城节点, 🇯🇵 日本节点, 🇭🇰 香港节点, DIRECT]}
+  
+  # 自动选择组
+  - {name: ♻️ 自动选择, <<: *a4}
+  
+  # 地区节点组（覆盖全球6大洲，增强容错性）
+  
+  # 亚洲地区
+  - {name: 🇭🇰 香港节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 300, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇭🇰|港|hk|hongkong|hong kong"}
+  - {name: 🇲🇴 澳门节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 300, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇲🇴|澳门|macao|macau|mo"}
+  - {name: 🇨🇳 台湾节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 300, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇹🇼|台|tw|taiwan"}
+  - {name: 🇯🇵 日本节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 300, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇯🇵|日|jp|japan"}
+  - {name: 🇰🇷 韩国节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 300, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇰🇷|韩|kr|korea"}
+  - {name: 🇸🇬 狮城节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 300, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇸🇬|新加坡|狮城|sg|singapore"}
+  - {name: 🇲🇾 马来节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 300, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇲🇾|马来|my|malaysia"}
+  - {name: 🇹🇭 泰国节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 300, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇹🇭|泰|th|thailand"}
+  - {name: 🇻🇳 越南节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 300, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇻🇳|越南|vn|vietnam"}
+  - {name: 🇵🇭 菲律宾节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 300, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇵🇭|菲律宾|ph|philippines"}
+  - {name: 🇮🇩 印尼节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 300, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇮🇩|印尼|id|indonesia"}
+  - {name: 🇮🇳 印度节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 300, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇮🇳|印度|in|india"}
+  
+  # 欧洲地区
+  - {name: 🇬🇧 英国节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 300, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇬🇧|英|uk|britain|united kingdom"}
+  - {name: 🇫🇷 法国节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 300, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇫🇷|法|fr|france"}
+  - {name: 🇩🇪 德国节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 300, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇩🇪|德|de|germany"}
+  - {name: 🇳🇱 荷兰节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 300, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇳🇱|荷兰|nl|netherlands"}
+  - {name: 🇮🇹 意大利节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 300, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇮🇹|意大利|it|italy"}
+  - {name: 🇪🇸 西班牙节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 300, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇪🇸|西班牙|es|spain"}
+  - {name: 🇨🇭 瑞士节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 300, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇨🇭|瑞士|ch|switzerland"}
+  - {name: 🇷🇺 俄罗斯节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 300, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇷🇺|俄|ru|russia"}
+  
+  # 北美地区
+  - {name: 🇺🇲 美国节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 300, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇺🇸|美|us|unitedstates|united states"}
+  - {name: 🇨🇦 加拿大节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 300, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇨🇦|加拿大|ca|canada"}
+  - {name: 🇲🇽 墨西哥节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 300, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇲🇽|墨西哥|mx|mexico"}
+  
+  # 南美地区
+  - {name: 🇧🇷 巴西节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 300, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇧🇷|巴西|br|brazil"}
+  - {name: 🇦🇷 阿根廷节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 300, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇦🇷|阿根廷|ar|argentina"}
+  - {name: 🇨🇱 智利节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 300, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇨🇱|智利|cl|chile"}
+  
+  # 大洋洲地区
+  - {name: 🇦🇺 澳洲节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 300, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇦🇺|澳|au|australia"}
+  - {name: 🇳🇿 新西兰节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 300, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇳🇿|新西兰|nz|new zealand"}
+  
+  # 欧洲联合节点组（用于游戏等服务）
+  - {name: 🇪🇺 欧洲节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 300, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇬🇧|🇫🇷|🇩🇪|🇳🇱|🇮🇹|🇪🇸|🇨🇭|🇷🇺|英|法|德|荷兰|意大利|西班牙|瑞士|俄|uk|fr|de|nl|it|es|ch|ru|britain|france|germany|netherlands|italy|spain|switzerland|russia"}
+  
+  # 中东地区
+  - {name: 🇦🇪 阿联酋节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 300, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇦🇪|阿联酋|ae|emirates"}
+  - {name: 🇸🇦 沙特节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 300, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇸🇦|沙特|sa|saudi"}
+  - {name: 🇹🇷 土耳其节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 300, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇹🇷|土耳其|tr|turkey"}
+
+  # 非洲地区
+  - {name: 🇿🇦 南非节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 300, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇿🇦|南非|za|south africa"}
+  - {name: 🇪🇬 埃及节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 300, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇪🇬|埃及|eg|egypt"}
+  
+
+# 规则提供者
+rule-providers:
+  # 广告拦截和隐私保护（多重防护）
+  AdBlock:
+    <<: *a5
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/reject.txt"
+    path: ./ruleset/AdBlock.yaml
+    
+  AdBlockDomain:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Advertising/Advertising.yaml"
+    path: ./ruleset/AdBlockDomain.yaml
+    
+  AdGuardSDNSFilter:
+    <<: *a5
+    url: "https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/BaseFilter/sections/adservers.txt"
+    path: ./ruleset/AdGuardSDNSFilter.yaml
+    
+  EasyList:
+    <<: *a5
+    url: "https://easylist.to/easylist/easylist.txt"
+    path: ./ruleset/EasyList.yaml
+    
+  EasyPrivacy:
+    <<: *a5
+    url: "https://easylist.to/easylist/easyprivacy.txt"
+    path: ./ruleset/EasyPrivacy.yaml
+    
+  Privacy:
+    <<: *a5
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/private.txt"
+    path: ./ruleset/Privacy.yaml
+    
+  Tracking:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Privacy/Privacy.yaml"
+    path: ./ruleset/Tracking.yaml
+    
+  Hijacking:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Hijacking/Hijacking.yaml"
+    path: ./ruleset/Hijacking.yaml
+    
+  Malware:
+    <<: *a5
+    url: "https://raw.githubusercontent.com/hectorm/hmirror/master/data/malware-filter/list.txt"
+    path: ./ruleset/Malware.yaml
+    
+  Phishing:
+    <<: *a5
+    url: "https://raw.githubusercontent.com/hectorm/hmirror/master/data/phishing-filter/list.txt"
+    path: ./ruleset/Phishing.yaml
+
+  # AI 服务规则集
+  OpenAI:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/OpenAI/OpenAI.yaml"
+    path: ./ruleset/OpenAI.yaml
+    
+  Claude:
+    <<: *a6  
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Claude/Claude.yaml"
+    path: ./ruleset/Claude.yaml
+    
+  Copilot:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Copilot/Copilot.yaml" 
+    path: ./ruleset/Copilot.yaml
+    
+  Gemini:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Gemini/Gemini.yaml"
+    path: ./ruleset/Gemini.yaml
+    
+  # 自定义AI服务规则
+  AIServices:
+    <<: *a6
+    url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/AI/AI.yaml"
+    path: ./ruleset/AIServices.yaml
+
+  # 流媒体服务规则集
+  BiliBili:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/BiliBili/BiliBili.yaml"
+    path: ./ruleset/BiliBili.yaml
+    
+  GlobalMedia:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/GlobalMedia/GlobalMedia_Classical.yaml"
+    path: ./ruleset/GlobalMedia.yaml
+    
+  Netflix:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Netflix/Netflix.yaml"
+    path: ./ruleset/Netflix.yaml
+    
+  Disney:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Disney/Disney.yaml"
+    path: ./ruleset/Disney.yaml
+    
+  YouTube:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/YouTube/YouTube.yaml"
+    path: ./ruleset/YouTube.yaml
+    
+  Prime Video:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/AmazonPrimeVideo/AmazonPrimeVideo.yaml"
+    path: ./ruleset/PrimeVideo.yaml
+    
+  HBO:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/HBO/HBO.yaml"
+    path: ./ruleset/HBO.yaml
+    
+  Hulu:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Hulu/Hulu.yaml"
+    path: ./ruleset/Hulu.yaml
+    
+  Paramount:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/ParamountPlus/ParamountPlus.yaml"
+    path: ./ruleset/Paramount.yaml
+    
+  Apple TV:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/AppleTV/AppleTV.yaml"
+    path: ./ruleset/AppleTV.yaml
+    
+  Spotify:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Spotify/Spotify.yaml"
+    path: ./ruleset/Spotify.yaml
+    
+  TikTok:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/TikTok/TikTok.yaml"
+    path: ./ruleset/TikTok.yaml
+    
+  Twitch:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Twitch/Twitch.yaml"
+    path: ./ruleset/Twitch.yaml
+
+  # 社交平台
+  Telegram:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Telegram/Telegram.yaml"
+    path: ./ruleset/Telegram.yaml
+    
+  Twitter:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Twitter/Twitter.yaml"
+    path: ./ruleset/Twitter.yaml
+
+  # 科技服务
+  Apple:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Apple/Apple_Classical.yaml"
+    path: ./ruleset/Apple.yaml
+    
+  Google:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Google/Google.yaml" 
+    path: ./ruleset/Google.yaml
+    
+  Microsoft:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Microsoft/Microsoft.yaml"
+    path: ./ruleset/Microsoft.yaml
+    
+  # 开发者平台规则集
+  GitHub:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/GitHub/GitHub.yaml"
+    path: ./ruleset/GitHub.yaml
+    
+  GitLab:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/GitLab/GitLab.yaml"
+    path: ./ruleset/GitLab.yaml
+    
+  Docker:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Docker/Docker.yaml"
+    path: ./ruleset/Docker.yaml
+    
+  StackOverflow:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/StackExchange/StackExchange.yaml"
+    path: ./ruleset/StackOverflow.yaml
+    
+  # 开发工具CDN
+  DevCDN:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Developer/Developer.yaml"
+    path: ./ruleset/DevCDN.yaml
+
+  # 腾讯服务
+  Tencent:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Tencent/Tencent.yaml"
+    path: ./ruleset/Tencent.yaml
+
+  # 游戏平台规则集
+  Game:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Game/Game.yaml"
+    path: ./ruleset/Game.yaml
+    
+  Steam:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Steam/Steam.yaml"
+    path: ./ruleset/Steam.yaml
+    
+  Epic:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Epic/Epic.yaml"
+    path: ./ruleset/Epic.yaml
+    
+  Origin:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/EA/EA.yaml"
+    path: ./ruleset/Origin.yaml
+    
+  Ubisoft:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/UbisoftConnect/UbisoftConnect.yaml"
+    path: ./ruleset/Ubisoft.yaml
+    
+  PlayStation:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/PlayStation/PlayStation.yaml"
+    path: ./ruleset/PlayStation.yaml
+    
+  Xbox:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Xbox/Xbox.yaml"
+    path: ./ruleset/Xbox.yaml
+    
+  Nintendo:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Nintendo/Nintendo.yaml"
+    path: ./ruleset/Nintendo.yaml
+    
+  Battle.net:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Blizzard/Blizzard.yaml"
+    path: ./ruleset/Battle.net.yaml
+    
+  Riot:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/RiotGames/RiotGames.yaml"
+    path: ./ruleset/Riot.yaml
+
+  # 国内直连优化规则集
+  ChinaDirect:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/direct.txt"
+    path: ./ruleset/ChinaDirect.yaml
+    
+  ChinaCompany:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/China/China.yaml"
+    path: ./ruleset/ChinaCompany.yaml
+    
+  ChinaMedia:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/ChinaMedia/ChinaMedia.yaml"
+    path: ./ruleset/ChinaMedia.yaml
+    
+  ChinaPayment:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Alipay/Alipay.yaml"
+    path: ./ruleset/ChinaPayment.yaml
+    
+  WeChat:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/WeChat/WeChat.yaml"
+    path: ./ruleset/WeChat.yaml
+    
+  # 基础规则
+  ProxyLite:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/proxy.txt"
+    path: ./ruleset/ProxyLite.yaml
+    
+  ChinaASN:
+    <<: *a7
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/cncidr.txt"
+    path: ./ruleset/ChinaASN.yaml
+    
+  Lan:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/lancidr.txt"
+    path: ./ruleset/Lan.yaml
+
+# 分流规则（按优先级排序）
+rules:
+  # 本地网络
+  - RULE-SET,Lan,DIRECT
+  
+  # 安全防护（多重防护体系）
+  - RULE-SET,Malware,🚫 恶意网站
+  - RULE-SET,Phishing,🛑 钓鱼防护
+  - RULE-SET,AdBlock,🆎 广告拦截
+  - RULE-SET,AdBlockDomain,🆎 广告拦截
+  - RULE-SET,AdGuardSDNSFilter,🆎 广告拦截
+  - RULE-SET,EasyList,🆎 广告拦截
+  - RULE-SET,EasyPrivacy,🔒 追踪保护
+  - RULE-SET,Privacy,🛡️ 隐私防护
+  - RULE-SET,Tracking,🔒 追踪保护
+  - RULE-SET,Hijacking,🍃 应用净化
+  
+  # 补充广告和追踪域名规则
+  - DOMAIN-SUFFIX,doubleclick.net,🆎 广告拦截
+  - DOMAIN-SUFFIX,googleadservices.com,🆎 广告拦截
+  - DOMAIN-SUFFIX,googlesyndication.com,🆎 广告拦截
+  - DOMAIN-SUFFIX,googletagmanager.com,🔒 追踪保护
+  - DOMAIN-SUFFIX,google-analytics.com,🔒 追踪保护
+  - DOMAIN-SUFFIX,googletagservices.com,🔒 追踪保护
+  - DOMAIN-SUFFIX,adsystem.google.com,🆎 广告拦截
+  - DOMAIN-SUFFIX,facebook.com,🔒 追踪保护
+  - DOMAIN-SUFFIX,connect.facebook.net,🔒 追踪保护
+  - DOMAIN-SUFFIX,fbcdn.net,🔒 追踪保护
+  - DOMAIN-SUFFIX,amazon-adsystem.com,🆎 广告拦截
+  - DOMAIN-SUFFIX,ads.yahoo.com,🆎 广告拦截
+  - DOMAIN-SUFFIX,bing.com,🔒 追踪保护
+  - DOMAIN-SUFFIX,clarity.ms,🔒 追踪保护
+  - DOMAIN-SUFFIX,hotjar.com,🔒 追踪保护
+  - DOMAIN-SUFFIX,mixpanel.com,🔒 追踪保护
+  - DOMAIN-SUFFIX,segment.com,🔒 追踪保护
+  - DOMAIN-SUFFIX,amplitude.com,🔒 追踪保护
+  - DOMAIN-SUFFIX,fullstory.com,🔒 追踪保护
+  - DOMAIN-SUFFIX,loggly.com,🔒 追踪保护
+  - DOMAIN-SUFFIX,bugsnag.com,🔒 追踪保护
+  - DOMAIN-SUFFIX,sentry.io,🔒 追踪保护
+  - DOMAIN-SUFFIX,crashlytics.com,🔒 追踪保护
+  - DOMAIN-SUFFIX,flurry.com,🔒 追踪保护
+  - DOMAIN-SUFFIX,quantcast.com,🔒 追踪保护
+  - DOMAIN-SUFFIX,scorecardresearch.com,🔒 追踪保护
+  - DOMAIN-SUFFIX,nielsen.com,🔒 追踪保护
+  - DOMAIN-SUFFIX,comscore.com,🔒 追踪保护
+  - DOMAIN-SUFFIX,adsymptotic.com,🆎 广告拦截
+  - DOMAIN-SUFFIX,moatads.com,🆎 广告拦截
+  - DOMAIN-SUFFIX,adsafeprotected.com,🆎 广告拦截
+  - DOMAIN-SUFFIX,outbrain.com,🆎 广告拦截
+  - DOMAIN-SUFFIX,taboola.com,🆎 广告拦截
+  - DOMAIN-SUFFIX,zemanta.com,🆎 广告拦截
+  - DOMAIN-SUFFIX,criteo.com,🆎 广告拦截
+  - DOMAIN-SUFFIX,adskeeper.co.uk,🆎 广告拦截
+  - DOMAIN-SUFFIX,mgid.com,🆎 广告拦截
+  - DOMAIN-SUFFIX,smartadserver.com,🆎 广告拦截
+  - DOMAIN-SUFFIX,pubmatic.com,🆎 广告拦截
+  - DOMAIN-SUFFIX,rubiconproject.com,🆎 广告拦截
+  - DOMAIN-SUFFIX,openx.net,🆎 广告拦截
+  - DOMAIN-SUFFIX,adsrvr.org,🆎 广告拦截
+  - DOMAIN-SUFFIX,turn.com,🆎 广告拦截
+  - DOMAIN-SUFFIX,rlcdn.com,🆎 广告拦截
+  - DOMAIN-SUFFIX,adsnative.com,🆎 广告拦截
+  - DOMAIN-SUFFIX,bidswitch.net,🆎 广告拦截
+  - DOMAIN-SUFFIX,casalemedia.com,🆎 广告拦截
+  - DOMAIN-SUFFIX,contextweb.com,🆎 广告拦截
+  - DOMAIN-SUFFIX,revcontent.com,🆎 广告拦截
+  - DOMAIN-SUFFIX,contentabc.com,🆎 广告拦截
+  - DOMAIN-SUFFIX,popin.cc,🆎 广告拦截
+  - DOMAIN-SUFFIX,zucks.co.jp,🆎 广告拦截
+  - DOMAIN-SUFFIX,yieldmo.com,🆎 广告拦截
+  - DOMAIN-SUFFIX,sharethrough.com,🆎 广告拦截
+  - DOMAIN-SUFFIX,springserve.com,🆎 广告拦截
+  - DOMAIN-SUFFIX,spotxchange.com,🆎 广告拦截
+  - DOMAIN-SUFFIX,spotx.tv,🆎 广告拦截
+  - DOMAIN-SUFFIX,videohub.tv,🆎 广告拦截
+  - DOMAIN-SUFFIX,teads.tv,🆎 广告拦截
+  - DOMAIN-SUFFIX,advertising.com,🆎 广告拦截
+  - DOMAIN-SUFFIX,adsystem.google.cn,🆎 广告拦截
+  - DOMAIN-SUFFIX,union.ucweb.com,🆎 广告拦截
+  - DOMAIN-SUFFIX,tanx.com,🆎 广告拦截
+  - DOMAIN-SUFFIX,mediav.com,🆎 广告拦截
+  - DOMAIN-SUFFIX,irs01.com,🆎 广告拦截
+  - DOMAIN-SUFFIX,rtbasia.com,🆎 广告拦截
+  - DOMAIN-SUFFIX,madserving.com,🆎 广告拦截
+  - DOMAIN-SUFFIX,mobvista.com,🆎 广告拦截
+  - DOMAIN-SUFFIX,smartnews-ads.com,🆎 广告拦截
+  - DOMAIN-SUFFIX,adnxs.com,🆎 广告拦截
+  - DOMAIN-SUFFIX,adsystem.com,🆎 广告拦截
+  - DOMAIN-SUFFIX,serving-sys.com,🆎 广告拦截
+  - DOMAIN-SUFFIX,effectivemeasure.net,🔒 追踪保护
+  - DOMAIN-SUFFIX,imrworldwide.com,🔒 追踪保护
+  - DOMAIN-SUFFIX,omtrdc.net,🔒 追踪保护
+  - DOMAIN-SUFFIX,2mdn.net,🆎 广告拦截
+  - DOMAIN-SUFFIX,googletag.com,🔒 追踪保护
+  - DOMAIN-SUFFIX,adsense.com,🆎 广告拦截
+  - DOMAIN-SUFFIX,admob.com,🆎 广告拦截
+  - DOMAIN-SUFFIX,ads.twitter.com,🆎 广告拦截
+  - DOMAIN-SUFFIX,analytics.twitter.com,🔒 追踪保护
+  - DOMAIN-SUFFIX,p.twitter.com,🔒 追踪保护
+  - DOMAIN-SUFFIX,scribe.twitter.com,🔒 追踪保护
+  - DOMAIN-SUFFIX,syndication.twitter.com,🔒 追踪保护
+  - DOMAIN-SUFFIX,urls.api.twitter.com,🔒 追踪保护
+  - DOMAIN-SUFFIX,ads.pinterest.com,🆎 广告拦截
+  - DOMAIN-SUFFIX,analytics.pinterest.com,🔒 追踪保护
+  - DOMAIN-SUFFIX,trk.pinterest.com,🔒 追踪保护
+  - DOMAIN-SUFFIX,ads.linkedin.com,🆎 广告拦截
+  - DOMAIN-SUFFIX,analytics.pointdrive.linkedin.com,🔒 追踪保护
+  - DOMAIN-SUFFIX,bizographics.com,🔒 追踪保护
+  - DOMAIN-SUFFIX,snap.licdn.com,🔒 追踪保护
+  - DOMAIN-SUFFIX,px.ads.linkedin.com,🆎 广告拦截
+  - DOMAIN-SUFFIX,ads.tiktok.com,🆎 广告拦截
+  - DOMAIN-SUFFIX,analytics.tiktok.com,🔒 追踪保护
+  - DOMAIN-SUFFIX,ads.reddit.com,🆎 广告拦截
+  - DOMAIN-SUFFIX,rereddit.com,🔒 追踪保护
+  - DOMAIN-SUFFIX,redditstatic.com,🔒 追踪保护
+  
+  # 挖矿拦截
+  - DOMAIN-SUFFIX,coinhive.com,🚨 挖矿拦截
+  - DOMAIN-SUFFIX,coin-hive.com,🚨 挖矿拦截
+  - DOMAIN-SUFFIX,cnhv.co,🚨 挖矿拦截
+  - DOMAIN-SUFFIX,authedmine.com,🚨 挖矿拦截
+  - DOMAIN-SUFFIX,crypto-loot.com,🚨 挖矿拦截
+  - DOMAIN-SUFFIX,cryptoloot.pro,🚨 挖矿拦截
+  - DOMAIN-SUFFIX,webminepool.com,🚨 挖矿拦截
+  - DOMAIN-SUFFIX,webmine.cz,🚨 挖矿拦截
+  - DOMAIN-SUFFIX,ppoi.org,🚨 挖矿拦截
+  - DOMAIN-SUFFIX,jsecoin.com,🚨 挖矿拦截
+  - DOMAIN-SUFFIX,minero.cc,🚨 挖矿拦截
+  - DOMAIN-SUFFIX,mineralt.io,🚨 挖矿拦截
+  - DOMAIN-SUFFIX,deepminer.net,🚨 挖矿拦截
+  - DOMAIN-SUFFIX,noblock.pro,🚨 挖矿拦截
+  - DOMAIN-SUFFIX,adless.io,🚨 挖矿拦截
+  - DOMAIN-SUFFIX,monerominer.rocks,🚨 挖矿拦截
+  - DOMAIN-SUFFIX,lmodr.biz,🚨 挖矿拦截
+  - DOMAIN-SUFFIX,xmr.pool.minergate.com,🚨 挖矿拦截
+  - DOMAIN-SUFFIX,go.megabanners.cf,🚨 挖矿拦截
+  - DOMAIN-SUFFIX,cfcdist.gdn,🚨 挖矿拦截
+  - DOMAIN-SUFFIX,afflow.com,🚨 挖矿拦截
+  
+  # AI 服务优化（支持更多主流AI平台）
+  - RULE-SET,OpenAI,🤖 人工智能
+  - RULE-SET,Claude,🤖 人工智能
+  - RULE-SET,Copilot,🤖 人工智能
+  - RULE-SET,Gemini,🤖 人工智能
+  - RULE-SET,AIServices,🤖 人工智能
+  
+  # 补充AI服务域名规则
+  - DOMAIN-SUFFIX,openai.com,🤖 人工智能
+  - DOMAIN-SUFFIX,chatgpt.com,🤖 人工智能
+  - DOMAIN-SUFFIX,anthropic.com,🤖 人工智能
+  - DOMAIN-SUFFIX,claude.ai,🤖 人工智能
+  - DOMAIN-SUFFIX,gemini.google.com,🤖 人工智能
+  - DOMAIN-SUFFIX,bard.google.com,🤖 人工智能
+  - DOMAIN-SUFFIX,poe.com,🤖 人工智能
+  - DOMAIN-SUFFIX,character.ai,🤖 人工智能
+  - DOMAIN-SUFFIX,midjourney.com,🤖 人工智能
+  - DOMAIN-SUFFIX,stability.ai,🤖 人工智能
+  - DOMAIN-SUFFIX,huggingface.co,🤖 人工智能
+  - DOMAIN-SUFFIX,replicate.com,🤖 人工智能
+  - DOMAIN-SUFFIX,runpod.io,🤖 人工智能
+  - DOMAIN-SUFFIX,cohere.ai,🤖 人工智能
+  - DOMAIN-SUFFIX,perplexity.ai,🤖 人工智能
+  - DOMAIN-SUFFIX,jasper.ai,🤖 人工智能
+  - DOMAIN-SUFFIX,copy.ai,🤖 人工智能
+  - DOMAIN-SUFFIX,writesonic.com,🤖 人工智能
+  - DOMAIN-SUFFIX,gamma.app,🤖 人工智能
+  - DOMAIN-SUFFIX,tome.app,🤖 人工智能
+  - DOMAIN-SUFFIX,notion.so,🤖 人工智能
+  - DOMAIN-SUFFIX,cursor.sh,🤖 人工智能
+  - DOMAIN-SUFFIX,codeium.com,🤖 人工智能
+  - DOMAIN-SUFFIX,tabby.tabbyml.com,🤖 人工智能
+  - DOMAIN-SUFFIX,deepl.com,🤖 人工智能
+  - DOMAIN-SUFFIX,grammarly.com,🤖 人工智能
+  - DOMAIN-SUFFIX,otter.ai,🤖 人工智能
+  - DOMAIN-SUFFIX,fireflies.ai,🤖 人工智能
+  - DOMAIN-SUFFIX,synthesia.io,🤖 人工智能
+  - DOMAIN-SUFFIX,runway.ml,🤖 人工智能
+  - DOMAIN-SUFFIX,leonardo.ai,🤖 人工智能
+  - DOMAIN-SUFFIX,civitai.com,🤖 人工智能
+  - DOMAIN-SUFFIX,tensor.art,🤖 人工智能
+  - DOMAIN-SUFFIX,artbreeder.com,🤖 人工智能
+  - DOMAIN-SUFFIX,dreamstudio.ai,🤖 人工智能
+  - DOMAIN-SUFFIX,dall-e.com,🤖 人工智能
+  - DOMAIN-SUFFIX,openai.azure.com,🤖 人工智能
+  - DOMAIN-SUFFIX,ai.azure.com,🤖 人工智能
+  - DOMAIN-SUFFIX,cognitiveservices.azure.com,🤖 人工智能
+  - DOMAIN-SUFFIX,aiplatform.googleapis.com,🤖 人工智能
+  - DOMAIN-SUFFIX,ml.googleapis.com,🤖 人工智能
+  - DOMAIN-SUFFIX,api.anthropic.com,🤖 人工智能
+  - DOMAIN-SUFFIX,api.openai.com,🤖 人工智能
+  - DOMAIN-SUFFIX,chat.openai.com,🤖 人工智能
+  - DOMAIN-SUFFIX,platform.openai.com,🤖 人工智能
+  - DOMAIN-SUFFIX,beta.openai.com,🤖 人工智能
+  - DOMAIN-SUFFIX,labs.openai.com,🤖 人工智能
+  - DOMAIN-SUFFIX,api.cohere.ai,🤖 人工智能
+  - DOMAIN-SUFFIX,api.stability.ai,🤖 人工智能
+  - DOMAIN-SUFFIX,stablediffusionapi.com,🤖 人工智能
+  - DOMAIN-SUFFIX,novelai.net,🤖 人工智能
+  - DOMAIN-SUFFIX,app.leonardo.ai,🤖 人工智能
+  - DOMAIN-SUFFIX,beta.character.ai,🤖 人工智能
+  - DOMAIN-SUFFIX,suno.ai,🤖 人工智能
+  - DOMAIN-SUFFIX,mubert.com,🤖 人工智能
+  - DOMAIN-SUFFIX,soundraw.io,🤖 人工智能
+  - DOMAIN-SUFFIX,boomy.com,🤖 人工智能
+  - DOMAIN-SUFFIX,elevenlabs.io,🤖 人工智能
+  - DOMAIN-SUFFIX,speech.platform.bing.com,🤖 人工智能
+  - DOMAIN-SUFFIX,speech.microsoft.com,🤖 人工智能
+  - DOMAIN-SUFFIX,api.elevenlabs.io,🤖 人工智能
+  - DOMAIN-SUFFIX,murf.ai,🤖 人工智能
+  - DOMAIN-SUFFIX,speechify.com,🤖 人工智能
+  
+  # 流媒体服务优化（支持全球主流平台）
+  - RULE-SET,Netflix,🎥 Netflix
+  - RULE-SET,Disney,🎭 Disney+
+  - RULE-SET,Prime Video,🎞️ Prime Video
+  - RULE-SET,HBO,🎪 HBO Max
+  - RULE-SET,Hulu,🎨 Hulu
+  - RULE-SET,Paramount,🎬 国际媒体
+  - RULE-SET,Apple TV,🎬 国际媒体
+  - RULE-SET,YouTube,📺 YouTube
+  - RULE-SET,Spotify,🎵 Spotify
+  - RULE-SET,TikTok,🎤 TikTok
+  - RULE-SET,Twitch,🎮 Twitch直播
+  - RULE-SET,BiliBili,📺 哔哩哔哩
+  - RULE-SET,GlobalMedia,🎬 国际媒体
+  
+  # 补充流媒体域名规则
+  - DOMAIN-SUFFIX,peacocktv.com,🎬 国际媒体
+  - DOMAIN-SUFFIX,nbc.com,🎬 国际媒体
+  - DOMAIN-SUFFIX,crunchyroll.com,🎬 国际媒体
+  - DOMAIN-SUFFIX,funimation.com,🎬 国际媒体
+  - DOMAIN-SUFFIX,vrv.co,🎬 国际媒体
+  - DOMAIN-SUFFIX,discovery.com,🎬 国际媒体
+  - DOMAIN-SUFFIX,discoveryplus.com,🎬 国际媒体
+  - DOMAIN-SUFFIX,max.com,🎪 HBO Max
+  - DOMAIN-SUFFIX,hbomax.com,🎪 HBO Max
+  - DOMAIN-SUFFIX,cinemax.com,🎪 HBO Max
+  - DOMAIN-SUFFIX,showtime.com,🎬 国际媒体
+  - DOMAIN-SUFFIX,starz.com,🎬 国际媒体
+  - DOMAIN-SUFFIX,epix.com,🎬 国际媒体
+  - DOMAIN-SUFFIX,mubi.com,🎬 国际媒体
+  - DOMAIN-SUFFIX,kanopy.com,🎬 国际媒体
+  - DOMAIN-SUFFIX,tubi.tv,🎬 国际媒体
+  - DOMAIN-SUFFIX,pluto.tv,🎬 国际媒体
+  - DOMAIN-SUFFIX,roku.com,🎬 国际媒体
+  - DOMAIN-SUFFIX,sling.com,🎬 国际媒体
+  - DOMAIN-SUFFIX,fubotv.com,🎬 国际媒体
+  - DOMAIN-SUFFIX,youtube.com,📺 YouTube
+  - DOMAIN-SUFFIX,youtu.be,📺 YouTube
+  - DOMAIN-SUFFIX,youtubei.googleapis.com,📺 YouTube
+  - DOMAIN-SUFFIX,ytimg.com,📺 YouTube
+  - DOMAIN-SUFFIX,youtube-nocookie.com,📺 YouTube
+  - DOMAIN-SUFFIX,googlevideo.com,📺 YouTube
+  - DOMAIN-SUFFIX,vimeo.com,🎬 国际媒体
+  - DOMAIN-SUFFIX,dailymotion.com,🎬 国际媒体
+  - DOMAIN-SUFFIX,twitch.tv,🎮 Twitch直播
+  - DOMAIN-SUFFIX,twitchcdn.net,🎮 Twitch直播
+  - DOMAIN-SUFFIX,jtvnw.net,🎮 Twitch直播
+  - DOMAIN-SUFFIX,tiktok.com,🎤 TikTok
+  - DOMAIN-SUFFIX,tiktokcdn.com,🎤 TikTok
+  - DOMAIN-SUFFIX,tiktokv.com,🎤 TikTok
+  - DOMAIN-SUFFIX,musical.ly,🎤 TikTok
+  - DOMAIN-SUFFIX,spotify.com,🎵 Spotify
+  - DOMAIN-SUFFIX,spoti.fi,🎵 Spotify
+  - DOMAIN-SUFFIX,scdn.co,🎵 Spotify
+  - DOMAIN-SUFFIX,pandora.com,🎵 Spotify
+  - DOMAIN-SUFFIX,soundcloud.com,🎵 Spotify
+  - DOMAIN-SUFFIX,apple.com,🎬 国际媒体
+  - DOMAIN-SUFFIX,icloud.com,🎬 国际媒体
+  - DOMAIN-SUFFIX,mzstatic.com,🎬 国际媒体
+  - DOMAIN-SUFFIX,iqiyi.com,📺 哔哩哔哩
+  - DOMAIN-SUFFIX,qq.com,📺 哔哩哔哩
+  - DOMAIN-SUFFIX,youku.com,📺 哔哩哔哩
+  - DOMAIN-SUFFIX,tudou.com,📺 哔哩哔哩
+  - DOMAIN-SUFFIX,sohu.com,📺 哔哩哔哩
+  - DOMAIN-SUFFIX,le.com,📺 哔哩哔哩
+  - DOMAIN-SUFFIX,letv.com,📺 哔哩哔哩
+  - DOMAIN-SUFFIX,pptv.com,📺 哔哩哔哩
+  - DOMAIN-SUFFIX,mgtv.com,📺 哔哩哔哩
+  - DOMAIN-SUFFIX,cctv.com,📺 哔哩哔哩
+  - DOMAIN-SUFFIX,miguvideo.com,📺 哔哩哔哩
+  - DOMAIN-SUFFIX,acfun.tv,📺 哔哩哔哩
+  - DOMAIN-SUFFIX,acfun.cn,📺 哔哩哔哩
+  - DOMAIN-SUFFIX,douyu.com,📺 哔哩哔哩
+  - DOMAIN-SUFFIX,huya.com,📺 哔哩哔哩
+  - DOMAIN-SUFFIX,zhanqi.tv,📺 哔哩哔哩
+  - DOMAIN-SUFFIX,yy.com,📺 哔哩哔哩
+  - DOMAIN-SUFFIX,ixigua.com,📺 哔哩哔哩
+  - DOMAIN-SUFFIX,douyin.com,📺 哔哩哔哩
+  - DOMAIN-SUFFIX,kuaishou.com,📺 哔哩哔哩
+  - DOMAIN-SUFFIX,xiaohongshu.com,📺 哔哩哔哩
+  - DOMAIN-SUFFIX,xhscdn.com,📺 哔哩哔哩
+  
+  # 社交通讯
+  - RULE-SET,Telegram,📟 电报消息
+  - RULE-SET,Twitter,🐦 推特服务
+  
+  # 科技服务
+  - RULE-SET,Apple,🍎 苹果服务
+  - RULE-SET,Google,🌌 谷歌服务
+  - RULE-SET,Microsoft,Ⓜ️ 微软服务
+  
+  # 开发者平台优化（全栈开发支持）
+  - RULE-SET,GitHub,🐙 GitHub
+  - RULE-SET,GitLab,🦊 GitLab
+  - RULE-SET,Docker,🐳 Docker Hub
+  - RULE-SET,StackOverflow,📚 技术社区
+  - RULE-SET,DevCDN,⚡ 开发工具
+  
+  # 代码托管和版本控制
+  - DOMAIN-SUFFIX,github.com,🐙 GitHub
+  - DOMAIN-SUFFIX,github.io,🐙 GitHub
+  - DOMAIN-SUFFIX,githubapp.com,🐙 GitHub
+  - DOMAIN-SUFFIX,githubassets.com,🐙 GitHub
+  - DOMAIN-SUFFIX,githubusercontent.com,🐙 GitHub
+  - DOMAIN-SUFFIX,githubstatus.com,🐙 GitHub
+  - DOMAIN-SUFFIX,github.blog,🐙 GitHub
+  - DOMAIN-SUFFIX,gitpod.io,🐙 GitHub
+  - DOMAIN-SUFFIX,codespaces.new,🐙 GitHub
+  - DOMAIN-SUFFIX,gitlab.com,🦊 GitLab
+  - DOMAIN-SUFFIX,gitlab.io,🦊 GitLab
+  - DOMAIN-SUFFIX,gitlab-static.net,🦊 GitLab
+  - DOMAIN-SUFFIX,bitbucket.org,👨‍💻 开发加速
+  - DOMAIN-SUFFIX,atlassian.com,👨‍💻 开发加速
+  - DOMAIN-SUFFIX,atlassian.net,👨‍💻 开发加速
+  - DOMAIN-SUFFIX,gitee.com,DIRECT
+  - DOMAIN-SUFFIX,gitee.io,DIRECT
+  - DOMAIN-SUFFIX,coding.net,DIRECT
+  - DOMAIN-SUFFIX,coding.io,DIRECT
+  
+  # 容器和DevOps
+  - DOMAIN-SUFFIX,docker.com,🐳 Docker Hub
+  - DOMAIN-SUFFIX,docker.io,🐳 Docker Hub
+  - DOMAIN-SUFFIX,dockerhub.com,🐳 Docker Hub
+  - DOMAIN-SUFFIX,registry-1.docker.io,🐳 Docker Hub
+  - DOMAIN-SUFFIX,kubernetes.io,⚡ 开发工具
+  - DOMAIN-SUFFIX,k8s.io,⚡ 开发工具
+  - DOMAIN-SUFFIX,helm.sh,⚡ 开发工具
+  - DOMAIN-SUFFIX,istio.io,⚡ 开发工具
+  - DOMAIN-SUFFIX,prometheus.io,⚡ 开发工具
+  - DOMAIN-SUFFIX,grafana.com,⚡ 开发工具
+  - DOMAIN-SUFFIX,elastic.co,⚡ 开发工具
+  - DOMAIN-SUFFIX,jenkins.io,⚡ 开发工具
+  - DOMAIN-SUFFIX,jenkins-ci.org,⚡ 开发工具
+  - DOMAIN-SUFFIX,travisci.org,⚡ 开发工具
+  - DOMAIN-SUFFIX,travis-ci.org,⚡ 开发工具
+  - DOMAIN-SUFFIX,circleci.com,⚡ 开发工具
+  - DOMAIN-SUFFIX,drone.io,⚡ 开发工具
+  - DOMAIN-SUFFIX,buildkite.com,⚡ 开发工具
+  
+  # 技术社区和文档
+  - DOMAIN-SUFFIX,stackoverflow.com,📚 技术社区
+  - DOMAIN-SUFFIX,stackexchange.com,📚 技术社区
+  - DOMAIN-SUFFIX,serverfault.com,📚 技术社区
+  - DOMAIN-SUFFIX,superuser.com,📚 技术社区
+  - DOMAIN-SUFFIX,askubuntu.com,📚 技术社区
+  - DOMAIN-SUFFIX,mathoverflow.net,📚 技术社区
+  - DOMAIN-SUFFIX,reddit.com,📚 技术社区
+  - DOMAIN-SUFFIX,dev.to,📚 技术社区
+  - DOMAIN-SUFFIX,hashnode.com,📚 技术社区
+  - DOMAIN-SUFFIX,medium.com,📚 技术社区
+  - DOMAIN-SUFFIX,towards.dev,📚 技术社区
+  - DOMAIN-SUFFIX,hackernoon.com,📚 技术社区
+  - DOMAIN-SUFFIX,freecodecamp.org,📚 技术社区
+  - DOMAIN-SUFFIX,codecademy.com,📚 技术社区
+  - DOMAIN-SUFFIX,udemy.com,📚 技术社区
+  - DOMAIN-SUFFIX,coursera.org,📚 技术社区
+  - DOMAIN-SUFFIX,edx.org,📚 技术社区
+  - DOMAIN-SUFFIX,khanacademy.org,📚 技术社区
+  - DOMAIN-SUFFIX,pluralsight.com,📚 技术社区
+  - DOMAIN-SUFFIX,egghead.io,📚 技术社区
+  - DOMAIN-SUFFIX,frontendmasters.com,📚 技术社区
+  
+  # 包管理器和CDN
+  - DOMAIN-SUFFIX,npmjs.com,📦 包管理器
+  - DOMAIN-SUFFIX,npmjs.org,📦 包管理器
+  - DOMAIN-SUFFIX,npm.im,📦 包管理器
+  - DOMAIN-SUFFIX,yarnpkg.com,📦 包管理器
+  - DOMAIN-SUFFIX,pnpm.io,📦 包管理器
+  - DOMAIN-SUFFIX,pypi.org,📦 包管理器
+  - DOMAIN-SUFFIX,pypi.python.org,📦 包管理器
+  - DOMAIN-SUFFIX,pythonhosted.org,📦 包管理器
+  - DOMAIN-SUFFIX,rubygems.org,📦 包管理器
+  - DOMAIN-SUFFIX,packagist.org,📦 包管理器
+  - DOMAIN-SUFFIX,getcomposer.org,📦 包管理器
+  - DOMAIN-SUFFIX,nuget.org,📦 包管理器
+  - DOMAIN-SUFFIX,mvnrepository.com,📦 包管理器
+  - DOMAIN-SUFFIX,maven.apache.org,📦 包管理器
+  - DOMAIN-SUFFIX,gradle.org,📦 包管理器
+  - DOMAIN-SUFFIX,crates.io,📦 包管理器
+  - DOMAIN-SUFFIX,pub.dev,📦 包管理器
+  - DOMAIN-SUFFIX,cocoapods.org,📦 包管理器
+  - DOMAIN-SUFFIX,go.dev,📦 包管理器
+  - DOMAIN-SUFFIX,pkg.go.dev,📦 包管理器
+  - DOMAIN-SUFFIX,proxy.golang.org,📦 包管理器
+  - DOMAIN-SUFFIX,sum.golang.org,📦 包管理器
+  
+  # CDN和静态资源
+  - DOMAIN-SUFFIX,jsdelivr.net,⚡ 开发工具
+  - DOMAIN-SUFFIX,unpkg.com,⚡ 开发工具
+  - DOMAIN-SUFFIX,cdnjs.com,⚡ 开发工具
+  - DOMAIN-SUFFIX,cdnjs.cloudflare.com,⚡ 开发工具
+  - DOMAIN-SUFFIX,bootcdn.cn,⚡ 开发工具
+  - DOMAIN-SUFFIX,staticfile.org,⚡ 开发工具
+  - DOMAIN-SUFFIX,75cdn.com,⚡ 开发工具
+  - DOMAIN-SUFFIX,rawgit.com,⚡ 开发工具
+  - DOMAIN-SUFFIX,raw.githubusercontent.com,🐙 GitHub
+  - DOMAIN-SUFFIX,gist.github.com,🐙 GitHub
+  - DOMAIN-SUFFIX,gist.githubusercontent.com,🐙 GitHub
+  
+  # 云服务和托管
+  - DOMAIN-SUFFIX,vercel.com,☁️ 云服务
+  - DOMAIN-SUFFIX,vercel.app,☁️ 云服务
+  - DOMAIN-SUFFIX,netlify.com,☁️ 云服务
+  - DOMAIN-SUFFIX,netlify.app,☁️ 云服务
+  - DOMAIN-SUFFIX,heroku.com,☁️ 云服务
+  - DOMAIN-SUFFIX,herokuapp.com,☁️ 云服务
+  - DOMAIN-SUFFIX,railway.app,☁️ 云服务
+  - DOMAIN-SUFFIX,render.com,☁️ 云服务
+  - DOMAIN-SUFFIX,digitalocean.com,☁️ 云服务
+  - DOMAIN-SUFFIX,linode.com,☁️ 云服务
+  - DOMAIN-SUFFIX,vultr.com,☁️ 云服务
+  - DOMAIN-SUFFIX,replit.com,☁️ 云服务
+  - DOMAIN-SUFFIX,repl.it,☁️ 云服务
+  - DOMAIN-SUFFIX,codesandbox.io,☁️ 云服务
+  - DOMAIN-SUFFIX,stackblitz.com,☁️ 云服务
+  - DOMAIN-SUFFIX,codepen.io,☁️ 云服务
+  - DOMAIN-SUFFIX,jsfiddle.net,☁️ 云服务
+  - DOMAIN-SUFFIX,jsbin.com,☁️ 云服务
+  
+  # 开发工具和IDE
+  - DOMAIN-SUFFIX,vscode.dev,⚡ 开发工具
+  - DOMAIN-SUFFIX,visualstudio.com,⚡ 开发工具
+  - DOMAIN-SUFFIX,code.visualstudio.com,⚡ 开发工具
+  - DOMAIN-SUFFIX,marketplace.visualstudio.com,⚡ 开发工具
+  - DOMAIN-SUFFIX,jetbrains.com,⚡ 开发工具
+  - DOMAIN-SUFFIX,intellij.net,⚡ 开发工具
+  - DOMAIN-SUFFIX,sublimetext.com,⚡ 开发工具
+  - DOMAIN-SUFFIX,atom.io,⚡ 开发工具
+  - DOMAIN-SUFFIX,brackets.io,⚡ 开发工具
+  - DOMAIN-SUFFIX,eclipse.org,⚡ 开发工具
+  - DOMAIN-SUFFIX,netbeans.org,⚡ 开发工具
+  - DOMAIN-SUFFIX,vim.org,⚡ 开发工具
+  - DOMAIN-SUFFIX,neovim.io,⚡ 开发工具
+  - DOMAIN-SUFFIX,emacs.org,⚡ 开发工具
+  
+  # API测试和调试
+  - DOMAIN-SUFFIX,postman.com,⚡ 开发工具
+  - DOMAIN-SUFFIX,insomnia.rest,⚡ 开发工具
+  - DOMAIN-SUFFIX,hoppscotch.io,⚡ 开发工具
+  - DOMAIN-SUFFIX,httpie.io,⚡ 开发工具
+  - DOMAIN-SUFFIX,reqres.in,⚡ 开发工具
+  - DOMAIN-SUFFIX,jsonplaceholder.typicode.com,⚡ 开发工具
+  - DOMAIN-SUFFIX,httpbin.org,⚡ 开发工具
+  - DOMAIN-SUFFIX,webhook.site,⚡ 开发工具
+  - DOMAIN-SUFFIX,ngrok.io,⚡ 开发工具
+  - DOMAIN-SUFFIX,localtunnel.me,⚡ 开发工具
+  
+  # 数据库和存储
+  - DOMAIN-SUFFIX,mongodb.com,⚡ 开发工具
+  - DOMAIN-SUFFIX,redis.io,⚡ 开发工具
+  - DOMAIN-SUFFIX,postgresql.org,⚡ 开发工具
+  - DOMAIN-SUFFIX,mysql.com,⚡ 开发工具
+  - DOMAIN-SUFFIX,sqlite.org,⚡ 开发工具
+  - DOMAIN-SUFFIX,firebase.google.com,☁️ 云服务
+  - DOMAIN-SUFFIX,supabase.com,☁️ 云服务
+  - DOMAIN-SUFFIX,planetscale.com,☁️ 云服务
+  - DOMAIN-SUFFIX,airtable.com,☁️ 云服务
+  
+  # 设计和原型
+  - DOMAIN-SUFFIX,figma.com,⚡ 开发工具
+  - DOMAIN-SUFFIX,sketch.com,⚡ 开发工具
+  - DOMAIN-SUFFIX,invisionapp.com,⚡ 开发工具
+  - DOMAIN-SUFFIX,zeplin.io,⚡ 开发工具
+  - DOMAIN-SUFFIX,framer.com,⚡ 开发工具
+  - DOMAIN-SUFFIX,principle.design,⚡ 开发工具
+  - DOMAIN-SUFFIX,adobe.com,⚡ 开发工具
+  - DOMAIN-SUFFIX,canva.com,⚡ 开发工具
+  
+  # 监控和分析
+  - DOMAIN-SUFFIX,sentry.io,⚡ 开发工具
+  - DOMAIN-SUFFIX,bugsnag.com,⚡ 开发工具
+  - DOMAIN-SUFFIX,rollbar.com,⚡ 开发工具
+  - DOMAIN-SUFFIX,newrelic.com,⚡ 开发工具
+  - DOMAIN-SUFFIX,datadog.com,⚡ 开发工具
+  - DOMAIN-SUFFIX,pingdom.com,⚡ 开发工具
+  - DOMAIN-SUFFIX,uptimerobot.com,⚡ 开发工具
+  
+  # 文档和Wiki
+  - DOMAIN-SUFFIX,gitbook.com,📚 技术社区
+  - DOMAIN-SUFFIX,gitbook.io,📚 技术社区
+  - DOMAIN-SUFFIX,notion.so,📚 技术社区
+  - DOMAIN-SUFFIX,confluence.atlassian.com,📚 技术社区
+  - DOMAIN-SUFFIX,bookstack.org,📚 技术社区
+  - DOMAIN-SUFFIX,mkdocs.org,📚 技术社区
+  - DOMAIN-SUFFIX,sphinx-doc.org,📚 技术社区
+  - DOMAIN-SUFFIX,readthedocs.io,📚 技术社区
+  - DOMAIN-SUFFIX,readthedocs.org,📚 技术社区
+  
+  # 腾讯服务
+  - RULE-SET,Tencent,🐧 腾讯服务
+  - RULE-SET,WeChat,💬 微信服务
+  
+  # 国内直连优化（确保最佳体验）
+  - RULE-SET,ChinaDirect,🇨🇳 国内服务
+  - RULE-SET,ChinaCompany,🇨🇳 国内服务
+  - RULE-SET,ChinaMedia,📺 国内媒体
+  - RULE-SET,ChinaPayment,💰 数字支付
+  
+  # 补充国内服务域名规则
+  - DOMAIN-SUFFIX,cn,🇨🇳 国内服务
+  - DOMAIN-SUFFIX,中国,🇨🇳 国内服务
+  - DOMAIN-SUFFIX,中國,🇨🇳 国内服务
+  - DOMAIN-SUFFIX,公司,🇨🇳 国内服务
+  - DOMAIN-SUFFIX,网络,🇨🇳 国内服务
+  
+  # 政府和教育机构
+  - DOMAIN-SUFFIX,gov.cn,🇨🇳 国内服务
+  - DOMAIN-SUFFIX,edu.cn,🇨🇳 国内服务
+  - DOMAIN-SUFFIX,ac.cn,🇨🇳 国内服务
+  - DOMAIN-SUFFIX,org.cn,🇨🇳 国内服务
+  - DOMAIN-SUFFIX,net.cn,🇨🇳 国内服务
+  - DOMAIN-SUFFIX,com.cn,🇨🇳 国内服务
+  
+  # 银行和金融
+  - DOMAIN-SUFFIX,bank.cn,💰 数字支付
+  - DOMAIN-SUFFIX,icbc.com.cn,💰 数字支付
+  - DOMAIN-SUFFIX,ccb.com,💰 数字支付
+  - DOMAIN-SUFFIX,abchina.com,💰 数字支付
+  - DOMAIN-SUFFIX,boc.cn,💰 数字支付
+  - DOMAIN-SUFFIX,cmbchina.com,💰 数字支付
+  - DOMAIN-SUFFIX,cmbc.com.cn,💰 数字支付
+  - DOMAIN-SUFFIX,bankcomm.com,💰 数字支付
+  - DOMAIN-SUFFIX,psbc.com,💰 数字支付
+  - DOMAIN-SUFFIX,cib.com.cn,💰 数字支付
+  - DOMAIN-SUFFIX,spdb.com.cn,💰 数字支付
+  - DOMAIN-SUFFIX,cgbchina.com.cn,💰 数字支付
+  - DOMAIN-SUFFIX,alipay.com,💰 数字支付
+  - DOMAIN-SUFFIX,alipayobjects.com,💰 数字支付
+  - DOMAIN-SUFFIX,alicdn.com,💰 数字支付
+  - DOMAIN-SUFFIX,antfin.com,💰 数字支付
+  - DOMAIN-SUFFIX,antgroup.com,💰 数字支付
+  - DOMAIN-SUFFIX,unionpay.com,💰 数字支付
+  - DOMAIN-SUFFIX,95516.com,💰 数字支付
+  - DOMAIN-SUFFIX,chinapay.com,💰 数字支付
+  - DOMAIN-SUFFIX,tenpay.com,💰 数字支付
+  - DOMAIN-SUFFIX,pay.qq.com,💰 数字支付
+  
+  # 电商和购物
+  - DOMAIN-SUFFIX,taobao.com,🏢 国产软件
+  - DOMAIN-SUFFIX,tmall.com,🏢 国产软件
+  - DOMAIN-SUFFIX,alibaba.com,🏢 国产软件
+  - DOMAIN-SUFFIX,alibabacloud.com,🏢 国产软件
+  - DOMAIN-SUFFIX,aliyun.com,🏢 国产软件
+  - DOMAIN-SUFFIX,1688.com,🏢 国产软件
+  - DOMAIN-SUFFIX,jd.com,🏢 国产软件
+  - DOMAIN-SUFFIX,jdcloud.com,🏢 国产软件
+  - DOMAIN-SUFFIX,360buyimg.com,🏢 国产软件
+  - DOMAIN-SUFFIX,pdd.com,🏢 国产软件
+  - DOMAIN-SUFFIX,pinduoduo.com,🏢 国产软件
+  - DOMAIN-SUFFIX,suning.com,🏢 国产软件
+  - DOMAIN-SUFFIX,dangdang.com,🏢 国产软件
+  - DOMAIN-SUFFIX,vip.com,🏢 国产软件
+  - DOMAIN-SUFFIX,gome.com.cn,🏢 国产软件
+  - DOMAIN-SUFFIX,yhd.com,🏢 国产软件
+  
+  # 搜索引擎
+  - DOMAIN-SUFFIX,baidu.com,🏢 国产软件
+  - DOMAIN-SUFFIX,bdstatic.com,🏢 国产软件
+  - DOMAIN-SUFFIX,bdimg.com,🏢 国产软件
+  - DOMAIN-SUFFIX,baidubce.com,🏢 国产软件
+  - DOMAIN-SUFFIX,baidupcs.com,🏢 国产软件
+  - DOMAIN-SUFFIX,so.com,🏢 国产软件
+  - DOMAIN-SUFFIX,360.com,🏢 国产软件
+  - DOMAIN-SUFFIX,360.cn,🏢 国产软件
+  - DOMAIN-SUFFIX,qhimg.com,🏢 国产软件
+  - DOMAIN-SUFFIX,sogou.com,🏢 国产软件
+  - DOMAIN-SUFFIX,soso.com,🏢 国产软件
+  
+  # 社交和通讯
+  - DOMAIN-SUFFIX,qq.com,💬 微信服务
+  - DOMAIN-SUFFIX,qzone.com,💬 微信服务
+  - DOMAIN-SUFFIX,qlogo.cn,💬 微信服务
+  - DOMAIN-SUFFIX,qpic.cn,💬 微信服务
+  - DOMAIN-SUFFIX,gtimg.cn,💬 微信服务
+  - DOMAIN-SUFFIX,gtimg.com,💬 微信服务
+  - DOMAIN-SUFFIX,wechat.com,💬 微信服务
+  - DOMAIN-SUFFIX,weixin.qq.com,💬 微信服务
+  - DOMAIN-SUFFIX,wx.qq.com,💬 微信服务
+  - DOMAIN-SUFFIX,weibo.com,🏢 国产软件
+  - DOMAIN-SUFFIX,weibo.cn,🏢 国产软件
+  - DOMAIN-SUFFIX,sinaimg.cn,🏢 国产软件
+  - DOMAIN-SUFFIX,sina.com.cn,🏢 国产软件
+  - DOMAIN-SUFFIX,dingtalk.com,🏢 国产软件
+  - DOMAIN-SUFFIX,dingtalkapps.com,🏢 国产软件
+  
+  # 云服务和CDN
+  - DOMAIN-SUFFIX,qcloud.com,🏢 国产软件
+  - DOMAIN-SUFFIX,tencentcloudapi.com,🏢 国产软件
+  - DOMAIN-SUFFIX,myqcloud.com,🏢 国产软件
+  - DOMAIN-SUFFIX,ucloud.cn,🏢 国产软件
+  - DOMAIN-SUFFIX,ufileos.com,🏢 国产软件
+  - DOMAIN-SUFFIX,qiniu.com,🏢 国产软件
+  - DOMAIN-SUFFIX,qiniucdn.com,🏢 国产软件
+  - DOMAIN-SUFFIX,clouddn.com,🏢 国产软件
+  - DOMAIN-SUFFIX,upyun.com,🏢 国产软件
+  - DOMAIN-SUFFIX,chinacache.com,🏢 国产软件
+  - DOMAIN-SUFFIX,ccgslb.com,🏢 国产软件
+  - DOMAIN-SUFFIX,ccgslb.net,🏢 国产软件
+  - DOMAIN-SUFFIX,bootcdn.cn,🏢 国产软件
+  - DOMAIN-SUFFIX,staticfile.org,🏢 国产软件
+  - DOMAIN-SUFFIX,75cdn.com,🏢 国产软件
+  
+  # 新闻资讯
+  - DOMAIN-SUFFIX,xinhuanet.com,📺 国内媒体
+  - DOMAIN-SUFFIX,people.com.cn,📺 国内媒体
+  - DOMAIN-SUFFIX,cctv.com,📺 国内媒体
+  - DOMAIN-SUFFIX,cntv.cn,📺 国内媒体
+  - DOMAIN-SUFFIX,chinanews.com,📺 国内媒体
+  - DOMAIN-SUFFIX,china.com,📺 国内媒体
+  - DOMAIN-SUFFIX,163.com,📺 国内媒体
+  - DOMAIN-SUFFIX,126.com,📺 国内媒体
+  - DOMAIN-SUFFIX,127.net,📺 国内媒体
+  - DOMAIN-SUFFIX,netease.com,📺 国内媒体
+  - DOMAIN-SUFFIX,sohu.com,📺 国内媒体
+  - DOMAIN-SUFFIX,ifeng.com,📺 国内媒体
+  - DOMAIN-SUFFIX,caixin.com,📺 国内媒体
+  - DOMAIN-SUFFIX,36kr.com,📺 国内媒体
+  - DOMAIN-SUFFIX,huxiu.com,📺 国内媒体
+  - DOMAIN-SUFFIX,jiemian.com,📺 国内媒体
+  - DOMAIN-SUFFIX,thepaper.cn,📺 国内媒体
+  
+  # 出行和地图
+  - DOMAIN-SUFFIX,amap.com,🏢 国产软件
+  - DOMAIN-SUFFIX,autonavi.com,🏢 国产软件
+  - DOMAIN-SUFFIX,didi.com,🏢 国产软件
+  - DOMAIN-SUFFIX,didistatic.com,🏢 国产软件
+  - DOMAIN-SUFFIX,didiglobal.com,🏢 国产软件
+  - DOMAIN-SUFFIX,xiaojukeji.com,🏢 国产软件
+  - DOMAIN-SUFFIX,12306.cn,🏢 国产软件
+  - DOMAIN-SUFFIX,ctrip.com,🏢 国产软件
+  - DOMAIN-SUFFIX,elong.com,🏢 国产软件
+  - DOMAIN-SUFFIX,tuniu.com,🏢 国产软件
+  - DOMAIN-SUFFIX,lvmama.com,🏢 国产软件
+  - DOMAIN-SUFFIX,qunar.com,🏢 国产软件
+  
+  # 教育和工具
+  - DOMAIN-SUFFIX,zhihu.com,📺 国内媒体
+  - DOMAIN-SUFFIX,zhimg.com,📺 国内媒体
+  - DOMAIN-SUFFIX,csdn.net,📺 国内媒体
+  - DOMAIN-SUFFIX,cnblogs.com,📺 国内媒体
+  - DOMAIN-SUFFIX,oschina.net,📺 国内媒体
+  - DOMAIN-SUFFIX,segmentfault.com,📺 国内媒体
+  - DOMAIN-SUFFIX,juejin.cn,📺 国内媒体
+  - DOMAIN-SUFFIX,jianshu.com,📺 国内媒体
+  - DOMAIN-SUFFIX,douban.com,📺 国内媒体
+  - DOMAIN-SUFFIX,doubanio.com,📺 国内媒体
+  - DOMAIN-SUFFIX,xunlei.com,🏢 国产软件
+  - DOMAIN-SUFFIX,sandai.net,🏢 国产软件
+  - DOMAIN-SUFFIX,yunpan.cn,🏢 国产软件
+  
+  # 手机厂商
+  - DOMAIN-SUFFIX,mi.com,🏢 国产软件
+  - DOMAIN-SUFFIX,xiaomi.com,🏢 国产软件
+  - DOMAIN-SUFFIX,miui.com,🏢 国产软件
+  - DOMAIN-SUFFIX,huawei.com,🏢 国产软件
+  - DOMAIN-SUFFIX,vmall.com,🏢 国产软件
+  - DOMAIN-SUFFIX,oppo.com,🏢 国产软件
+  - DOMAIN-SUFFIX,vivo.com.cn,🏢 国产软件
+  - DOMAIN-SUFFIX,oneplus.com,🏢 国产软件
+  - DOMAIN-SUFFIX,meizu.com,🏢 国产软件
+  - DOMAIN-SUFFIX,flyme.cn,🏢 国产软件
+  - DOMAIN-SUFFIX,smartisan.com,🏢 国产软件
+  
+  # 游戏公司
+  - DOMAIN-SUFFIX,tencent.com,💬 微信服务
+  - DOMAIN-SUFFIX,qq.com,💬 微信服务
+  - DOMAIN-SUFFIX,wegame.com,💬 微信服务
+  - DOMAIN-SUFFIX,tgp.qq.com,💬 微信服务
+  - DOMAIN-SUFFIX,netease.com,📺 国内媒体
+  - DOMAIN-SUFFIX,163.com,📺 国内媒体
+  - DOMAIN-SUFFIX,mihoyo.com,🎮 游戏平台
+  - DOMAIN-SUFFIX,hoyoverse.com,🎮 游戏平台
+  - DOMAIN-SUFFIX,mihoyo.com,🎮 游戏平台
+  - DOMAIN-SUFFIX,yuanshen.com,🎮 游戏平台
+  - DOMAIN-SUFFIX,4399.com,🏢 国产软件
+  - DOMAIN-SUFFIX,7k7k.com,🏢 国产软件
+  
+  # CDN和网络
+  - DOMAIN-SUFFIX,cdn.tencent-cloud.com,🏢 国产软件
+  - DOMAIN-SUFFIX,cdn.aliyun.com,🏢 国产软件
+  - DOMAIN-SUFFIX,aliyuncs.com,🏢 国产软件
+  - DOMAIN-SUFFIX,cdnhwc2.com,🏢 国产软件
+  - DOMAIN-SUFFIX,hdslb.com,📺 哔哩哔哩
+  - DOMAIN-SUFFIX,bilivideo.com,📺 哔哩哔哩
+  - DOMAIN-SUFFIX,bilibili.com,📺 哔哩哔哩
+  
+  # IP段和ASN
+  - RULE-SET,ChinaASN,🇨🇳 国内服务
+  
+  # 游戏平台优化（支持全球主流游戏平台）
+  - RULE-SET,Steam,🎯 Steam
+  - RULE-SET,Epic,🎲 Epic Games
+  - RULE-SET,Origin,🏎️ EA Origin
+  - RULE-SET,Ubisoft,🗡️ 育碧游戏
+  - RULE-SET,PlayStation,🕹️ PlayStation
+  - RULE-SET,Xbox,🕹️ Xbox Live
+  - RULE-SET,Nintendo,🎮 Nintendo Switch
+  - RULE-SET,Battle.net,⚔️ 暴雪战网
+  - RULE-SET,Riot,🎯 英雄联盟
+  - RULE-SET,Game,🎮 游戏平台
+  
+  # 补充游戏平台域名规则
+  - DOMAIN-SUFFIX,steampowered.com,🎯 Steam
+  - DOMAIN-SUFFIX,steamcommunity.com,🎯 Steam
+  - DOMAIN-SUFFIX,steamstatic.com,🎯 Steam
+  - DOMAIN-SUFFIX,steamusercontent.com,🎯 Steam
+  - DOMAIN-SUFFIX,steamstore-a.akamaihd.net,🎯 Steam
+  - DOMAIN-SUFFIX,epicgames.com,🎲 Epic Games
+  - DOMAIN-SUFFIX,unrealengine.com,🎲 Epic Games
+  - DOMAIN-SUFFIX,fortnite.com,🎲 Epic Games
+  - DOMAIN-SUFFIX,epicgames.dev,🎲 Epic Games
+  - DOMAIN-SUFFIX,helpshift.com,🎲 Epic Games
+  - DOMAIN-SUFFIX,origin.com,🏎️ EA Origin
+  - DOMAIN-SUFFIX,ea.com,🏎️ EA Origin
+  - DOMAIN-SUFFIX,eaplay.com,🏎️ EA Origin
+  - DOMAIN-SUFFIX,easports.com,🏎️ EA Origin
+  - DOMAIN-SUFFIX,battlefield.com,🏎️ EA Origin
+  - DOMAIN-SUFFIX,ubisoft.com,🗡️ 育碧游戏
+  - DOMAIN-SUFFIX,uplay.com,🗡️ 育碧游戏
+  - DOMAIN-SUFFIX,ubisoftconnect.com,🗡️ 育碧游戏
+  - DOMAIN-SUFFIX,ubi.com,🗡️ 育碧游戏
+  - DOMAIN-SUFFIX,assassinscreed.com,🗡️ 育碧游戏
+  - DOMAIN-SUFFIX,playstation.com,🕹️ PlayStation
+  - DOMAIN-SUFFIX,playstation.net,🕹️ PlayStation
+  - DOMAIN-SUFFIX,sony.com,🕹️ PlayStation
+  - DOMAIN-SUFFIX,sonyentertainmentnetwork.com,🕹️ PlayStation
+  - DOMAIN-SUFFIX,api.playstation.com,🕹️ PlayStation
+  - DOMAIN-SUFFIX,xbox.com,🕹️ Xbox Live
+  - DOMAIN-SUFFIX,xboxlive.com,🕹️ Xbox Live
+  - DOMAIN-SUFFIX,live.com,🕹️ Xbox Live
+  - DOMAIN-SUFFIX,microsoft.com,🕹️ Xbox Live
+  - DOMAIN-SUFFIX,gamepass.com,🕹️ Xbox Live
+  - DOMAIN-SUFFIX,nintendo.com,🎮 Nintendo Switch
+  - DOMAIN-SUFFIX,nintendo.net,🎮 Nintendo Switch
+  - DOMAIN-SUFFIX,nintendo.co.jp,🎮 Nintendo Switch
+  - DOMAIN-SUFFIX,nintendoswitch.com,🎮 Nintendo Switch
+  - DOMAIN-SUFFIX,nintendo-europe.com,🎮 Nintendo Switch
+  - DOMAIN-SUFFIX,battlenet.com.cn,⚔️ 暴雪战网
+  - DOMAIN-SUFFIX,battle.net,⚔️ 暴雪战网
+  - DOMAIN-SUFFIX,blizzard.com,⚔️ 暴雪战网
+  - DOMAIN-SUFFIX,blizzard.cn,⚔️ 暴雪战网
+  - DOMAIN-SUFFIX,overwatch.com,⚔️ 暴雪战网
+  - DOMAIN-SUFFIX,diablo3.com,⚔️ 暴雪战网
+  - DOMAIN-SUFFIX,worldofwarcraft.com,⚔️ 暴雪战网
+  - DOMAIN-SUFFIX,hearthstone.com,⚔️ 暴雪战网
+  - DOMAIN-SUFFIX,riotgames.com,🎯 英雄联盟
+  - DOMAIN-SUFFIX,leagueoflegends.com,🎯 英雄联盟
+  - DOMAIN-SUFFIX,valorant.com,🎯 英雄联盟
+  - DOMAIN-SUFFIX,riotcdn.net,🎯 英雄联盟
+  - DOMAIN-SUFFIX,riot.net,🎯 英雄联盟
+  - DOMAIN-SUFFIX,legends.com,🎯 英雄联盟
+  - DOMAIN-SUFFIX,gog.com,🎮 游戏平台
+  - DOMAIN-SUFFIX,gog-statics.com,🎮 游戏平台
+  - DOMAIN-SUFFIX,rockstargames.com,🎮 游戏平台
+  - DOMAIN-SUFFIX,rsg.sc,🎮 游戏平台
+  - DOMAIN-SUFFIX,socialclub.rockstargames.com,🎮 游戏平台
+  - DOMAIN-SUFFIX,activision.com,🎮 游戏平台
+  - DOMAIN-SUFFIX,callofduty.com,🎮 游戏平台
+  - DOMAIN-SUFFIX,square-enix.com,🎮 游戏平台
+  - DOMAIN-SUFFIX,finalfantasyxiv.com,🎮 游戏平台
+  - DOMAIN-SUFFIX,2k.com,🎮 游戏平台
+  - DOMAIN-SUFFIX,2kgames.com,🎮 游戏平台
+  - DOMAIN-SUFFIX,bethesda.net,🎮 游戏平台
+  - DOMAIN-SUFFIX,zenimax.com,🎮 游戏平台
+  - DOMAIN-SUFFIX,elderscrolls.com,🎮 游戏平台
+  - DOMAIN-SUFFIX,fallout.com,🎮 游戏平台
+  - DOMAIN-SUFFIX,cdprojektred.com,🎮 游戏平台
+  - DOMAIN-SUFFIX,cyberpunk.net,🎮 游戏平台
+  - DOMAIN-SUFFIX,thewitcher.com,🎮 游戏平台
+  - DOMAIN-SUFFIX,paradoxplaza.com,🎮 游戏平台
+  - DOMAIN-SUFFIX,paradoxinteractive.com,🎮 游戏平台
+  - DOMAIN-SUFFIX,denuvo.com,🎮 游戏平台
+  - DOMAIN-SUFFIX,unity3d.com,🎮 游戏平台
+  - DOMAIN-SUFFIX,unity.com,🎮 游戏平台
+  - DOMAIN-SUFFIX,mihoyo.com,🎮 游戏平台
+  - DOMAIN-SUFFIX,hoyoverse.com,🎮 游戏平台
+  - DOMAIN-SUFFIX,genshinimpact.com,🎮 游戏平台
+  - DOMAIN-SUFFIX,honkaiimpact3.com,🎮 游戏平台
+  - DOMAIN-SUFFIX,wargaming.net,🎮 游戏平台
+  - DOMAIN-SUFFIX,worldoftanks.com,🎮 游戏平台
+  - DOMAIN-SUFFIX,warthunder.com,🎮 游戏平台
+  - DOMAIN-SUFFIX,gaijin.net,🎮 游戏平台
+  - DOMAIN-SUFFIX,discord.com,🎮 游戏平台
+  - DOMAIN-SUFFIX,discordapp.com,🎮 游戏平台
+  - DOMAIN-SUFFIX,discord.gg,🎮 游戏平台
+  
+  # 全球代理
+  - RULE-SET,ProxyLite,🌏 全球加速
+  
+  # 国内直连（确保最优路径）
+  - GEOIP,CN,🇨🇳 国内服务
+  
+  # 兜底规则
+  - MATCH,🐟 兜底分流
+
+# TUN 模式配置
+tun:
+  enable: false
+  stack: system
+  auto-route: true
+  auto-detect-interface: true
+  dns-hijack:
+    - 198.18.0.2:53
+
+#==========================================
+# 🎯 配置说明与使用指南
+#==========================================
+# 
+# 📝 基础设置：
+# 1. 替换订阅：将 "https://t.me/ddgksf2021.yaml" 替换为你的实际订阅链接
+# 2. 开启TUN：如需TUN模式，将 "enable: false" 改为 "enable: true"
+# 
+# 🌟 特色功能说明：
+# - 🎯 游戏专线：自动筛选机场中的游戏专用节点，延迟更低
+# - 🏠 家宽优选：自动选择家宽/住宅IP节点，更稳定不易封号
+# - 🚀 星链网络：马斯克星链卫星网络节点，覆盖偏远地区
+# - 📱 5G网络：5G移动网络节点，速度更快
+# 
+# 🌍 全球节点覆盖：
+# 亚洲：香港、澳门、台湾、日本、韩国、新加坡、马来西亚、泰国、越南、菲律宾、印尼、印度等
+# 欧洲：英国、法国、德国、荷兰、意大利、西班牙、瑞士、俄罗斯等
+# 北美：美国、加拿大、墨西哥
+# 南美：巴西、阿根廷、智利
+# 大洋洲：澳大利亚、新西兰
+# 非洲：南非、埃及
+# 中东：阿联酋、沙特、土耳其
+# 
+# 🎮 游戏优化：
+# - 游戏平台会优先使用游戏专线节点
+# - 支持Steam、Epic、PlayStation、Xbox等平台
+# 
+# 📺 流媒体全覆盖：
+# 国际流媒体：Netflix、Disney+、HBO Max/Max、Prime Video、Hulu、Paramount+、Apple TV+
+# 音视频平台：YouTube、Spotify、TikTok、Twitch、Vimeo、SoundCloud、Pandora
+#==========================================
+# 🛡️ 容错机制和故障处理说明
+#==========================================
+# 
+# 🔧 DNS容错机制：
+# - 多重DNS服务器：国内(223.5.5.5, 119.29.29.29) + 国外(1.1.1.1, 8.8.8.8)
+# - DNS-over-HTTPS + 传统DNS双重保障
+# - DNS-over-TLS加密传输保护隐私
+# - respect-rules确保DNS查询遵循分流规则
+# 
+# 🌐 节点容错机制：
+# - Fallback模式：主节点故障时自动切换到备用节点
+# - 故障转移组：🌐 故障转移，所有节点统一管理
+# - 负载均衡组：⚖️ 负载均衡，分散流量压力
+# - 备用线路组：🔄 备用线路，多重保障
+# - 健康检查：每5分钟检测，超时5秒自动切换
+# 
+# 🎯 订阅容错机制：
+# - 自动过滤：排除无效、过期、测试节点
+# - 健康检查：定期检测节点可用性
+# - 订阅缓存：本地保存，订阅服务器故障时仍可使用
+# - 超时保护：连接超时5秒自动重试
+# 
+# 📋 规则容错机制：
+# - 多重规则源：Loyalsoldier + blackmatrix7 + AdGuard等
+# - 手动补充：重要域名手动添加，避免规则遗漏
+# - 规则缓存：本地保存86400秒，减少依赖
+# - 兜底规则：MATCH规则确保所有流量都有去向
+# 
+# 🚨 故障场景处理：
+# 
+# 1️⃣ 订阅服务器故障：
+#    - 使用本地缓存的节点配置
+#    - 手动导入备用订阅链接
+#    - 切换到"🔄 备用线路"组
+# 
+# 2️⃣ 主要节点故障：
+#    - Fallback自动切换到同地区其他节点
+#    - 使用"🌐 故障转移"统一管理
+#    - 临时切换到"⚖️ 负载均衡"分散压力
+# 
+# 3️⃣ 整个地区节点故障：
+#    - 策略组中的"🔄 备用线路"选项
+#    - 手动切换到其他地区节点
+#    - 使用DIRECT直连（适用于部分服务）
+# 
+# 4️⃣ DNS解析故障：
+#    - 自动切换到备用DNS服务器
+#    - Fallback机制使用国外DNS
+#    - 手动切换enhanced-mode为redir-host
+# 
+# 5️⃣ 规则更新失败：
+#    - 使用本地缓存的规则文件
+#    - 手动域名规则确保核心服务可用
+#    - 兜底规则确保所有流量正常转发
+# 
+# 6️⃣ 特定服务无法访问：
+#    - 每个服务都有多个节点选择
+#    - 备用线路选项作为最后保障
+#    - 可临时调整为DIRECT直连测试
+# 
+# 💡 使用建议：
+# - 定期检查节点健康状态
+# - 重要服务保存多个备用方案
+# - 遇到问题先切换"🔄 备用线路"
+# - 极端情况下可临时使用DIRECT
+# - 建议备份配置文件到本地
+#
+#==========================================
+# 
+# 🤖 AI服务全覆盖：
+# 聊天AI：OpenAI ChatGPT、Claude、Gemini/Bard、Poe、Character.AI、Perplexity
+# 图像AI：Midjourney、Stable Diffusion、Leonardo.AI、Runway、DALL-E、Civitai
+# 代码AI：GitHub Copilot、Cursor、Codeium、Tabby
+# 写作AI：Jasper、Copy.ai、Writesonic、Grammarly、Notion AI
+# 语音AI：ElevenLabs、Murf、Speechify、Otter.ai、Fireflies
+# 音乐AI：Suno、Mubert、Soundraw、Boomy
+# 视频AI：Synthesia、Runway ML
+# 翻译AI：DeepL
+# 演示AI：Gamma、Tome
+# 开发平台：Hugging Face、Replicate、RunPod、Cohere
+# 
+# ⚙️ 高级设置：
+# - 自动健康检查：每10分钟检测节点可用性
+# - 故障切换：节点故障时自动切换到备用节点
+# - 负载均衡：支持多节点负载均衡
+# 
+# 🔧 自定义选项：
+# - 可根据需要调整各地区节点的检测间隔
+# - 可自定义容差值来控制节点切换的敏感度
+# - 支持手动选择和自动切换两种模式
+#
+# 💡 使用建议：
+# 1. 首次使用建议选择"自动选择"，让系统自动选择最优节点
+# 2. 游戏时优先使用"游戏专线"或对应地区的游戏节点
+# 3. 流媒体观看时选择对应服务的优化节点
+# 4. 需要稳定IP时选择"家宽优选"
+# 5. 特殊需求时可使用"星链网络"或"5G网络"
+#
+#==========================================
