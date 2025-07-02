@@ -7,6 +7,7 @@
 - 展示和入口：
   - 🎲 [lottery-app](lovecan-lottery.html)：LOVECAN重映-幸运弦迷抽奖工具。
   - 🎵 [music-player](lyrics_player%20.html)：LED演出歌词显示器。
+  - ⚡ [clash-win](clash-win.yaml)：全球精品机场融合配置。
 
 ## lottery-app（lovecan-lottery.html）
 - 影院座位抽奖工具，支持自定义座位布局。
@@ -18,6 +19,12 @@
 - 歌词大屏显示，支持多主题、字体大小、播放模式切换。
 - 拖拽上传歌词/音频/背景图片，适合演出、KTV、活动现场。
 - 支持歌词搜索、播放列表导入导出、同步校准。
+
+## clash-win（clash-win.yaml）
+- 全球精品机场融合配置文件，支持229个全球节点。
+- 包含智能分流、游戏加速、家宽优选等功能。
+- 支持全球6大洲节点、游戏专线、5G加速、星链网络。
+- 适用于Clash客户端的Windows网络代理配置。
 
 ---
 
