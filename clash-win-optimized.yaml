@@ -143,7 +143,7 @@ proxy-groups:
   - {name: 🎬 国际媒体, type: select, proxies: [🇺🇲 美国节点, 🇬🇧 英国节点, 🇯🇵 日本节点, 🇸🇬 狮城节点, 🇨🇦 加拿大节点, 🔄 备用线路]}
   - {name: 🎮 游戏平台, type: select, proxies: [DIRECT, 🎯 游戏专线, 🇭🇰 香港节点, 🇯🇵 日本节点, 🇸🇬 狮城节点, 🇺🇲 美国节点, 🔄 备用线路]}
   - {name: 👨‍💻 开发加速, type: select, proxies: [🇺🇲 美国节点, 🇸🇬 狮城节点, 🇯🇵 日本节点, 🇭🇰 香港节点, 🇬🇧 英国节点, DIRECT]}
-  - {name: 💬 社交通讯, type: select, proxies: [🇸🇬 狮城节点, 🇺🇲 美国节点, 🇭🇰 香港节点, 🇳🇱 荷兰节点, 🔄 备用线路]}
+  - {name: 🌐 国际社交, type: select, proxies: [🇸🇬 狮城节点, 🇺🇲 美国节点, 🇭🇰 香港节点, 🇳🇱 荷兰节点, 🔄 备用线路]}
   # 国内服务策略组（优化体验）
   - {name: 🇨🇳 国内服务, type: select, proxies: [DIRECT, 🇭🇰 香港节点, 🇨🇳 台湾节点]}
   - {name: 💰 数字支付, type: select, proxies: [DIRECT]}
@@ -315,6 +315,10 @@ rule-providers:
     path: ./ruleset/AIServices.yaml
 
   # 流媒体服务规则集
+  Animation:
+    <<: *a6
+    url: "*blackmatrix_rules,Animation/Animation.yaml"
+    path: ./ruleset/Animation.yaml
   BiliBili:
     <<: *a6
     url: "*blackmatrix_rules,BiliBili/BiliBili.yaml"
@@ -381,6 +385,10 @@ rule-providers:
     path: ./ruleset/Twitch.yaml
 
   # 社交平台
+  SocialMedia:
+    <<: *a6
+    url: "*blackmatrix_rules,SocialMedia/SocialMedia.yaml"
+    path: ./ruleset/SocialMedia.yaml
   Telegram:
     <<: *a6
     url: "*blackmatrix_rules,Telegram/Telegram.yaml"
@@ -558,6 +566,7 @@ rules:
   - RULE-SET,AIServices,🤖 人工智能
   
   # 流媒体服务优化
+  - RULE-SET,Animation,🎬 国际媒体
   - RULE-SET,Netflix,🎬 国际媒体
   - RULE-SET,Disney,🎬 国际媒体
   - RULE-SET,PrimeVideo,🎬 国际媒体
@@ -573,8 +582,9 @@ rules:
   - RULE-SET,GlobalMedia,🎬 国际媒体
   
   # 社交通讯
-  - RULE-SET,Telegram,💬 社交通讯
-  - RULE-SET,Twitter,💬 社交通讯
+  - RULE-SET,SocialMedia,🌐 国际社交
+  - RULE-SET,Telegram,🌐 国际社交
+  - RULE-SET,Twitter,🌐 国际社交
   
   # 科技服务
   - RULE-SET,Apple,🍎 苹果服务
