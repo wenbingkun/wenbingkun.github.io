@@ -150,7 +150,9 @@ proxy-groups:
   - {name: 🇨🇳 国内服务, type: select, proxies: [DIRECT, 🇭🇰 香港节点, 🇨🇳 台湾节点]}
   - {name: 💰 数字支付, type: select, proxies: [DIRECT]}
   - {name: 💬 微信服务, type: select, proxies: [DIRECT]}
-  - {name: Ⓜ️ 微软服务, type: select, proxies: [DIRECT, 🇺🇲 美国节点, 🇭🇰 香港节点, 🇸🇬 狮城节点]}
+  - {name: Ⓜ️ 微软服务, type: select, proxies: [Ⓜ️ 微软服务-国际, Ⓜ️ 微软服务-国内]}
+  - {name: Ⓜ️ 微软服务-国际, type: select, proxies: [🇺🇲 美国节点, 🇭🇰 香港节点, 🇸🇬 狮城节点, 🚀 手动切换, ♻️ 自动选择]}
+  - {name: Ⓜ️ 微软服务-国内, type: select, proxies: [DIRECT, 🚀 手动切换]}
   - {name: 🍃 应用净化, type: select, proxies: [REJECT, DIRECT]}
   - {name: 🆎 广告拦截, type: select, proxies: [REJECT, DIRECT]}
   - {name: 🛡️ 隐私防护, type: select, proxies: [REJECT, DIRECT]}
@@ -593,7 +595,13 @@ rules:
   # 科技服务
   - RULE-SET,Apple,🍎 苹果服务
   - RULE-SET,Google,🌌 谷歌服务
-  - RULE-SET,Microsoft,Ⓜ️ 微软服务
+  - DOMAIN-SUFFIX,microsoft.com,Ⓜ️ 微软服务-国际
+  - DOMAIN-SUFFIX,windowsupdate.com,Ⓜ️ 微软服务-国内
+  - DOMAIN-SUFFIX,update.microsoft.com,Ⓜ️ 微软服务-国内
+  - DOMAIN-SUFFIX,windows.com,Ⓜ️ 微软服务-国内
+  - DOMAIN-SUFFIX,office.com,Ⓜ️ 微软服务-国内
+  - DOMAIN-SUFFIX,live.com,Ⓜ️ 微软服务-国内
+  - RULE-SET,Microsoft,Ⓜ️ 微软服务-国际
   
   # 开发者平台优化
   - RULE-SET,GitHub,👨‍💻 开发加速
