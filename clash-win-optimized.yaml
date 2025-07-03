@@ -153,13 +153,7 @@ proxy-groups:
   - {name: Ⓜ️ 微软服务, type: select, proxies: [Ⓜ️ 微软服务-国际, Ⓜ️ 微软服务-国内]}
   - {name: Ⓜ️ 微软服务-国际, type: select, proxies: [🇺🇲 美国节点, 🇭🇰 香港节点, 🇸🇬 狮城节点, 🚀 手动切换, ♻️ 自动选择]}
   - {name: Ⓜ️ 微软服务-国内, type: select, proxies: [DIRECT, 🚀 手动切换]}
-  - {name: 🍃 应用净化, type: select, proxies: [REJECT, DIRECT]}
-  - {name: 🆎 广告拦截, type: select, proxies: [REJECT, DIRECT]}
-  - {name: 🛡️ 隐私防护, type: select, proxies: [REJECT, DIRECT]}
-  - {name: 🚫 恶意网站, type: select, proxies: [REJECT, DIRECT]}
-  - {name: 🔒 追踪保护, type: select, proxies: [REJECT, DIRECT]}
-  - {name: 🛑 钓鱼防护, type: select, proxies: [REJECT, DIRECT]}
-  - {name: 🚨 挖矿拦截, type: select, proxies: [REJECT, DIRECT]}
+  - {name: 🛡️ 安全防护, type: select, proxies: [REJECT, DIRECT]}
   - {name: 🐟 兜底分流, <<: *a3}
   
   # 特殊功能组（增强容错性）
@@ -551,16 +545,16 @@ rules:
   - RULE-SET,Lan,DIRECT
   
   # 安全防护（多重防护体系）
-  - RULE-SET,Malware,🚫 恶意网站
-  - RULE-SET,Phishing,🛑 钓鱼防护
-  - RULE-SET,AdBlock,🆎 广告拦截
-  - RULE-SET,AdBlockDomain,🆎 广告拦截
-  - RULE-SET,AdGuardSDNSFilter,🆎 广告拦截
-  - RULE-SET,EasyList,🆎 广告拦截
-  - RULE-SET,EasyPrivacy,🔒 追踪保护
-  - RULE-SET,Privacy,🛡️ 隐私防护
-  - RULE-SET,Tracking,🔒 追踪保护
-  - RULE-SET,Hijacking,🍃 应用净化
+  - RULE-SET,Malware,🛡️ 安全防护
+  - RULE-SET,Phishing,🛡️ 安全防护
+  - RULE-SET,AdBlock,🛡️ 安全防护
+  - RULE-SET,AdBlockDomain,🛡️ 安全防护
+  - RULE-SET,AdGuardSDNSFilter,🛡️ 安全防护
+  - RULE-SET,EasyList,🛡️ 安全防护
+  - RULE-SET,EasyPrivacy,🛡️ 安全防护
+  - RULE-SET,Privacy,🛡️ 安全防护
+  - RULE-SET,Tracking,🛡️ 安全防护
+  - RULE-SET,Hijacking,🛡️ 安全防护
   
   # AI 服务优化
   - RULE-SET,OpenAI,🤖 人工智能
