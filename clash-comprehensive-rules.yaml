@@ -2,9 +2,9 @@
 # @ConfigName        全球精品机场融合配置 (优化版)
 # @Author            基于墨鱼配置 + 全球机场订阅优化
 # @UpdateTime        2025年7月融合版
-# @Function          支持229个全球节点、智能分流、游戏加速、家宽优选
+# @Function          全球节点覆盖、智能分流、游戏优化、AI服务支持
 # @ConfigVersion     3.1.0
-# @Features          🌍全球7大洲节点 | 🎮游戏专线 | 🏠家宽优选 | 🚀星链网络 | 📱5G加速
+# @Features          🌍全球7大洲节点 | 🎮游戏专线 | 🤖主流AI支持 | 📋智能分流
 #==========================================
 
 # 基础配置
@@ -597,11 +597,11 @@ tun:
 # 1. 替换订阅：将 "https://example.com/subscription.yaml" 替换为你的实际订阅链接
 # 2. 开启TUN：如需TUN模式，将 "enable: false" 改为 "enable: true"
 # 
-# 🌟 特色功能说明：
+# 🌟 核心功能特色：
 # - 🎯 游戏专线：自动筛选机场中的游戏专用节点，延迟更低
-# - 🏠 家宽优选：自动选择家宽/住宅IP节点，更稳定不易封号
-# - 🚀 星链网络：马斯克星链卫星网络节点，覆盖偏远地区
-# - 📱 5G网络：5G移动网络节点，速度更快
+# - 📋 智能分流：专用规则优先，避免通用规则误捕获
+# - 🤖 AI服务：支持主流AI平台独立路由选择
+# - 🌍 全球覆盖：7大洲31个国家地区节点支持
 # 
 # 🌍 全球节点覆盖：
 # 亚洲：香港、澳门、台湾、日本、韩国、新加坡、马来西亚、泰国、越南、菲律宾、印尼、印度等
@@ -694,17 +694,10 @@ tun:
 #
 #==========================================
 # 
-# 🤖 AI服务全覆盖：
-# 聊天AI：OpenAI ChatGPT、Claude、Gemini/Bard、Poe、Character.AI、Perplexity
-# 图像AI：Midjourney、Stable Diffusion、Leonardo.AI、Runway、DALL-E、Civitai
-# 代码AI：GitHub Copilot、Cursor、Codeium、Tabby
-# 写作AI：Jasper、Copy.ai、Writesonic、Grammarly、Notion AI
-# 语音AI：ElevenLabs、Murf、Speechify、Otter.ai、Fireflies
-# 音乐AI：Suno、Mubert、Soundraw、Boomy
-# 视频AI：Synthesia、Runway ML
-# 翻译AI：DeepL
-# 演示AI：Gamma、Tome
-# 开发平台：Hugging Face、Replicate、RunPod、Cohere
+# 🤖 AI服务支持（5个主流平台）：
+# 聊天AI：OpenAI ChatGPT、Claude、Gemini/Bard、Perplexity
+# 代码AI：GitHub Copilot
+# 说明：专用规则仅覆盖主流AI平台，其他AI服务通过通用规则处理
 # 
 # ⚙️ 高级设置：
 # - 自动健康检查：每10分钟检测节点可用性
