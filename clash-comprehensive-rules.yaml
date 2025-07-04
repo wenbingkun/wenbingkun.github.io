@@ -4,7 +4,7 @@
 # @UpdateTime        2025年7月融合版
 # @Function          支持229个全球节点、智能分流、游戏加速、家宽优选
 # @ConfigVersion     3.1.0
-# @Features          🌍全球6大洲节点 | 🎮游戏专线 | 🏠家宽优选 | 🚀星链网络 | 📱5G加速
+# @Features          🌍全球7大洲节点 | 🎮游戏专线 | 🏠家宽优选 | 🚀星链网络 | 📱5G加速
 #==========================================
 
 # 基础配置
@@ -160,26 +160,66 @@ proxy-groups:
   - {name: 🌐 故障转移, <<: *a8, filter: ".*"}
   - {name: 🔄 备用线路, type: select, proxies: [♻️ 自动选择, 🌐 故障转移, DIRECT]}
   
-  # 地区节点组（覆盖全球6大洲，增强容错性）
+  # 地区节点组（覆盖全球7大洲，增强容错性）
+  # 支持31个国家和地区：亚洲12国、欧洲8国、北美3国、南美3国、大洋洲2国、中东3国、非洲2国
   
-  # 亚洲主要地区
+  # 亚洲地区
   - {name: 🇭🇰 香港节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇭🇰|港|hk|hongkong|hong kong"}
+  - {name: 🇲🇴 澳门节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇲🇴|澳门|macao|macau|mo"}
   - {name: 🇨🇳 台湾节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇹🇼|台|tw|taiwan"}
   - {name: 🇯🇵 日本节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇯🇵|日|jp|japan"}
+  - {name: 🇰🇷 韩国节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇰🇷|韩|kr|korea"}
   - {name: 🇸🇬 狮城节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇸🇬|新加坡|狮城|sg|singapore"}
+  - {name: 🇲🇾 马来节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇲🇾|马来|my|malaysia"}
+  - {name: 🇹🇭 泰国节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇹🇭|泰|th|thailand"}
+  - {name: 🇻🇳 越南节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇻🇳|越南|vn|vietnam"}
+  - {name: 🇵🇭 菲律宾节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇵🇭|菲律宾|ph|philippines"}
+  - {name: 🇮🇩 印尼节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇮🇩|印尼|id|indonesia"}
+  - {name: 🇮🇳 印度节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇮🇳|印度|in|india"}
   
-  # 欧美主要地区
+  # 欧洲地区
   - {name: 🇬🇧 英国节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇬🇧|英|uk|britain|united kingdom"}
+  - {name: 🇫🇷 法国节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇫🇷|法|fr|france"}
+  - {name: 🇩🇪 德国节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇩🇪|德|de|germany"}
+  - {name: 🇳🇱 荷兰节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇳🇱|荷兰|nl|netherlands"}
+  - {name: 🇮🇹 意大利节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇮🇹|意大利|it|italy"}
+  - {name: 🇪🇸 西班牙节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇪🇸|西班牙|es|spain"}
+  - {name: 🇨🇭 瑞士节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇨🇭|瑞士|ch|switzerland"}
+  - {name: 🇷🇺 俄罗斯节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇷🇺|俄|ru|russia"}
+  
+  # 北美地区
   - {name: 🇺🇲 美国节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇺🇸|美国|us|unitedstates|united states"}
   - {name: 🇨🇦 加拿大节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇨🇦|加拿大|ca|canada"}
+  - {name: 🇲🇽 墨西哥节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇲🇽|墨西哥|mx|mexico"}
+  
+  # 南美地区
+  - {name: 🇧🇷 巴西节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇧🇷|巴西|br|brazil"}
+  - {name: 🇦🇷 阿根廷节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇦🇷|阿根廷|ar|argentina"}
+  - {name: 🇨🇱 智利节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇨🇱|智利|cl|chile"}
+  
+  # 大洋洲地区
   - {name: 🇦🇺 澳洲节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇦🇺|澳|au|australia"}
+  - {name: 🇳🇿 新西兰节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇳🇿|新西兰|nz|new zealand"}
+  
+  # 欧洲联合节点组（用于游戏等服务）
+  - {name: 🇪🇺 欧洲节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇬🇧|🇫🇷|🇩🇪|🇳🇱|🇮🇹|🇪🇸|🇨🇭|🇷🇺|英|法|德|荷兰|意大利|西班牙|瑞士|俄|uk|fr|de|nl|it|es|ch|ru|britain|france|germany|netherlands|italy|spain|switzerland|russia"}
+  
+  # 中东地区
+  - {name: 🇦🇪 阿联酋节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇦🇪|阿联酋|ae|emirates"}
+  - {name: 🇸🇦 沙特节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇸🇦|沙特|sa|saudi"}
+  - {name: 🇹🇷 土耳其节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇹🇷|土耳其|tr|turkey"}
+
+  # 非洲地区
+  - {name: 🇿🇦 南非节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇿🇦|南非|za|south africa"}
+  - {name: 🇪🇬 埃及节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇪🇬|埃及|eg|egypt"}
+  
+  # 南极洲地区（第七大洲）
+  - {name: 🇦🇶 南极节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 8000, use: [Sub], filter: "(?i)🇦🇶|南极|antarctica|antarctic"}
   
 
 # 规则提供者
 rule-providers:
-  # 远程规则集URL锚点
-  loyal_rules: &loyal_rules "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/"
-  blackmatrix_rules: &blackmatrix_rules "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/"
+  # 远程规则集
 
   # 安全防护规则集（全面安全防护）
   AdBlock:
@@ -189,7 +229,7 @@ rule-providers:
     
   AdGuard:
     <<: *a6
-    url: "*blackmatrix_rules,Advertising/Advertising.yaml"
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Advertising/Advertising.yaml"
     path: ./ruleset/AdGuard.yaml
     
   Privacy:
@@ -199,220 +239,220 @@ rule-providers:
     
   Tracking:
     <<: *a6
-    url: "*blackmatrix_rules,Privacy/Privacy.yaml"
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Privacy/Privacy.yaml"
     path: ./ruleset/Tracking.yaml
     
   Hijacking:
     <<: *a6
-    url: "*blackmatrix_rules,Hijacking/Hijacking.yaml"
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Hijacking/Hijacking.yaml"
     path: ./ruleset/Hijacking.yaml
     
   Malware:
     <<: *a6
-    url: "*blackmatrix_rules,Malware/Malware.yaml"
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Malware/Malware.yaml"
     path: ./ruleset/Malware.yaml
 
   # AI 服务规则集（组合规则 - 5个平台）
   OpenAI:
     <<: *a6
-    url: "*blackmatrix_rules,OpenAI/OpenAI.yaml"
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/OpenAI/OpenAI.yaml"
     path: ./ruleset/OpenAI.yaml
     
   Claude:
     <<: *a6
-    url: "*blackmatrix_rules,Claude/Claude.yaml"
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Claude/Claude.yaml"
     path: ./ruleset/Claude.yaml
     
   Copilot:
     <<: *a6
-    url: "*blackmatrix_rules,Copilot/Copilot.yaml"
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Copilot/Copilot.yaml"
     path: ./ruleset/Copilot.yaml
     
   Gemini:
     <<: *a6
-    url: "*blackmatrix_rules,Gemini/Gemini.yaml"
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Gemini/Gemini.yaml"
     path: ./ruleset/Gemini.yaml
     
   Perplexity:
     <<: *a6
-    url: "*blackmatrix_rules,Perplexity/Perplexity.yaml"
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Perplexity/Perplexity.yaml"
     path: ./ruleset/Perplexity.yaml
 
   # 流媒体服务规则集（组合规则 - 8个平台）
   Netflix:
     <<: *a6
-    url: "*blackmatrix_rules,Netflix/Netflix.yaml"
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Netflix/Netflix.yaml"
     path: ./ruleset/Netflix.yaml
     
   Disney:
     <<: *a6
-    url: "*blackmatrix_rules,Disney/Disney.yaml"
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Disney/Disney.yaml"
     path: ./ruleset/Disney.yaml
     
   YouTube:
     <<: *a6
-    url: "*blackmatrix_rules,YouTube/YouTube.yaml"
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/YouTube/YouTube.yaml"
     path: ./ruleset/YouTube.yaml
     
   Spotify:
     <<: *a6
-    url: "*blackmatrix_rules,Spotify/Spotify.yaml"
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Spotify/Spotify.yaml"
     path: ./ruleset/Spotify.yaml
     
   Twitch:
     <<: *a6
-    url: "*blackmatrix_rules,Twitch/Twitch.yaml"
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Twitch/Twitch.yaml"
     path: ./ruleset/Twitch.yaml
     
   AppleTV:
     <<: *a6
-    url: "*blackmatrix_rules,AppleTV/AppleTV.yaml"
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/AppleTV/AppleTV.yaml"
     path: ./ruleset/AppleTV.yaml
     
   PrimeVideo:
     <<: *a6
-    url: "*blackmatrix_rules,AmazonPrimeVideo/AmazonPrimeVideo.yaml"
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/AmazonPrimeVideo/AmazonPrimeVideo.yaml"
     path: ./ruleset/PrimeVideo.yaml
     
   GlobalMedia:
     <<: *a6
-    url: "*blackmatrix_rules,GlobalMedia/GlobalMedia_Classical.yaml"
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/GlobalMedia/GlobalMedia_Classical.yaml"
     path: ./ruleset/GlobalMedia.yaml
     
   # B站专项规则集
   BiliBili:
     <<: *a6
-    url: "*blackmatrix_rules,BiliBili/BiliBili.yaml"
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/BiliBili/BiliBili.yaml"
     path: ./ruleset/BiliBili.yaml
 
   # 社交平台规则集（组合规则 - 8个平台）
   Telegram:
     <<: *a6
-    url: "*blackmatrix_rules,Telegram/Telegram.yaml"
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Telegram/Telegram.yaml"
     path: ./ruleset/Telegram.yaml
     
   Twitter:
     <<: *a6
-    url: "*blackmatrix_rules,Twitter/Twitter.yaml"
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Twitter/Twitter.yaml"
     path: ./ruleset/Twitter.yaml
     
   Instagram:
     <<: *a6
-    url: "*blackmatrix_rules,Instagram/Instagram.yaml"
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Instagram/Instagram.yaml"
     path: ./ruleset/Instagram.yaml
     
   Discord:
     <<: *a6
-    url: "*blackmatrix_rules,Discord/Discord.yaml"
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Discord/Discord.yaml"
     path: ./ruleset/Discord.yaml
     
   TikTok:
     <<: *a6
-    url: "*blackmatrix_rules,TikTok/TikTok.yaml"
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/TikTok/TikTok.yaml"
     path: ./ruleset/TikTok.yaml
     
   Facebook:
     <<: *a6
-    url: "*blackmatrix_rules,Facebook/Facebook.yaml"
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Facebook/Facebook.yaml"
     path: ./ruleset/Facebook.yaml
     
   Reddit:
     <<: *a6
-    url: "*blackmatrix_rules,Reddit/Reddit.yaml"
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Reddit/Reddit.yaml"
     path: ./ruleset/Reddit.yaml
     
   SocialMedia:
     <<: *a6
-    url: "*blackmatrix_rules,SocialMedia/SocialMedia.yaml"
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/SocialMedia/SocialMedia.yaml"
     path: ./ruleset/SocialMedia.yaml
 
   # 科技服务
   Apple:
     <<: *a6
-    url: "*blackmatrix_rules,Apple/Apple_Classical.yaml"
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Apple/Apple_Classical.yaml"
     path: ./ruleset/Apple.yaml
     
   Google:
     <<: *a6
-    url: "*blackmatrix_rules,Google/Google.yaml" 
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Google/Google.yaml" 
     path: ./ruleset/Google.yaml
     
   Microsoft:
     <<: *a6
-    url: "*blackmatrix_rules,Microsoft/Microsoft.yaml"
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Microsoft/Microsoft.yaml"
     path: ./ruleset/Microsoft.yaml
     
   # 开发者平台规则集（组合规则 - 6个平台）
   GitHub:
     <<: *a6
-    url: "*blackmatrix_rules,GitHub/GitHub.yaml"
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/GitHub/GitHub.yaml"
     path: ./ruleset/GitHub.yaml
     
   GitLab:
     <<: *a6
-    url: "*blackmatrix_rules,GitLab/GitLab.yaml"
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/GitLab/GitLab.yaml"
     path: ./ruleset/GitLab.yaml
     
   Docker:
     <<: *a6
-    url: "*blackmatrix_rules,Docker/Docker.yaml"
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Docker/Docker.yaml"
     path: ./ruleset/Docker.yaml
     
   StackOverflow:
     <<: *a6
-    url: "*blackmatrix_rules,StackExchange/StackExchange.yaml"
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/StackExchange/StackExchange.yaml"
     path: ./ruleset/StackOverflow.yaml
     
   Cloudflare:
     <<: *a6
-    url: "*blackmatrix_rules,Cloudflare/Cloudflare.yaml"
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Cloudflare/Cloudflare.yaml"
     path: ./ruleset/Cloudflare.yaml
     
   Developer:
     <<: *a6
-    url: "*blackmatrix_rules,Developer/Developer.yaml"
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Developer/Developer.yaml"
     path: ./ruleset/Developer.yaml
 
   # 腾讯服务
   Tencent:
     <<: *a6
-    url: "*blackmatrix_rules,Tencent/Tencent.yaml"
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Tencent/Tencent.yaml"
     path: ./ruleset/Tencent.yaml
 
   # 游戏平台规则集（组合规则 - 7个平台）
   Steam:
     <<: *a6
-    url: "*blackmatrix_rules,Steam/Steam.yaml"
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Steam/Steam.yaml"
     path: ./ruleset/Steam.yaml
     
   Epic:
     <<: *a6
-    url: "*blackmatrix_rules,Epic/Epic.yaml"
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Epic/Epic.yaml"
     path: ./ruleset/Epic.yaml
     
   PlayStation:
     <<: *a6
-    url: "*blackmatrix_rules,PlayStation/PlayStation.yaml"
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/PlayStation/PlayStation.yaml"
     path: ./ruleset/PlayStation.yaml
     
   Xbox:
     <<: *a6
-    url: "*blackmatrix_rules,Xbox/Xbox.yaml"
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Xbox/Xbox.yaml"
     path: ./ruleset/Xbox.yaml
     
   Nintendo:
     <<: *a6
-    url: "*blackmatrix_rules,Nintendo/Nintendo.yaml"
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Nintendo/Nintendo.yaml"
     path: ./ruleset/Nintendo.yaml
     
   BattleNet:
     <<: *a6
-    url: "*blackmatrix_rules,Blizzard/Blizzard.yaml"
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Blizzard/Blizzard.yaml"
     path: ./ruleset/BattleNet.yaml
     
   Game:
     <<: *a6
-    url: "*blackmatrix_rules,Game/Game.yaml"
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Game/Game.yaml"
     path: ./ruleset/Game.yaml
 
   # 国内直连优化规则集
@@ -423,7 +463,7 @@ rule-providers:
     
   ChinaCompany:
     <<: *a6
-    url: "*blackmatrix_rules,China/China.yaml"
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/China/China.yaml"
     path: ./ruleset/ChinaCompany.yaml
     
   # 基础规则
