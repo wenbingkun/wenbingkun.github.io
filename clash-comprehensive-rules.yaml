@@ -278,7 +278,7 @@ rule-providers:
     url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Perplexity/Perplexity.yaml"
     path: ./ruleset/Perplexity.yaml
 
-  # 流媒体服务规则集（组合规则 - 8个平台）
+  # 流媒体服务规则集（组合规则 - 7个平台，YouTube移至谷歌服务）
   Netflix:
     <<: *a6
     url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Netflix/Netflix.yaml"
@@ -502,10 +502,9 @@ rules:
   - RULE-SET,Gemini,🤖 人工智能
   - RULE-SET,Perplexity,🤖 人工智能
   
-  # 流媒体服务优化（组合规则 - 8个平台）
+  # 流媒体服务优化（组合规则 - 7个平台，YouTube已移至谷歌服务）
   - RULE-SET,Netflix,🎬 流媒体
   - RULE-SET,Disney,🎬 流媒体
-  - RULE-SET,YouTube,🎬 流媒体
   - RULE-SET,Spotify,🎬 流媒体
   - RULE-SET,Twitch,🎬 流媒体
   - RULE-SET,AppleTV,🎬 流媒体
@@ -528,6 +527,7 @@ rules:
   # 科技服务
   - RULE-SET,Apple,🍎 苹果服务
   - RULE-SET,Google,🌌 谷歌服务
+  - RULE-SET,YouTube,🌌 谷歌服务
   - DOMAIN-SUFFIX,microsoft.com,Ⓜ️ 微软服务
   - DOMAIN-SUFFIX,windowsupdate.com,Ⓜ️ 微软服务
   - DOMAIN-SUFFIX,update.microsoft.com,Ⓜ️ 微软服务
@@ -614,7 +614,8 @@ tun:
 # 
 # 📺 流媒体全覆盖：
 # 国际流媒体：Netflix、Disney+、HBO Max/Max、Prime Video、Hulu、Paramount+、Apple TV+
-# 音视频平台：YouTube、Spotify、TikTok、Twitch、Vimeo、SoundCloud、Pandora
+# 音视频平台：Spotify、TikTok、Twitch、Vimeo、SoundCloud、Pandora
+# 注：YouTube已移至谷歌服务组，实现独立节点选择
 #==========================================
 # 🛡️ 容错机制和故障处理说明
 #==========================================
