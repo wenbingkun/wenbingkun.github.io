@@ -528,13 +528,13 @@ rules:
   # 科技服务
   - RULE-SET,Apple,🍎 苹果服务
   - RULE-SET,Google,🌌 谷歌服务
-  - DOMAIN-SUFFIX,microsoft.com,Ⓜ️ 微软服务-国际
-  - DOMAIN-SUFFIX,windowsupdate.com,Ⓜ️ 微软服务-国内
-  - DOMAIN-SUFFIX,update.microsoft.com,Ⓜ️ 微软服务-国内
-  - DOMAIN-SUFFIX,windows.com,Ⓜ️ 微软服务-国内
-  - DOMAIN-SUFFIX,office.com,Ⓜ️ 微软服务-国内
-  - DOMAIN-SUFFIX,live.com,Ⓜ️ 微软服务-国内
-  - RULE-SET,Microsoft,Ⓜ️ 微软服务-国际
+  - DOMAIN-SUFFIX,microsoft.com,Ⓜ️ 微软服务
+  - DOMAIN-SUFFIX,windowsupdate.com,Ⓜ️ 微软服务
+  - DOMAIN-SUFFIX,update.microsoft.com,Ⓜ️ 微软服务
+  - DOMAIN-SUFFIX,windows.com,Ⓜ️ 微软服务
+  - DOMAIN-SUFFIX,office.com,Ⓜ️ 微软服务
+  - DOMAIN-SUFFIX,live.com,Ⓜ️ 微软服务
+  - RULE-SET,Microsoft,Ⓜ️ 微软服务
   
   # 开发者平台优化（组合规则 - 6个平台）
   - RULE-SET,GitHub,👨‍💻 开发服务
