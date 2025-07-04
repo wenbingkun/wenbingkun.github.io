@@ -278,7 +278,7 @@ rule-providers:
     url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Perplexity/Perplexity.yaml"
     path: ./ruleset/Perplexity.yaml
 
-  # 流媒体服务规则集（组合规则 - 7个平台，YouTube移至谷歌服务）
+  # 流媒体服务规则集（专用规则优先，避免被GlobalMedia通用规则误捕获）
   Netflix:
     <<: *a6
     url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Netflix/Netflix.yaml"
@@ -325,7 +325,7 @@ rule-providers:
     url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/BiliBili/BiliBili.yaml"
     path: ./ruleset/BiliBili.yaml
 
-  # 社交平台规则集（组合规则 - 8个平台）
+  # 社交平台规则集（专用规则优先，避免被SocialMedia通用规则误捕获）
   Telegram:
     <<: *a6
     url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Telegram/Telegram.yaml"
@@ -502,30 +502,32 @@ rules:
   - RULE-SET,Gemini,🤖 人工智能
   - RULE-SET,Perplexity,🤖 人工智能
   
-  # YouTube专项规则（必须在GlobalMedia之前，避免被GlobalMedia捕获）
-  - RULE-SET,YouTube,🌌 谷歌服务
+  # 专用平台规则（按优先级顺序排列，确保精确匹配）
   
-  # 流媒体服务优化（组合规则 - 7个平台，YouTube已移至谷歌服务）
+  # 特殊分组的视频平台
+  - RULE-SET,YouTube,🌌 谷歌服务
+  - RULE-SET,BiliBili,📺 哔哩哔哩
+  
+  # 社交平台专用规则（避免被通用规则误捕获）
+  - RULE-SET,TikTok,🌐 社交平台
+  - RULE-SET,Telegram,🌐 社交平台
+  - RULE-SET,Twitter,🌐 社交平台
+  - RULE-SET,Instagram,🌐 社交平台
+  - RULE-SET,Discord,🌐 社交平台
+  - RULE-SET,Facebook,🌐 社交平台
+  - RULE-SET,Reddit,🌐 社交平台
+  
+  # 流媒体平台专用规则（避免被GlobalMedia误捕获）
   - RULE-SET,Netflix,🎬 流媒体
   - RULE-SET,Disney,🎬 流媒体
   - RULE-SET,Spotify,🎬 流媒体
   - RULE-SET,Twitch,🎬 流媒体
   - RULE-SET,AppleTV,🎬 流媒体
   - RULE-SET,PrimeVideo,🎬 流媒体
-  - RULE-SET,GlobalMedia,🎬 流媒体
   
-  # B站专项优化
-  - RULE-SET,BiliBili,📺 哔哩哔哩
-  
-  # 社交通讯（组合规则 - 8个平台）
-  - RULE-SET,Telegram,🌐 社交平台
-  - RULE-SET,Twitter,🌐 社交平台
-  - RULE-SET,Instagram,🌐 社交平台
-  - RULE-SET,Discord,🌐 社交平台
-  - RULE-SET,TikTok,🌐 社交平台
-  - RULE-SET,Facebook,🌐 社交平台
-  - RULE-SET,Reddit,🌐 社交平台
+  # 通用兜底规则（放在最后，避免抢夺专用规则流量）
   - RULE-SET,SocialMedia,🌐 社交平台
+  - RULE-SET,GlobalMedia,🎬 流媒体
   
   # 科技服务
   - RULE-SET,Apple,🍎 苹果服务
@@ -614,10 +616,14 @@ tun:
 # - 游戏平台会优先使用游戏专线节点
 # - 支持Steam、Epic、PlayStation、Xbox等平台
 # 
-# 📺 流媒体全覆盖：
-# 国际流媒体：Netflix、Disney+、HBO Max/Max、Prime Video、Hulu、Paramount+、Apple TV+
-# 音视频平台：Spotify、TikTok、Twitch、Vimeo、SoundCloud、Pandora
-# 注：YouTube已移至谷歌服务组，实现独立节点选择
+# 📋 规则匹配优先级（重要）：
+# 🎯 专用平台规则（高优先级）：
+#   - YouTube → 谷歌服务，TikTok → 社交平台
+#   - Netflix、Disney+、Spotify、Twitch → 流媒体  
+# 🌐 通用兜底规则（低优先级）：
+#   - SocialMedia → 社交平台（捕获未知社交平台）
+#   - GlobalMedia → 流媒体（捕获未知流媒体平台）
+# ⚠️  专用规则必须在通用规则之前，否则会被误捕获
 #==========================================
 # 🛡️ 容错机制和故障处理说明
 #==========================================
