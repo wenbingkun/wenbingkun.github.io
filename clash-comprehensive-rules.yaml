@@ -114,7 +114,7 @@ i:    &a7 {type: http,     behavior: ipcidr,    interval: 86400}
 proxy-providers:
   Sub:
     <<: *a1
-    url: https://你的机场订阅链接.yaml  # ⚠️ 必须替换：将此处替换为你的实际机场订阅链接
+    url: https://example.com/subscription.yaml  # 请替换为实际的机场订阅链接
     path: ./proxy_providers/sub.yaml
     health-check:
       enable: true
@@ -590,7 +590,7 @@ tun:
 #==========================================
 # 
 # 📝 基础设置：
-# 1. 替换订阅：将 "https://你的机场订阅链接.yaml" 替换为你的实际订阅链接
+# 1. 替换订阅：将 "https://example.com/subscription.yaml" 替换为你的实际订阅链接
 # 2. 开启TUN：如需TUN模式，将 "enable: false" 改为 "enable: true"
 # 
 # 🌟 特色功能说明：
