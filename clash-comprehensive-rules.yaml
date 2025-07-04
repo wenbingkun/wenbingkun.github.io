@@ -502,6 +502,9 @@ rules:
   - RULE-SET,Gemini,🤖 人工智能
   - RULE-SET,Perplexity,🤖 人工智能
   
+  # YouTube专项规则（必须在GlobalMedia之前，避免被GlobalMedia捕获）
+  - RULE-SET,YouTube,🌌 谷歌服务
+  
   # 流媒体服务优化（组合规则 - 7个平台，YouTube已移至谷歌服务）
   - RULE-SET,Netflix,🎬 流媒体
   - RULE-SET,Disney,🎬 流媒体
@@ -527,7 +530,6 @@ rules:
   # 科技服务
   - RULE-SET,Apple,🍎 苹果服务
   - RULE-SET,Google,🌌 谷歌服务
-  - RULE-SET,YouTube,🌌 谷歌服务
   - DOMAIN-SUFFIX,microsoft.com,Ⓜ️ 微软服务
   - DOMAIN-SUFFIX,windowsupdate.com,Ⓜ️ 微软服务
   - DOMAIN-SUFFIX,update.microsoft.com,Ⓜ️ 微软服务
