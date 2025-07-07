@@ -1042,8 +1042,8 @@
         </div>
         
         <div class="file-upload-group">
-            <label class="upload-label">音频文件 (同步播放)<span class="shortcut-hint">拖拽上传</span></label>
-            <input type="file" id="audioFile" accept="audio/*" class="file-input" />
+            <label class="upload-label">音频文件 (支持多选音频)<span class="shortcut-hint">拖拽上传</span></label>
+            <input type="file" id="audioFile" accept="audio/*,video/mp4,.mp4" class="file-input" multiple />
         </div>
 
         <div class="file-upload-group">
@@ -1270,7 +1270,7 @@
                     const ext = file.name.toLowerCase().split('.').pop();
                     if (ext === 'lrc' || ext === 'txt') {
                         lrcFiles.push(file);
-                    } else if (ext === 'mp3' || ext === 'wav' || ext === 'ogg' || ext === 'm4a') {
+                    } else if (ext === 'mp3' || ext === 'wav' || ext === 'ogg' || ext === 'm4a' || ext === 'mp4') {
                         audioFiles.push(file);
                     } else if (ext === 'jpg' || ext === 'jpeg' || ext === 'png' || ext === 'gif' || ext === 'webp') {
                         imageFiles.push(file);
@@ -1285,8 +1285,8 @@
                 
                 // 处理音频文件
                 if (audioFiles.length > 0) {
-                    console.log('拖拽上传音频文件:', audioFiles[0].name);
-                    this.loadAudioFile(audioFiles[0]);
+                    console.log('拖拽上传音频文件:', audioFiles.length, '个');
+                    this.loadAudioFiles(audioFiles);
                 }
                 
                 // 处理背景图片
@@ -1305,11 +1305,9 @@
                 });
 
                 document.getElementById('audioFile').addEventListener('change', (e) => {
-                    const file = e.target.files[0];
-                    if (file) {
-                        console.log('开始加载音频文件:', file.name);
-                        this.loadAudioFile(file);
-                    }
+                    const files = Array.from(e.target.files);
+                    console.log('选择了', files.length, '个音频文件');
+                    this.loadAudioFiles(files);
                 });
                 
                 document.getElementById('backgroundFile').addEventListener('change', (e) => {
@@ -1524,9 +1522,35 @@
                 });
             }
 
-            loadAudioFile(file) {
-                // 释放之前的音频资源
-                this.cleanupAudio();
+            loadAudioFiles(files) {
+                let loadedCount = 0;
+                const totalFiles = files.length;
+
+                files.forEach((file, index) => {
+                    if (file.name.toLowerCase().match(/\.(mp3|wav|ogg|m4a|aac|flac|mp4)$/)) {
+                        // 错开加载时间，避免同时创建太多音频元素
+                        setTimeout(() => {
+                            this.loadAudioFile(file, true); // skipCleanup = true
+                        }, index * 50); // 50ms间隔
+                        
+                        loadedCount++;
+                    } else {
+                        console.warn('跳过非音频文件:', file.name);
+                    }
+                });
+
+                if (loadedCount > 0) {
+                    this.showNotification(`开始加载 ${loadedCount} 个音频文件`, 'info');
+                } else {
+                    this.showNotification('没有找到有效的音频文件', 'warning');
+                }
+            }
+
+            loadAudioFile(file, skipCleanup = false) {
+                // 如果不是批量模式，则释放之前的音频资源
+                if (!skipCleanup) {
+                    this.cleanupAudio();
+                }
                 
                 // 创建新的音频元素
                 this.audioElement = new Audio();
