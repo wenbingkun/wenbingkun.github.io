@@ -750,24 +750,85 @@
         .drag-handle {
             width: 16px;
             height: 16px;
-            background: rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.2);
             border-radius: 3px;
             cursor: grab;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 8px;
-            color: rgba(255, 255, 255, 0.6);
+            color: rgba(255, 255, 255, 0.5);
             transition: all 0.2s ease;
+            opacity: 0.6;
+            position: relative;
         }
         
         .drag-handle:hover {
-            background: rgba(255, 255, 255, 0.5);
+            background: rgba(255, 255, 255, 0.4);
             color: rgba(255, 255, 255, 0.9);
+            opacity: 1;
+            transform: scale(1.1);
         }
         
         .drag-handle:active {
             cursor: grabbing;
+            transform: scale(0.95);
+        }
+        
+        /* 拖拽时的元素样式 */
+        .song-item.dragging {
+            opacity: 0.7;
+            cursor: grabbing;
+            transform: rotate(2deg) scale(1.02);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            background: rgba(0, 123, 255, 0.2);
+            border-color: rgba(0, 123, 255, 0.6);
+        }
+        
+        /* 拖拽目标样式 */
+        .song-item.drag-over {
+            border-color: rgba(0, 123, 255, 0.8);
+            background: rgba(0, 123, 255, 0.15);
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+        }
+        
+        /* 插入位置指示器 */
+        .drop-indicator {
+            height: 2px;
+            background: #007bff;
+            margin: 2px 0;
+            border-radius: 1px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            position: relative;
+        }
+        
+        .drop-indicator::before {
+            content: '';
+            position: absolute;
+            left: -4px;
+            top: -2px;
+            width: 6px;
+            height: 6px;
+            background: #007bff;
+            border-radius: 50%;
+        }
+        
+        .drop-indicator::after {
+            content: '';
+            position: absolute;
+            right: -4px;
+            top: -2px;
+            width: 6px;
+            height: 6px;
+            background: #007bff;
+            border-radius: 50%;
+        }
+        
+        .drop-indicator.active {
+            opacity: 1;
         }
 
         .song-item:hover {
@@ -1128,6 +1189,7 @@
                 <span class="playlist-count" id="playlistCount">0 首歌曲</span>
             </div>
             <div class="playlist-actions" style="margin-bottom: 10px; display: flex; gap: 5px;">
+                <button class="playlist-action-btn" id="sortPlaylist" title="按名称排序">🔤</button>
                 <button class="playlist-action-btn" id="exportPlaylist" title="导出播放列表">💾</button>
                 <button class="playlist-action-btn" id="importPlaylist" title="导入播放列表">📂</button>
                 <button class="playlist-action-btn" id="clearPlaylist" title="清空播放列表">🗑️</button>
@@ -1187,7 +1249,7 @@
                 this.timers = new Set(); // 跟踪定时器
                 
                 // 播放模式
-                this.playMode = 'list'; // 'list': 列表播放, 'loop': 列表循环, 'single': 单曲循环, 'random': 随机播放
+                this.playMode = 'loop'; // 'list': 列表播放, 'loop': 列表循环, 'single': 单曲循环, 'random': 随机播放
                 this.playHistory = []; // 随机播放历史记录
                 
                 
@@ -1389,6 +1451,10 @@
                 // 播放列表功能
                 document.getElementById('exportPlaylist').addEventListener('click', () => {
                     this.exportPlaylist();
+                });
+                
+                document.getElementById('sortPlaylist').addEventListener('click', () => {
+                    this.sortPlaylist();
                 });
                 
                 document.getElementById('importPlaylist').addEventListener('click', () => {
@@ -1790,7 +1856,7 @@
                         }
                         
                         songItem.innerHTML = `
-                            <div class="drag-handle" title="拖拽排序">⠿</div>
+                            <div class="drag-handle" title="拖拽排序">⋮⋮</div>
                             <div class="song-index-num">${index + 1}</div>
                             <div class="song-mode-icon" title="${modeTitle}" style="font-size: 10px; margin-right: 4px;">${modeIcon}</div>
                             <div class="song-name" title="${song.name}">${song.name}</div>
@@ -1811,7 +1877,9 @@
 
                     // 添加事件监听器
                     this.playlist.querySelectorAll('.song-item').forEach(item => {
-                        // 点击事件
+                        let clickTimeout = null;
+                        
+                        // 点击事件（处理单击和双击）
                         item.addEventListener('click', (e) => {
                             // 如果点击的是删除按钮，不执行切换歌曲
                             if (e.target.dataset.action === 'delete') {
@@ -1828,7 +1896,22 @@
                             }
                             
                             const index = parseInt(item.dataset.index);
-                            this.switchToSong(index);
+                            
+                            // 清除之前的单击延时
+                            if (clickTimeout) {
+                                clearTimeout(clickTimeout);
+                                clickTimeout = null;
+                                // 双击：切换歌曲并播放
+                                this.switchToSong(index);
+                                setTimeout(() => this.play(), 100);
+                                return;
+                            }
+                            
+                            // 单击：延时切换歌曲（如果没有双击）
+                            clickTimeout = setTimeout(() => {
+                                this.switchToSong(index);
+                                clickTimeout = null;
+                            }, 250); // 250ms延时检测双击
                         });
                         
                         // 拖拽事件
@@ -1843,6 +1926,12 @@
                 let draggedElement = null;
                 
                 item.addEventListener('dragstart', (e) => {
+                    // 只允许从拖拽手柄开始拖拽
+                    if (!e.target.classList.contains('drag-handle')) {
+                        e.preventDefault();
+                        return false;
+                    }
+                    
                     draggedElement = item;
                     item.classList.add('dragging');
                     
@@ -1851,57 +1940,95 @@
                     e.dataTransfer.setData('text/plain', dragIndex.toString());
                     e.dataTransfer.effectAllowed = 'move';
                     
-                    // 延迟隐藏原始元素，避免拖拽图像问题
-                    setTimeout(() => {
-                        if (draggedElement) {
-                            draggedElement.style.display = 'none';
-                        }
-                    }, 0);
+                    // 创建自定义拖拽图像
+                    const dragImage = item.cloneNode(true);
+                    dragImage.style.opacity = '0.8';
+                    dragImage.style.transform = 'rotate(2deg)';
+                    dragImage.style.width = item.offsetWidth + 'px';
+                    dragImage.style.position = 'absolute';
+                    dragImage.style.top = '-1000px';
+                    document.body.appendChild(dragImage);
+                    e.dataTransfer.setDragImage(dragImage, item.offsetWidth / 2, 20);
+                    
+                    // 清理临时元素
+                    setTimeout(() => document.body.removeChild(dragImage), 0);
+                    
+                    console.log('开始拖拽歌曲:', this.songs[dragIndex].name);
                 });
                 
                 item.addEventListener('dragend', (e) => {
                     if (draggedElement) {
                         draggedElement.classList.remove('dragging');
-                        draggedElement.style.display = '';
                         draggedElement = null;
                     }
                     
-                    // 清除所有拖拽样式
+                    // 清除所有拖拽相关样式
                     this.playlist.querySelectorAll('.song-item').forEach(songItem => {
                         songItem.classList.remove('drag-over');
                     });
+                    
+                    // 隐藏所有插入指示器
+                    this.playlist.querySelectorAll('.drop-indicator').forEach(indicator => {
+                        indicator.classList.remove('active');
+                    });
+                    
+                    console.log('拖拽结束');
                 });
                 
                 item.addEventListener('dragover', (e) => {
                     e.preventDefault();
                     e.dataTransfer.dropEffect = 'move';
+                    
+                    if (item !== draggedElement) {
+                        // 计算鼠标在元素中的位置，决定插入位置
+                        const rect = item.getBoundingClientRect();
+                        const midpoint = rect.top + rect.height / 2;
+                        const isTop = e.clientY < midpoint;
+                        
+                        // 更新视觉反馈
+                        item.classList.add('drag-over');
+                        if (isTop) {
+                            item.style.borderTop = '2px solid #007bff';
+                            item.style.borderBottom = '';
+                        } else {
+                            item.style.borderTop = '';
+                            item.style.borderBottom = '2px solid #007bff';
+                        }
+                    }
                 });
                 
                 item.addEventListener('dragenter', (e) => {
                     e.preventDefault();
-                    if (item !== draggedElement) {
-                        item.classList.add('drag-over');
-                    }
                 });
                 
                 item.addEventListener('dragleave', (e) => {
-                    // 只有当离开的是整个元素时才移除样式
+                    // 只有当完全离开元素时才清除样式
                     if (!item.contains(e.relatedTarget)) {
                         item.classList.remove('drag-over');
+                        item.style.borderTop = '';
+                        item.style.borderBottom = '';
                     }
                 });
                 
                 item.addEventListener('drop', (e) => {
                     e.preventDefault();
                     item.classList.remove('drag-over');
+                    item.style.borderTop = '';
+                    item.style.borderBottom = '';
                     
                     if (item === draggedElement) return;
                     
                     const dragIndex = parseInt(e.dataTransfer.getData('text/plain'));
                     const dropIndex = parseInt(item.dataset.index);
                     
-                    if (dragIndex !== dropIndex) {
-                        this.reorderSongs(dragIndex, dropIndex);
+                    // 计算实际插入位置
+                    const rect = item.getBoundingClientRect();
+                    const midpoint = rect.top + rect.height / 2;
+                    const isTop = e.clientY < midpoint;
+                    const finalIndex = isTop ? dropIndex : dropIndex + 1;
+                    
+                    if (dragIndex !== finalIndex && finalIndex <= this.songs.length) {
+                        this.reorderSongs(dragIndex, Math.min(finalIndex, this.songs.length - 1));
                     }
                 });
             }
@@ -2727,6 +2854,57 @@
             }
             
             // 播放列表管理
+            sortPlaylist() {
+                if (this.songs.length <= 1) {
+                    this.showNotification('歌曲数量不足，无需排序', 'info');
+                    return;
+                }
+                
+                // 记录当前播放歌曲的名称
+                const currentSongName = this.currentSongIndex >= 0 ? this.songs[this.currentSongIndex].name : null;
+                
+                // 智能排序：数字前缀优先，然后按名称
+                this.songs.sort((a, b) => {
+                    const nameA = a.name;
+                    const nameB = b.name;
+                    
+                    // 提取数字前缀
+                    const extractNumber = (name) => {
+                        const match = name.match(/^(\d+)/);
+                        return match ? parseInt(match[1]) : Infinity;
+                    };
+                    
+                    const numA = extractNumber(nameA);
+                    const numB = extractNumber(nameB);
+                    
+                    // 如果都有数字前缀，按数字排序
+                    if (numA !== Infinity && numB !== Infinity) {
+                        if (numA !== numB) return numA - numB;
+                        // 数字相同时按名称排序
+                        return nameA.localeCompare(nameB, 'zh-CN');
+                    }
+                    
+                    // 如果只有一个有数字前缀，有数字的排在前面
+                    if (numA !== Infinity) return -1;
+                    if (numB !== Infinity) return 1;
+                    
+                    // 都没有数字前缀，按名称排序
+                    return nameA.localeCompare(nameB, 'zh-CN');
+                });
+                
+                // 重新找到当前播放歌曲的索引
+                if (currentSongName) {
+                    this.currentSongIndex = this.songs.findIndex(song => song.name === currentSongName);
+                }
+                
+                // 更新显示
+                this.updatePlaylist();
+                this.updateSongDisplay();
+                
+                this.showNotification(`歌曲列表已按名称排序 (${this.songs.length} 首)`, 'success');
+                console.log('播放列表已排序');
+            }
+            
             exportPlaylist() {
                 if (this.songs.length === 0) {
                     this.showNotification('播放列表为空，无法导出', 'warning');
