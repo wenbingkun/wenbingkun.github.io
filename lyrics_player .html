@@ -729,6 +729,45 @@
             cursor: pointer;
             transition: all 0.2s ease;
             border: 1px solid transparent;
+            position: relative;
+        }
+        
+        .song-item[draggable="true"] {
+            cursor: grab;
+        }
+        
+        .song-item.dragging {
+            opacity: 0.5;
+            cursor: grabbing;
+            transform: rotate(5deg);
+        }
+        
+        .song-item.drag-over {
+            border-color: rgba(0, 123, 255, 0.8);
+            background: rgba(0, 123, 255, 0.1);
+        }
+        
+        .drag-handle {
+            width: 16px;
+            height: 16px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+            cursor: grab;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8px;
+            color: rgba(255, 255, 255, 0.6);
+            transition: all 0.2s ease;
+        }
+        
+        .drag-handle:hover {
+            background: rgba(255, 255, 255, 0.5);
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .drag-handle:active {
+            cursor: grabbing;
         }
 
         .song-item:hover {
@@ -1723,6 +1762,7 @@
                         }
                         
                         songItem.innerHTML = `
+                            <div class="drag-handle" title="拖拽排序">⠿</div>
                             <div class="song-index-num">${index + 1}</div>
                             <div class="song-mode-icon" title="${modeTitle}" style="font-size: 10px; margin-right: 4px;">${modeIcon}</div>
                             <div class="song-name" title="${song.name}">${song.name}</div>
@@ -1732,6 +1772,9 @@
                             </div>
                         `;
                         
+                        // 设置拖拽属性
+                        songItem.draggable = true;
+                        
                         fragment.appendChild(songItem);
                     });
 
@@ -1740,6 +1783,7 @@
 
                     // 添加事件监听器
                     this.playlist.querySelectorAll('.song-item').forEach(item => {
+                        // 点击事件
                         item.addEventListener('click', (e) => {
                             // 如果点击的是删除按钮，不执行切换歌曲
                             if (e.target.dataset.action === 'delete') {
@@ -1749,13 +1793,116 @@
                                 return;
                             }
                             
+                            // 如果点击的是拖拽手柄，不执行切换歌曲
+                            if (e.target.classList.contains('drag-handle')) {
+                                e.stopPropagation();
+                                return;
+                            }
+                            
                             const index = parseInt(item.dataset.index);
                             this.switchToSong(index);
                         });
+                        
+                        // 拖拽事件
+                        this.initSongItemDragEvents(item);
                     });
 
                     console.log('播放列表更新完成，共', this.songs.length, '首歌曲');
                 });
+            }
+
+            initSongItemDragEvents(item) {
+                let draggedElement = null;
+                
+                item.addEventListener('dragstart', (e) => {
+                    draggedElement = item;
+                    item.classList.add('dragging');
+                    
+                    // 设置拖拽数据
+                    const dragIndex = parseInt(item.dataset.index);
+                    e.dataTransfer.setData('text/plain', dragIndex.toString());
+                    e.dataTransfer.effectAllowed = 'move';
+                    
+                    // 延迟隐藏原始元素，避免拖拽图像问题
+                    setTimeout(() => {
+                        if (draggedElement) {
+                            draggedElement.style.display = 'none';
+                        }
+                    }, 0);
+                });
+                
+                item.addEventListener('dragend', (e) => {
+                    if (draggedElement) {
+                        draggedElement.classList.remove('dragging');
+                        draggedElement.style.display = '';
+                        draggedElement = null;
+                    }
+                    
+                    // 清除所有拖拽样式
+                    this.playlist.querySelectorAll('.song-item').forEach(songItem => {
+                        songItem.classList.remove('drag-over');
+                    });
+                });
+                
+                item.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                });
+                
+                item.addEventListener('dragenter', (e) => {
+                    e.preventDefault();
+                    if (item !== draggedElement) {
+                        item.classList.add('drag-over');
+                    }
+                });
+                
+                item.addEventListener('dragleave', (e) => {
+                    // 只有当离开的是整个元素时才移除样式
+                    if (!item.contains(e.relatedTarget)) {
+                        item.classList.remove('drag-over');
+                    }
+                });
+                
+                item.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    item.classList.remove('drag-over');
+                    
+                    if (item === draggedElement) return;
+                    
+                    const dragIndex = parseInt(e.dataTransfer.getData('text/plain'));
+                    const dropIndex = parseInt(item.dataset.index);
+                    
+                    if (dragIndex !== dropIndex) {
+                        this.reorderSongs(dragIndex, dropIndex);
+                    }
+                });
+            }
+
+            reorderSongs(fromIndex, toIndex) {
+                if (fromIndex === toIndex) return;
+                
+                // 移动歌曲
+                const movedSong = this.songs.splice(fromIndex, 1)[0];
+                this.songs.splice(toIndex, 0, movedSong);
+                
+                // 更新当前播放索引
+                if (this.currentSongIndex === fromIndex) {
+                    // 当前播放的歌曲被移动了
+                    this.currentSongIndex = toIndex;
+                } else if (this.currentSongIndex > fromIndex && this.currentSongIndex <= toIndex) {
+                    // 当前播放的歌曲索引需要减1
+                    this.currentSongIndex--;
+                } else if (this.currentSongIndex < fromIndex && this.currentSongIndex >= toIndex) {
+                    // 当前播放的歌曲索引需要加1
+                    this.currentSongIndex++;
+                }
+                
+                // 更新显示
+                this.updatePlaylist();
+                this.updateSongDisplay();
+                
+                console.log(`歌曲从位置 ${fromIndex + 1} 移动到位置 ${toIndex + 1}`);
+                this.showNotification(`歌曲已移动到第 ${toIndex + 1} 位`, 'success');
             }
 
             switchToSong(index) {
