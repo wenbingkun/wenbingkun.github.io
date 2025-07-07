@@ -1558,7 +1558,11 @@
                         this.audioMode = true;
                         this.currentAudioSong = matchedSong;
                         if (this.showNotification) {
-                            this.showNotification(`检测到同名文件，已切换到同步模式: ${audioSong.name}`, 'success');
+                            const isExactMatch = matchedSong.name === audioSong.name;
+                            const message = isExactMatch 
+                                ? `检测到同名文件，已切换到同步模式: ${audioSong.name}`
+                                : `智能匹配到歌词文件 "${matchedSong.name}"，已切换到同步模式`;
+                            this.showNotification(message, 'success');
                         }
                     } else {
                         // 纯音频模式
@@ -2833,7 +2837,76 @@
             
             // 文件匹配和播放模式管理
             findMatchingSong(fileName) {
-                return this.songs.find(song => song.name === fileName);
+                // 首先尝试精确匹配
+                let matchedSong = this.songs.find(song => song.name === fileName);
+                if (matchedSong) return matchedSong;
+                
+                // 如果精确匹配失败，尝试模糊匹配
+                return this.songs.find(song => this.fuzzyMatch(song.name, fileName));
+            }
+            
+            fuzzyMatch(songName, targetName) {
+                // 标准化文件名：去除文件扩展名、数字前缀、特殊字符
+                const normalize = (name) => {
+                    return name
+                        .replace(/\.[^.]*$/, '') // 去除扩展名
+                        .replace(/^\d+[-_\s]*/, '') // 去除数字前缀 (如 "01_", "1-", "001 ")
+                        .replace(/[-_\s]+/g, '') // 去除连字符、下划线、空格
+                        .toLowerCase() // 转小写
+                        .trim();
+                };
+                
+                const normalizedSong = normalize(songName);
+                const normalizedTarget = normalize(targetName);
+                
+                // 完全匹配
+                if (normalizedSong === normalizedTarget) return true;
+                
+                // 包含匹配（支持部分匹配）
+                if (normalizedSong.includes(normalizedTarget) || normalizedTarget.includes(normalizedSong)) {
+                    return true;
+                }
+                
+                // 相似度匹配（使用简单的编辑距离算法）
+                const similarity = this.calculateSimilarity(normalizedSong, normalizedTarget);
+                return similarity > 0.8; // 80%以上相似度认为匹配
+            }
+            
+            calculateSimilarity(str1, str2) {
+                if (str1 === str2) return 1;
+                if (str1.length === 0 || str2.length === 0) return 0;
+                
+                const maxLength = Math.max(str1.length, str2.length);
+                const editDistance = this.levenshteinDistance(str1, str2);
+                return (maxLength - editDistance) / maxLength;
+            }
+            
+            levenshteinDistance(str1, str2) {
+                const matrix = [];
+                
+                for (let i = 0; i <= str2.length; i++) {
+                    matrix[i] = [i];
+                }
+                
+                for (let j = 0; j <= str1.length; j++) {
+                    matrix[0][j] = j;
+                }
+                
+                for (let i = 1; i <= str2.length; i++) {
+                    for (let j = 1; j <= str1.length; j++) {
+                        if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+                            matrix[i][j] = matrix[i - 1][j - 1];
+                        } else {
+                            matrix[i][j] = Math.min(
+                                matrix[i - 1][j - 1] + 1, // substitution
+                                matrix[i][j - 1] + 1,     // insertion
+                                matrix[i - 1][j] + 1      // deletion
+                            );
+                        }
+                    }
+                }
+                
+                return matrix[str2.length][str1.length];
             }
             
             getSongMode(song) {
