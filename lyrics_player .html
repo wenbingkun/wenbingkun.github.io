@@ -318,7 +318,7 @@
         }
 
         .file-input {
-            width: 100%;
+            flex: 1;
             padding: 8px;
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.2);
@@ -335,6 +335,31 @@
             border-radius: 4px;
             margin-right: 8px;
             cursor: pointer;
+        }
+
+        .folder-button {
+            padding: 8px 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .folder-button:hover {
+            border-color: rgba(255, 255, 255, 0.4);
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+
+        .folder-button:active {
+            transform: scale(0.95);
         }
 
         /* 当前播放信息 */
@@ -1129,7 +1154,7 @@
     <div class="drag-overlay" id="dragOverlay">
         <div class="drag-hint">
             🎥 放开文件到这里<br>
-            <small>支持 LRC 歌词文件和 MP3/WAV 音频文件</small>
+            <small>支持 LRC 歌词文件和音频文件<br>可拖拽文件或使用📁按钮选择文件夹</small>
         </div>
     </div>
     
@@ -1144,13 +1169,21 @@
         <div class="panel-title">🎵 演出控制台<span class="shortcut-hint">Esc 全屏</span></div>
         
         <div class="file-upload-group">
-            <label class="upload-label">歌词文件 (支持多选LRC)<span class="shortcut-hint">拖拽上传</span></label>
-            <input type="file" id="lrcFile" accept=".lrc,.txt" class="file-input" multiple />
+            <label class="upload-label">歌词文件 (支持多选LRC)<span class="shortcut-hint">拖拽上传 | 📁文件夹</span></label>
+            <div style="display: flex; gap: 5px;">
+                <input type="file" id="lrcFile" accept=".lrc,.txt" class="file-input" multiple />
+                <button class="folder-button" id="lrcFolderBtn" title="选择文件夹加载">📁</button>
+            </div>
+            <input type="file" id="lrcFolder" webkitdirectory directory style="display: none;" />
         </div>
         
         <div class="file-upload-group">
-            <label class="upload-label">音频文件 (支持多选音频)<span class="shortcut-hint">拖拽上传</span></label>
-            <input type="file" id="audioFile" accept="audio/*,video/mp4,.mp4" class="file-input" multiple />
+            <label class="upload-label">音频文件 (支持多选音频)<span class="shortcut-hint">拖拽上传 | 📁文件夹</span></label>
+            <div style="display: flex; gap: 5px;">
+                <input type="file" id="audioFile" accept="audio/*,video/mp4,.mp4" class="file-input" multiple />
+                <button class="folder-button" id="audioFolderBtn" title="选择文件夹加载">📁</button>
+            </div>
+            <input type="file" id="audioFolder" webkitdirectory directory style="display: none;" />
         </div>
 
         <div class="file-upload-group">
@@ -1387,9 +1420,9 @@
                     const ext = file.name.toLowerCase().split('.').pop();
                     if (ext === 'lrc' || ext === 'txt') {
                         lrcFiles.push(file);
-                    } else if (ext === 'mp3' || ext === 'wav' || ext === 'ogg' || ext === 'm4a' || ext === 'mp4') {
+                    } else if (['mp3', 'wav', 'flac', 'ogg', 'aac', 'm4a', 'mp4'].includes(ext)) {
                         audioFiles.push(file);
-                    } else if (ext === 'jpg' || ext === 'jpeg' || ext === 'png' || ext === 'gif' || ext === 'webp') {
+                    } else if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].includes(ext)) {
                         imageFiles.push(file);
                     }
                 });
@@ -1433,6 +1466,25 @@
                         console.log('开始加载背景图片:', file.name);
                         this.loadBackgroundImage(file);
                     }
+                });
+
+                // 文件夹选择
+                document.getElementById('lrcFolderBtn').addEventListener('click', () => {
+                    document.getElementById('lrcFolder').click();
+                });
+
+                document.getElementById('lrcFolder').addEventListener('change', (e) => {
+                    const files = Array.from(e.target.files);
+                    this.processFolderFiles(files, 'lyrics');
+                });
+
+                document.getElementById('audioFolderBtn').addEventListener('click', () => {
+                    document.getElementById('audioFolder').click();
+                });
+
+                document.getElementById('audioFolder').addEventListener('change', (e) => {
+                    const files = Array.from(e.target.files);
+                    this.processFolderFiles(files, 'audio');
                 });
 
                 // 播放控制
@@ -3567,6 +3619,73 @@
                         this.requestWakeLock();
                     }
                 }
+            }
+            
+            // 处理文件夹中的文件
+            processFolderFiles(files, type) {
+                if (files.length === 0) {
+                    this.showNotification('文件夹为空', 'warning');
+                    return;
+                }
+                
+                let validFiles = [];
+                let totalFiles = files.length;
+                let processedFiles = 0;
+                
+                // 根据类型过滤文件
+                if (type === 'lyrics') {
+                    validFiles = files.filter(file => 
+                        file.name.toLowerCase().endsWith('.lrc') || 
+                        file.name.toLowerCase().endsWith('.txt')
+                    );
+                } else if (type === 'audio') {
+                    validFiles = files.filter(file => {
+                        const ext = file.name.toLowerCase().split('.').pop();
+                        return ['mp3', 'wav', 'flac', 'ogg', 'aac', 'm4a', 'mp4'].includes(ext);
+                    });
+                }
+                
+                console.log(`文件夹扫描完成: 总文件 ${totalFiles} 个, 有效${type === 'lyrics' ? '歌词' : '音频'}文件 ${validFiles.length} 个`);
+                
+                if (validFiles.length === 0) {
+                    const fileTypeName = type === 'lyrics' ? '歌词文件 (.lrc/.txt)' : '音频文件';
+                    this.showNotification(`文件夹中没有找到${fileTypeName}`, 'warning');
+                    return;
+                }
+                
+                // 显示加载进度
+                this.showNotification(`正在加载 ${validFiles.length} 个${type === 'lyrics' ? '歌词' : '音频'}文件...`, 'info');
+                
+                // 按文件夹路径分组显示
+                const folderGroups = {};
+                validFiles.forEach(file => {
+                    const folderPath = file.webkitRelativePath ? file.webkitRelativePath.split('/').slice(0, -1).join('/') : '根目录';
+                    if (!folderGroups[folderPath]) {
+                        folderGroups[folderPath] = [];
+                    }
+                    folderGroups[folderPath].push(file);
+                });
+                
+                // 显示文件夹结构信息
+                console.log('文件夹结构:');
+                Object.keys(folderGroups).forEach(folder => {
+                    console.log(`  📁 ${folder}: ${folderGroups[folder].length} 个文件`);
+                });
+                
+                // 加载文件
+                if (type === 'lyrics') {
+                    this.loadLrcFiles(validFiles);
+                } else if (type === 'audio') {
+                    this.loadAudioFiles(validFiles);
+                }
+                
+                // 成功提示
+                const folderCount = Object.keys(folderGroups).length;
+                const folderText = folderCount > 1 ? ` (来自 ${folderCount} 个文件夹)` : '';
+                this.showNotification(
+                    `成功加载 ${validFiles.length} 个${type === 'lyrics' ? '歌词' : '音频'}文件${folderText}`, 
+                    'success'
+                );
             }
         }
 
