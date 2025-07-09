@@ -1335,6 +1335,9 @@
                 this.wakeLock = null; // Screen Wake Lock API
                 this.wakeLockSupported = 'wakeLock' in navigator; // 检查浏览器支持
                 
+                // 拖拽状态
+                this.draggedElement = null; // 当前拖拽的元素
+                
                 
                 // 页面卸载时清理资源
                 window.addEventListener('beforeunload', () => {
@@ -2071,8 +2074,6 @@
             }
 
             initSongItemDragEvents(item) {
-                let draggedElement = null;
-                
                 item.addEventListener('dragstart', (e) => {
                     // 只允许从拖拽手柄开始拖拽
                     if (!e.target.classList.contains('drag-handle')) {
@@ -2080,7 +2081,7 @@
                         return false;
                     }
                     
-                    draggedElement = item;
+                    this.draggedElement = item;
                     item.classList.add('dragging');
                     
                     // 设置拖拽数据
@@ -2105,14 +2106,16 @@
                 });
                 
                 item.addEventListener('dragend', (e) => {
-                    if (draggedElement) {
-                        draggedElement.classList.remove('dragging');
-                        draggedElement = null;
+                    if (this.draggedElement) {
+                        this.draggedElement.classList.remove('dragging');
+                        this.draggedElement = null;
                     }
                     
                     // 清除所有拖拽相关样式
                     this.playlist.querySelectorAll('.song-item').forEach(songItem => {
                         songItem.classList.remove('drag-over');
+                        songItem.style.borderTop = '';
+                        songItem.style.borderBottom = '';
                     });
                     
                     // 隐藏所有插入指示器
@@ -2127,7 +2130,7 @@
                     e.preventDefault();
                     e.dataTransfer.dropEffect = 'move';
                     
-                    if (item !== draggedElement) {
+                    if (item !== this.draggedElement) {
                         // 计算鼠标在元素中的位置，决定插入位置
                         const rect = item.getBoundingClientRect();
                         const midpoint = rect.top + rect.height / 2;
@@ -2164,7 +2167,7 @@
                     item.style.borderTop = '';
                     item.style.borderBottom = '';
                     
-                    if (item === draggedElement) return;
+                    if (item === this.draggedElement) return;
                     
                     const dragIndex = parseInt(e.dataTransfer.getData('text/plain'));
                     const dropIndex = parseInt(item.dataset.index);
