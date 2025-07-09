@@ -2467,11 +2467,11 @@
                 this.isPlaying = true;
                 this.playButton.textContent = '⏸';
                 
-                if (songMode === 'sync' && this.audioElement) {
+                if (songMode === 'sync' && currentSong.audioElement) {
                     // 同步模式：音频+歌词同步播放
                     this.audioMode = true;
-                    this.audioElement.currentTime = Math.max(0, this.currentTime - this.audioOffset);
-                    this.audioElement.play().catch(e => {
+                    currentSong.audioElement.currentTime = Math.max(0, this.currentTime - this.audioOffset);
+                    currentSong.audioElement.play().catch(e => {
                         console.error('音频播放失败:', e);
                         this.showNotification('音频播放失败，切换到纯歌词模式', 'error');
                         this.audioMode = false;
@@ -2482,11 +2482,11 @@
                             this.animate();
                         }
                     });
-                } else if (songMode === 'audio' && this.audioElement) {
+                } else if (songMode === 'audio' && currentSong.audioElement) {
                     // 纯音频模式：只播放音频，不显示歌词
                     this.audioMode = true;
-                    this.audioElement.currentTime = Math.max(0, this.currentTime);
-                    this.audioElement.play().catch(e => {
+                    currentSong.audioElement.currentTime = Math.max(0, this.currentTime);
+                    currentSong.audioElement.play().catch(e => {
                         console.error('音频播放失败:', e);
                         this.showNotification('音频播放失败', 'error');
                         this.audioMode = false;
@@ -2525,8 +2525,9 @@
                 this.playButton.textContent = '▶';
                 this.pausedTime = this.currentTime;
                 
-                if (this.audioMode && this.audioElement) {
-                    this.audioElement.pause();
+                const currentSong = this.songs[this.currentSongIndex];
+                if (this.audioMode && currentSong && currentSong.audioElement) {
+                    currentSong.audioElement.pause();
                 }
                 
                 if (this.animationId) {
@@ -2582,12 +2583,12 @@
                 if (this.currentSongIndex < 0) return;
                 
                 const currentSong = this.songs[this.currentSongIndex];
-                const maxDuration = this.audioMode && this.audioElement ? this.audioElement.duration : currentSong.duration;
+                const maxDuration = this.audioMode && currentSong.audioElement ? currentSong.audioElement.duration : currentSong.duration;
                 this.currentTime = Math.max(0, Math.min(time, maxDuration));
                 this.pausedTime = this.currentTime; // pausedTime以秒为单位，保持一致
                 
-                if (this.audioMode && this.audioElement) {
-                    this.audioElement.currentTime = Math.max(0, this.currentTime - this.audioOffset);
+                if (this.audioMode && currentSong.audioElement) {
+                    currentSong.audioElement.currentTime = Math.max(0, this.currentTime - this.audioOffset);
                 } else {
                     // 无论是否播放，都需要更新startTime以保证跳转正确
                     if (this.isPlaying) {
