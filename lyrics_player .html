@@ -361,6 +361,17 @@
         .folder-button:active {
             transform: scale(0.95);
         }
+        
+        .compatibility-hint {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 3px;
+            font-style: italic;
+        }
+        
+        .compatibility-hint.warning {
+            color: #ffa500;
+        }
 
         /* 当前播放信息 */
         .current-song-info {
@@ -1175,6 +1186,7 @@
                 <button class="folder-button" id="lrcFolderBtn" title="选择文件夹加载">📁</button>
             </div>
             <input type="file" id="lrcFolder" webkitdirectory directory style="display: none;" />
+            <div class="compatibility-hint" id="lrcFolderHint" style="display: none;"></div>
         </div>
         
         <div class="file-upload-group">
@@ -1184,6 +1196,7 @@
                 <button class="folder-button" id="audioFolderBtn" title="选择文件夹加载">📁</button>
             </div>
             <input type="file" id="audioFolder" webkitdirectory directory style="display: none;" />
+            <div class="compatibility-hint" id="audioFolderHint" style="display: none;"></div>
         </div>
 
         <div class="file-upload-group">
@@ -1363,6 +1376,8 @@
                 // 拖拽状态
                 this.draggedElement = null; // 当前拖拽的元素
                 
+                // 浏览器兼容性检查
+                this.checkBrowserCompatibility();
                 
                 // 页面卸载时清理资源
                 window.addEventListener('beforeunload', () => {
@@ -1377,6 +1392,61 @@
                 this.initEventListeners();
                 this.initCursorHiding();
                 this.initDragAndDrop();
+            }
+
+            // 浏览器兼容性检查
+            checkBrowserCompatibility() {
+                // 检查文件夹选择API支持
+                const folderSupported = 'webkitdirectory' in document.createElement('input');
+                
+                const lrcHint = document.getElementById('lrcFolderHint');
+                const audioHint = document.getElementById('audioFolderHint');
+                
+                if (!folderSupported) {
+                    // 不支持文件夹选择
+                    const warningText = '注意：当前浏览器不支持文件夹选择功能，请使用基于Chromium的浏览器（如Chrome、Edge）';
+                    
+                    if (lrcHint) {
+                        lrcHint.textContent = warningText;
+                        lrcHint.className = 'compatibility-hint warning';
+                        lrcHint.style.display = 'block';
+                    }
+                    
+                    if (audioHint) {
+                        audioHint.textContent = warningText;
+                        audioHint.className = 'compatibility-hint warning';
+                        audioHint.style.display = 'block';
+                    }
+                    
+                    // 禁用文件夹按钮
+                    const lrcFolderBtn = document.getElementById('lrcFolderBtn');
+                    const audioFolderBtn = document.getElementById('audioFolderBtn');
+                    
+                    if (lrcFolderBtn) {
+                        lrcFolderBtn.disabled = true;
+                        lrcFolderBtn.title = '当前浏览器不支持文件夹选择功能';
+                    }
+                    
+                    if (audioFolderBtn) {
+                        audioFolderBtn.disabled = true;
+                        audioFolderBtn.title = '当前浏览器不支持文件夹选择功能';
+                    }
+                } else {
+                    // 支持文件夹选择，显示兼容性提示
+                    const infoText = '支持文件夹选择 (Chrome/Edge/Opera等浏览器)';
+                    
+                    if (lrcHint) {
+                        lrcHint.textContent = infoText;
+                        lrcHint.className = 'compatibility-hint';
+                        lrcHint.style.display = 'block';
+                    }
+                    
+                    if (audioHint) {
+                        audioHint.textContent = infoText;
+                        audioHint.className = 'compatibility-hint';
+                        audioHint.style.display = 'block';
+                    }
+                }
             }
 
             // 增强的事件监听器管理方法
@@ -1509,19 +1579,19 @@
                 
                 // 处理歌词文件
                 if (lrcFiles.length > 0) {
-                    console.log('拖拽上传歌词文件:', lrcFiles.length, '个');
+                    log('拖拽上传歌词文件:', lrcFiles.length, '个');
                     this.loadLrcFiles(lrcFiles);
                 }
                 
                 // 处理音频文件
                 if (audioFiles.length > 0) {
-                    console.log('拖拽上传音频文件:', audioFiles.length, '个');
+                    log('拖拽上传音频文件:', audioFiles.length, '个');
                     this.loadAudioFiles(audioFiles);
                 }
                 
                 // 处理背景图片
                 if (imageFiles.length > 0) {
-                    console.log('拖拽上传背景图片:', imageFiles[0].name);
+                    log('拖拽上传背景图片:', imageFiles[0].name);
                     this.loadBackgroundImage(imageFiles[0]);
                 }
             }
@@ -1530,20 +1600,20 @@
                 // 文件上传
                 document.getElementById('lrcFile').addEventListener('change', (e) => {
                     const files = Array.from(e.target.files);
-                    console.log('选择了', files.length, '个文件');
+                    log('选择了', files.length, '个文件');
                     this.loadLrcFiles(files);
                 });
 
                 document.getElementById('audioFile').addEventListener('change', (e) => {
                     const files = Array.from(e.target.files);
-                    console.log('选择了', files.length, '个音频文件');
+                    log('选择了', files.length, '个音频文件');
                     this.loadAudioFiles(files);
                 });
                 
                 document.getElementById('backgroundFile').addEventListener('change', (e) => {
                     const file = e.target.files[0];
                     if (file) {
-                        console.log('开始加载背景图片:', file.name);
+                        log('开始加载背景图片:', file.name);
                         this.loadBackgroundImage(file);
                     }
                 });
@@ -1773,7 +1843,7 @@
                                 this.addSong(song);
                                 
                                 loadedCount++;
-                                console.log(`歌曲 ${loadedCount}/${totalFiles} 加载完成:`, song.name);
+                                log(`歌曲 ${loadedCount}/${totalFiles} 加载完成:`, song.name);
                                 if (this.showNotification) {
                                     this.showNotification(`加载歌曲: ${song.name}`, 'success');
                                 }
@@ -1794,7 +1864,7 @@
                         };
                         reader.readAsText(file, 'UTF-8');
                     } else {
-                        console.warn('跳过非LRC文件:', file.name);
+                        warn('跳过非LRC文件:', file.name);
                         loadedCount++;
                     }
                 });
@@ -1814,7 +1884,7 @@
                         
                         loadedCount++;
                     } else {
-                        console.warn('跳过非音频文件:', file.name);
+                        warn('跳过非音频文件:', file.name);
                     }
                 });
 
@@ -1839,7 +1909,7 @@
                 
                 // 音频事件监听
                 this.audioElement.addEventListener('loadedmetadata', () => {
-                    console.log('音频文件加载成功, 时长:', this.formatTime(this.audioElement.duration));
+                    log('音频文件加载成功, 时长:', this.formatTime(this.audioElement.duration));
                     
                     // 创建音频歌曲对象
                     const audioSong = {
@@ -1961,7 +2031,7 @@
                         }
                         
                         this.backgroundContainer.style.backgroundImage = `url(${e.target.result})`;
-                        console.log('背景图片加载成功');
+                        log('背景图片加载成功');
                         if (this.showNotification) {
                             this.showNotification(`背景图片加载成功: ${file.name}`, 'success');
                         }
@@ -2006,7 +2076,7 @@
                             lyrics.push({ time, text: text || '♪' });
                         }
                     } catch (error) {
-                        console.warn(`解析歌词第${index + 1}行失败:`, line, error.message);
+                        warn(`解析歌词第${index + 1}行失败:`, line, error.message);
                     }
                 });
 
@@ -2020,7 +2090,7 @@
                 }
                 
                 this.songs.push(song);
-                console.log('歌曲添加到列表:', song.name, '总时长:', this.formatTime(song.duration));
+                log('歌曲添加到列表:', song.name, '总时长:', this.formatTime(song.duration));
                 this.updatePlaylist();
                 this.updateStatusIndicator();
                 
@@ -2150,7 +2220,7 @@
                         }
                     });
 
-                    console.log('播放列表更新完成，共', this.songs.length, '首歌曲');
+                    log('播放列表更新完成，共', this.songs.length, '首歌曲');
                 });
             }
 
@@ -2186,7 +2256,7 @@
                     }, 0);
                     this.addTimer(timerId);
                     
-                    console.log('开始拖拽歌曲:', this.songs[dragIndex].name);
+                    log('开始拖拽歌曲:', this.songs[dragIndex].name);
                 });
                 
                 // 拖拽结束事件 - 绑定到拖拽手柄
@@ -2203,7 +2273,7 @@
                         songItem.style.borderBottom = '';
                     });
                     
-                    console.log('拖拽结束');
+                    log('拖拽结束');
                 });
                 
                 // 拖拽覆盖事件 - 绑定到歌曲项
@@ -2271,7 +2341,7 @@
                     const isTop = e.clientY < midpoint;
                     const finalIndex = isTop ? dropIndex : dropIndex + 1;
                     
-                    console.log(`拖拽: 从位置 ${dragIndex} 移动到位置 ${finalIndex}`);
+                    log(`拖拽: 从位置 ${dragIndex} 移动到位置 ${finalIndex}`);
                     
                     if (dragIndex !== finalIndex && finalIndex <= this.songs.length) {
                         this.reorderSongs(dragIndex, Math.min(finalIndex, this.songs.length - 1));
@@ -2302,7 +2372,7 @@
                 this.updatePlaylist();
                 this.updateSongDisplay();
                 
-                console.log(`歌曲从位置 ${fromIndex + 1} 移动到位置 ${toIndex + 1}`);
+                log(`歌曲从位置 ${fromIndex + 1} 移动到位置 ${toIndex + 1}`);
                 this.showNotification(`歌曲已移动到第 ${toIndex + 1} 位`, 'success');
             }
 
@@ -2361,7 +2431,7 @@
                 this.playButton.disabled = false;
                 this.totalTimeSpan.textContent = this.formatTime(currentSong.duration);
                 
-                console.log('切换到歌曲:', currentSong.name, `(${songMode}模式)`);
+                log('切换到歌曲:', currentSong.name, `(${songMode}模式)`);
             }
 
             switchToNextSong() {
@@ -2377,13 +2447,13 @@
 
             onSongEnded() {
                 this.pause();
-                console.log('歌曲播放完成:', this.songs[this.currentSongIndex].name);
+                log('歌曲播放完成:', this.songs[this.currentSongIndex].name);
                 
                 // 根据播放模式决定下一步动作
                 const nextIndex = this.getNextSongIndex();
                 
                 if (nextIndex >= 0) {
-                    console.log(`播放模式: ${this.playMode}, 准备播放下一首`);
+                    log(`播放模式: ${this.playMode}, 准备播放下一首`);
                     const timerId = setTimeout(() => {
                         if (nextIndex === this.currentSongIndex && this.playMode === 'single') {
                             // 单曲循环：重置到开头继续播放
@@ -2400,7 +2470,7 @@
                     }, 500); // 延迟500ms，让用户看到当前歌曲已完成
                     this.addTimer(timerId);
                 } else {
-                    console.log('播放列表已结束');
+                    log('播放列表已结束');
                     this.showNotification('播放列表已结束', 'info');
                 }
             }
@@ -2419,7 +2489,7 @@
             removeSong(index) {
                 if (index < 0 || index >= this.songs.length) return;
                 
-                console.log('删除歌曲:', this.songs[index].name);
+                log('删除歌曲:', this.songs[index].name);
                 
                 // 清理歌词缓存
                 this.lyricsCache.clear();
@@ -2508,7 +2578,7 @@
 
             togglePlay() {
                 if (this.currentSongIndex < 0 || this.currentSongIndex >= this.songs.length) {
-                    console.log('没有选择有效歌曲');
+                    log('没有选择有效歌曲');
                     return;
                 }
                 
@@ -2588,7 +2658,7 @@
                 // 请求屏幕保持唤醒
                 this.requestWakeLock();
                 
-                console.log('开始播放:', currentSong.name, `(${songMode}模式)`);
+                log('开始播放:', currentSong.name, `(${songMode}模式)`);
             }
 
             pause() {
@@ -2611,7 +2681,7 @@
                 // 释放屏幕唤醒锁
                 this.releaseWakeLock();
                 
-                console.log('暂停播放');
+                log('暂停播放');
             }
 
             animate() {
@@ -2708,7 +2778,7 @@
                     this.playbackSpeed = speed;
                 }
                 
-                console.log('播放速度设置为:', speed + 'x');
+                log('播放速度设置为:', speed + 'x');
             }
             
             setFontScale(scale) {
@@ -2720,7 +2790,7 @@
                 });
                 
                 this.updateLyricsFontSize();
-                console.log('字体大小设置为:', this.fontScale + 'x');
+                log('字体大小设置为:', this.fontScale + 'x');
             }
             
             adjustFontSize(delta) {
@@ -2745,7 +2815,7 @@
                 // 添加新主题类
                 document.body.classList.add(`theme-${theme}`);
                 
-                console.log('主题设置为:', theme);
+                log('主题设置为:', theme);
             }
             
             switchTheme() {
@@ -2775,7 +2845,7 @@
                     'random': '随机播放'
                 };
                 
-                console.log('播放模式设置为:', modeNames[mode]);
+                log('播放模式设置为:', modeNames[mode]);
                 this.showNotification(`播放模式: ${modeNames[mode]}`, 'info');
             }
             
@@ -2930,7 +3000,7 @@
                     });
                 });
                 
-                console.log(`在当前歌曲中搜索到 ${this.searchResults.length} 条结果`);
+                log(`在当前歌曲中搜索到 ${this.searchResults.length} 条结果`);
             }
             
             clearSearch() {
@@ -3075,7 +3145,7 @@
                 } catch (error) {
                     console.error('显示通知时出错:', error);
                     // 降级处理：直接在控制台输出
-                    console.log(`[${type.toUpperCase()}] ${message}`);
+                    log(`[${type.toUpperCase()}] ${message}`);
                 }
             }
 
@@ -3154,11 +3224,11 @@
             toggleFullscreen() {
                 if (!document.fullscreenElement) {
                     document.documentElement.requestFullscreen().catch(err => {
-                        console.log('无法进入全屏模式:', err);
+                        log('无法进入全屏模式:', err);
                     });
                 } else {
                     document.exitFullscreen().catch(err => {
-                        console.log('无法退出全屏模式:', err);
+                        log('无法退出全屏模式:', err);
                     });
                 }
             }
@@ -3219,7 +3289,7 @@
                 this.updateSongDisplay();
                 
                 this.showNotification(`歌曲列表已按名称排序 (${this.songs.length} 首)`, 'success');
-                console.log('播放列表已排序');
+                log('播放列表已排序');
             }
             
             exportPlaylist() {
@@ -3332,7 +3402,7 @@
                 this.audioOffset = Math.round(this.audioOffset * 10) / 10; // 保留一位小数
                 this.updateOffsetDisplay();
                 
-                console.log('音频偏移调整为:', this.audioOffset, '秒');
+                log('音频偏移调整为:', this.audioOffset, '秒');
             }
             
             resetOffset() {
@@ -3359,7 +3429,7 @@
                 // 首先尝试精确匹配
                 let matchedSong = this.songs.find(song => song.name === fileName);
                 if (matchedSong) {
-                    console.log(`精确匹配成功: "${fileName}" ← "${matchedSong.name}"`);
+                    log(`精确匹配成功: "${fileName}" ← "${matchedSong.name}"`);
                     return matchedSong;
                 }
                 
@@ -3391,22 +3461,22 @@
                     
                     // 只有分数足够高才认为是有效匹配
                     if (bestMatch.score >= 0.85) { // 提高匹配阈值到85%
-                        console.log(`智能匹配成功: "${fileName}" ← "${bestMatch.song.name}" (分数: ${bestMatch.score.toFixed(3)}, ${bestMatch.details})`);
+                        log(`智能匹配成功: "${fileName}" ← "${bestMatch.song.name}" (分数: ${bestMatch.score.toFixed(3)}, ${bestMatch.details})`);
                         
                         // 显示其他候选项（用于调试）
                         if (candidates.length > 1) {
-                            console.log('其他候选匹配:', candidates.slice(1, 3).map(c => 
+                            log('其他候选匹配:', candidates.slice(1, 3).map(c => 
                                 `"${c.song.name}" (${c.score.toFixed(3)})`
                             ).join(', '));
                         }
                         
                         return bestMatch.song;
                     } else {
-                        console.log(`匹配分数过低: "${fileName}", 最佳候选 "${bestMatch.song.name}" (分数: ${bestMatch.score.toFixed(3)})`);
+                        log(`匹配分数过低: "${fileName}", 最佳候选 "${bestMatch.song.name}" (分数: ${bestMatch.score.toFixed(3)})`);
                     }
                 }
                 
-                console.log(`未找到匹配: "${fileName}"`);
+                log(`未找到匹配: "${fileName}"`);
                 return null;
             }
             
@@ -3652,7 +3722,7 @@
                     'success'
                 );
                 
-                console.log(`歌曲 "${song.name}" 模式从 ${oldMode} 切换到 ${newMode}`);
+                log(`歌曲 "${song.name}" 模式从 ${oldMode} 切换到 ${newMode}`);
             }
             
             // 应用模式切换到当前播放的歌曲
@@ -3661,7 +3731,7 @@
                 const wasPlaying = this.isPlaying;
                 const currentTime = this.currentTime;
                 
-                console.log('应用模式切换:', effectiveMode);
+                log('应用模式切换:', effectiveMode);
                 
                 // 暂停当前播放
                 this.pause();
@@ -3742,7 +3812,7 @@
                 // 更新歌词进度指示器
                 this.updateLyricProgress();
                 
-                console.log(`跳转到第 ${lyricIndex + 1} 句: "${currentLyric}"`);
+                log(`跳转到第 ${lyricIndex + 1} 句: "${currentLyric}"`);
                 return true;
             }
             
@@ -3828,7 +3898,7 @@
             // 防止屏幕熄屏功能
             async requestWakeLock() {
                 if (!this.wakeLockSupported) {
-                    console.log('浏览器不支持Screen Wake Lock API');
+                    log('浏览器不支持Screen Wake Lock API');
                     return;
                 }
                 
@@ -3838,11 +3908,11 @@
                     }
                     
                     this.wakeLock = await navigator.wakeLock.request('screen');
-                    console.log('已启用屏幕保持唤醒');
+                    log('已启用屏幕保持唤醒');
                     
                     // 监听唤醒锁释放事件
                     this.wakeLock.addEventListener('release', () => {
-                        console.log('屏幕唤醒锁已释放');
+                        log('屏幕唤醒锁已释放');
                         this.wakeLock = null;
                     });
                     
@@ -3858,7 +3928,7 @@
                     try {
                         await this.wakeLock.release();
                         this.wakeLock = null;
-                        console.log('已释放屏幕唤醒锁');
+                        log('已释放屏幕唤醒锁');
                         this.showNotification('已允许屏幕熄屏', 'info');
                     } catch (err) {
                         console.error('释放屏幕唤醒锁失败:', err);
@@ -3902,7 +3972,7 @@
                     });
                 }
                 
-                console.log(`文件夹扫描完成: 总文件 ${totalFiles} 个, 有效${type === 'lyrics' ? '歌词' : '音频'}文件 ${validFiles.length} 个`);
+                log(`文件夹扫描完成: 总文件 ${totalFiles} 个, 有效${type === 'lyrics' ? '歌词' : '音频'}文件 ${validFiles.length} 个`);
                 
                 if (validFiles.length === 0) {
                     const fileTypeName = type === 'lyrics' ? '歌词文件 (.lrc/.txt)' : '音频文件';
@@ -3924,9 +3994,9 @@
                 });
                 
                 // 显示文件夹结构信息
-                console.log('文件夹结构:');
+                log('文件夹结构:');
                 Object.keys(folderGroups).forEach(folder => {
-                    console.log(`  📁 ${folder}: ${folderGroups[folder].length} 个文件`);
+                    log(`  📁 ${folder}: ${folderGroups[folder].length} 个文件`);
                 });
                 
                 // 加载文件
@@ -3959,30 +4029,30 @@
                 const audioOnlySongs = this.songs.filter(song => song.mode === 'audio');
                 const lyricsOnlySongs = this.songs.filter(song => song.mode === 'lyrics');
                 
-                console.log('🎵 文件匹配报告:');
-                console.log(`- 同步模式 (有歌词+音频): ${syncSongs.length} 首`);
-                console.log(`- 纯音频模式: ${audioOnlySongs.length} 首`);
-                console.log(`- 纯歌词模式: ${lyricsOnlySongs.length} 首`);
-                console.log(`- 总计: ${this.songs.length} 首歌曲`);
+                log('🎵 文件匹配报告:');
+                log(`- 同步模式 (有歌词+音频): ${syncSongs.length} 首`);
+                log(`- 纯音频模式: ${audioOnlySongs.length} 首`);
+                log(`- 纯歌词模式: ${lyricsOnlySongs.length} 首`);
+                log(`- 总计: ${this.songs.length} 首歌曲`);
                 
                 if (syncSongs.length > 0) {
-                    console.log('\n✅ 成功匹配的歌曲:');
+                    log('\n✅ 成功匹配的歌曲:');
                     syncSongs.forEach((song, index) => {
-                        console.log(`  ${index + 1}. "${song.name}" (同步模式)`);
+                        log(`  ${index + 1}. "${song.name}" (同步模式)`);
                     });
                 }
                 
                 if (audioOnlySongs.length > 0) {
-                    console.log('\n🎶 未匹配的音频文件:');
+                    log('\n🎶 未匹配的音频文件:');
                     audioOnlySongs.forEach((song, index) => {
-                        console.log(`  ${index + 1}. "${song.name}" (纯音频)`);
+                        log(`  ${index + 1}. "${song.name}" (纯音频)`);
                     });
                 }
                 
                 if (lyricsOnlySongs.length > 0) {
-                    console.log('\n📝 未匹配的歌词文件:');
+                    log('\n📝 未匹配的歌词文件:');
                     lyricsOnlySongs.forEach((song, index) => {
-                        console.log(`  ${index + 1}. "${song.name}" (纯歌词)`);
+                        log(`  ${index + 1}. "${song.name}" (纯歌词)`);
                     });
                 }
                 
@@ -4003,7 +4073,7 @@
         // 初始化播放器
         document.addEventListener('DOMContentLoaded', () => {
             LyricsPlayerApp.player = new LEDLyricsPlayer();
-            console.log('LED歌词播放器初始化完成');
+            log('LED歌词播放器初始化完成');
         });
     </script>
 </body>
