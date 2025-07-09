@@ -1868,6 +1868,14 @@
                         loadedCount++;
                     }
                 });
+                
+                // 加载完成后自动排序
+                const timerId = setTimeout(() => {
+                    this.sortPlaylist();
+                    this.updatePlaylist();
+                    this.showNotification('歌曲列表已自动排序', 'success');
+                }, files.length * 20); // 根据文件数量调整延迟
+                this.addTimer(timerId);
             }
 
             loadAudioFiles(files) {
@@ -1890,6 +1898,13 @@
 
                 if (loadedCount > 0) {
                     this.showNotification(`开始加载 ${loadedCount} 个音频文件`, 'info');
+                    // 加载完成后自动排序
+                    const timerId = setTimeout(() => {
+                        this.sortPlaylist();
+                        this.updatePlaylist();
+                        this.showNotification('歌曲列表已自动排序', 'success');
+                    }, loadedCount * 60); // 根据文件数量调整延迟
+                    this.addTimer(timerId);
                 } else {
                     this.showNotification('没有找到有效的音频文件', 'warning');
                 }
@@ -1938,12 +1953,10 @@
                             this.showNotification(message, 'success');
                         }
                     } else {
-                        // 纯音频模式
-                        this.addSong(audioSong);
-                        this.audioMode = false;
-                        this.currentAudioSong = audioSong;
+                        // 未找到匹配的歌词文件，记录但不创建新歌曲
+                        warn(`音频文件 "${file.name}" 无法匹配到歌词文件，已跳过`);
                         if (this.showNotification) {
-                            this.showNotification(`音频加载成功: ${file.name}`, 'success');
+                            this.showNotification(`音频文件 "${file.name}" 无法匹配到歌词文件，已跳过`, 'warning');
                         }
                     }
                     
@@ -2087,6 +2100,13 @@
                 // 确保新歌曲有默认的userMode
                 if (!song.userMode) {
                     song.userMode = 'auto';
+                }
+                
+                // 检查是否已存在同名歌曲，避免重复添加
+                const existingSong = this.songs.find(s => s.name === song.name);
+                if (existingSong) {
+                    warn(`歌曲 "${song.name}" 已存在，跳过重复添加`);
+                    return;
                 }
                 
                 this.songs.push(song);
@@ -3460,7 +3480,7 @@
                     const bestMatch = candidates[0];
                     
                     // 只有分数足够高才认为是有效匹配
-                    if (bestMatch.score >= 0.85) { // 提高匹配阈值到85%
+                    if (bestMatch.score >= 0.7) { // 降低匹配阈值到70%以提高匹配成功率
                         log(`智能匹配成功: "${fileName}" ← "${bestMatch.song.name}" (分数: ${bestMatch.score.toFixed(3)}, ${bestMatch.details})`);
                         
                         // 显示其他候选项（用于调试）
@@ -4014,11 +4034,23 @@
                     'success'
                 );
                 
-                // 如果是音频文件，显示匹配报告
+                // 如果是音频文件，显示匹配报告并自动排序
                 if (type === 'audio') {
                     const timerId = setTimeout(() => {
                         this.showMatchingReport();
+                        // 自动排序歌曲列表
+                        this.sortPlaylist();
+                        this.updatePlaylist();
+                        this.showNotification('歌曲列表已自动排序', 'success');
                     }, 1000);
+                    this.addTimer(timerId);
+                } else if (type === 'lyrics') {
+                    // 如果只是加载歌词文件，也进行排序
+                    const timerId = setTimeout(() => {
+                        this.sortPlaylist();
+                        this.updatePlaylist();
+                        this.showNotification('歌曲列表已自动排序', 'success');
+                    }, 500);
                     this.addTimer(timerId);
                 }
             }
