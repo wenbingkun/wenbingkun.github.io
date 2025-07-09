@@ -1281,7 +1281,10 @@
     </div>
 
     <script>
-        let player; // 全局变量，方便调试
+        // 使用命名空间避免全局变量污染
+        const LyricsPlayerApp = {
+            player: null // 播放器实例
+        };
 
         class LEDLyricsPlayer {
             constructor() {
@@ -1326,6 +1329,7 @@
                 this.objectUrls = new Set(); // 跟踪创建的URL对象
                 this.eventListeners = new Map(); // 跟踪事件监听器
                 this.timers = new Set(); // 跟踪定时器
+                this.cursorTimeout = null; // 光标隐藏定时器
                 
                 // 播放模式
                 this.playMode = 'loop'; // 'list': 列表播放, 'loop': 列表循环, 'single': 单曲循环, 'random': 随机播放
@@ -1355,16 +1359,21 @@
             }
 
             initCursorHiding() {
-                let cursorTimeout;
-                
                 const showCursor = () => {
                     document.body.classList.remove('auto-hide-cursor');
-                    clearTimeout(cursorTimeout);
-                    cursorTimeout = setTimeout(() => {
+                    if (this.cursorTimeout) {
+                        clearTimeout(this.cursorTimeout);
+                    }
+                    this.cursorTimeout = setTimeout(() => {
                         document.body.classList.add('auto-hide-cursor');
                     }, 3000);
+                    this.timers.add(this.cursorTimeout);
                 };
 
+                // 存储事件监听器引用用于清理
+                this.eventListeners.set('mousemove', showCursor);
+                this.eventListeners.set('mousedown', showCursor);
+                
                 document.addEventListener('mousemove', showCursor);
                 document.addEventListener('mousedown', showCursor);
                 
@@ -1786,7 +1795,7 @@
                             const isExactMatch = matchedSong.name === audioSong.name;
                             const message = isExactMatch 
                                 ? `检测到同名文件，已切换到同步模式: ${audioSong.name}`
-                                : `智能匹配到歌词文件 "${matchedSong.name}"，已切换到同步模式`;
+                                : `智能匹配: "${audioSong.name}" ↔ "${matchedSong.name}"`;
                             this.showNotification(message, 'success');
                         }
                     } else {
@@ -2467,9 +2476,11 @@
                         this.showNotification('音频播放失败，切换到纯歌词模式', 'error');
                         this.audioMode = false;
                         this.updateAudioMode();
-                        // 切换到纯歌词自动播放
-                        this.startTime = performance.now() - (this.pausedTime * 1000);
-                        this.animate();
+                        // 确保播放状态正确，然后切换到纯歌词自动播放
+                        if (this.isPlaying) {
+                            this.startTime = performance.now() - (this.pausedTime * 1000);
+                            this.animate();
+                        }
                     });
                 } else if (songMode === 'audio' && this.audioElement) {
                     // 纯音频模式：只播放音频，不显示歌词
@@ -2479,7 +2490,11 @@
                         console.error('音频播放失败:', e);
                         this.showNotification('音频播放失败', 'error');
                         this.audioMode = false;
-                        this.pause();
+                        // 重置播放状态
+                        this.isPlaying = false;
+                        this.playButton.textContent = '▶';
+                        this.updateStatusIndicator();
+                        this.updateSongDisplay();
                         return;
                     });
                     // 纯音频模式下隐藏歌词或显示音乐符号
@@ -2576,7 +2591,10 @@
                 } else {
                     // 无论是否播放，都需要更新startTime以保证跳转正确
                     if (this.isPlaying) {
-                        this.startTime = performance.now() - (this.currentTime * 1000 / this.playbackSpeed);
+                        // 简化时间计算，避免复杂的除法运算
+                        const elapsedMs = this.currentTime * 1000;
+                        const adjustedElapsedMs = elapsedMs / this.playbackSpeed;
+                        this.startTime = performance.now() - adjustedElapsedMs;
                     } else {
                         // 暂停状态下也要更新pausedTime
                         this.pausedTime = this.currentTime;
@@ -2913,6 +2931,12 @@
                 });
                 this.timers.clear();
                 
+                // 清理事件监听器
+                this.eventListeners.forEach((handler, eventType) => {
+                    document.removeEventListener(eventType, handler);
+                });
+                this.eventListeners.clear();
+                
                 // 清理缓存
                 this.lyricsCache.clear();
                 this.searchResults = [];
@@ -2925,33 +2949,44 @@
             
             // 通知系统
             showNotification(message, type = 'info', duration = 3000) {
-                const container = document.getElementById('notificationContainer');
-                const notification = document.createElement('div');
-                notification.className = `notification ${type}`;
-                notification.textContent = message;
-                
-                container.appendChild(notification);
-                
-                // 自动移除
-                const timerId = setTimeout(() => {
-                    if (notification.parentNode) {
-                        notification.parentNode.removeChild(notification);
+                try {
+                    const container = document.getElementById('notificationContainer');
+                    if (!container) {
+                        console.error('通知容器不存在');
+                        return;
                     }
-                }, duration);
-                this.addTimer(timerId);
+                    
+                    const notification = document.createElement('div');
+                    notification.className = `notification ${type}`;
+                    notification.textContent = message;
+                    
+                    container.appendChild(notification);
                 
-                // 点击关闭
-                notification.addEventListener('click', () => {
-                    this.clearTimer(timerId);
-                    if (notification.parentNode) {
-                        notification.style.animation = 'fadeOut 0.2s ease forwards';
-                        setTimeout(() => {
-                            if (notification.parentNode) {
-                                notification.parentNode.removeChild(notification);
-                            }
-                        }, 200);
-                    }
-                });
+                    // 自动移除
+                    const timerId = setTimeout(() => {
+                        if (notification.parentNode) {
+                            notification.parentNode.removeChild(notification);
+                        }
+                    }, duration);
+                    this.addTimer(timerId);
+                    
+                    // 点击关闭
+                    notification.addEventListener('click', () => {
+                        this.clearTimer(timerId);
+                        if (notification.parentNode) {
+                            notification.style.animation = 'fadeOut 0.2s ease forwards';
+                            setTimeout(() => {
+                                if (notification.parentNode) {
+                                    notification.parentNode.removeChild(notification);
+                                }
+                            }, 200);
+                        }
+                    });
+                } catch (error) {
+                    console.error('显示通知时出错:', error);
+                    // 降级处理：直接在控制台输出
+                    console.log(`[${type.toUpperCase()}] ${message}`);
+                }
             }
 
             updateProgress() {
@@ -3233,37 +3268,150 @@
             findMatchingSong(fileName) {
                 // 首先尝试精确匹配
                 let matchedSong = this.songs.find(song => song.name === fileName);
-                if (matchedSong) return matchedSong;
+                if (matchedSong) {
+                    console.log(`精确匹配成功: "${fileName}" ← "${matchedSong.name}"`);
+                    return matchedSong;
+                }
                 
-                // 如果精确匹配失败，尝试模糊匹配
-                return this.songs.find(song => this.fuzzyMatch(song.name, fileName));
+                // 智能模糊匹配 - 寻找最佳匹配而不是第一个匹配
+                return this.findBestMatch(fileName);
+            }
+            
+            // 寻找最佳匹配的歌曲
+            findBestMatch(fileName) {
+                const candidates = [];
+                
+                // 为每首歌曲计算匹配分数
+                this.songs.forEach(song => {
+                    const score = this.calculateMatchScore(song.name, fileName);
+                    if (score > 0) {
+                        candidates.push({
+                            song: song,
+                            score: score,
+                            details: this.getMatchDetails(song.name, fileName)
+                        });
+                    }
+                });
+                
+                // 按分数排序，选择最高分
+                candidates.sort((a, b) => b.score - a.score);
+                
+                if (candidates.length > 0) {
+                    const bestMatch = candidates[0];
+                    
+                    // 只有分数足够高才认为是有效匹配
+                    if (bestMatch.score >= 0.85) { // 提高匹配阈值到85%
+                        console.log(`智能匹配成功: "${fileName}" ← "${bestMatch.song.name}" (分数: ${bestMatch.score.toFixed(3)}, ${bestMatch.details})`);
+                        
+                        // 显示其他候选项（用于调试）
+                        if (candidates.length > 1) {
+                            console.log('其他候选匹配:', candidates.slice(1, 3).map(c => 
+                                `"${c.song.name}" (${c.score.toFixed(3)})`
+                            ).join(', '));
+                        }
+                        
+                        return bestMatch.song;
+                    } else {
+                        console.log(`匹配分数过低: "${fileName}", 最佳候选 "${bestMatch.song.name}" (分数: ${bestMatch.score.toFixed(3)})`);
+                    }
+                }
+                
+                console.log(`未找到匹配: "${fileName}"`);
+                return null;
+            }
+            
+            // 计算匹配分数 (0-1之间)
+            calculateMatchScore(songName, targetName) {
+                // 多重匹配策略，取最高分
+                const scores = [];
+                
+                // 1. 精确匹配（去除扩展名）
+                const songBase = songName.replace(/\.[^/.]+$/, '');
+                const targetBase = targetName.replace(/\.[^/.]+$/, '');
+                if (songBase === targetBase) {
+                    return 1.0; // 完美匹配
+                }
+                
+                // 2. 标准化后的精确匹配
+                const normalizedSong = this.normalizeForMatching(songName);
+                const normalizedTarget = this.normalizeForMatching(targetName);
+                if (normalizedSong === normalizedTarget && normalizedSong.length > 2) {
+                    scores.push(0.95);
+                }
+                
+                // 3. 编辑距离相似度
+                const similarity = this.calculateSimilarity(normalizedSong, normalizedTarget);
+                scores.push(similarity);
+                
+                // 4. 数字前缀匹配（如果都有数字前缀）
+                const songPrefix = songName.match(/^(\d+)/);
+                const targetPrefix = targetName.match(/^(\d+)/);
+                if (songPrefix && targetPrefix && songPrefix[1] === targetPrefix[1]) {
+                    // 相同数字前缀，增加权重
+                    const nameWithoutPrefix1 = songName.replace(/^\d+[-_\s]*/, '');
+                    const nameWithoutPrefix2 = targetName.replace(/^\d+[-_\s]*/, '');
+                    const prefixSimilarity = this.calculateSimilarity(
+                        this.normalizeForMatching(nameWithoutPrefix1),
+                        this.normalizeForMatching(nameWithoutPrefix2)
+                    );
+                    scores.push(prefixSimilarity * 0.98); // 略低于完美匹配
+                }
+                
+                // 5. 长度惩罚：长度差异很大的匹配降低分数
+                const lengthRatio = Math.min(normalizedSong.length, normalizedTarget.length) / 
+                                   Math.max(normalizedSong.length, normalizedTarget.length);
+                const lengthPenalty = lengthRatio < 0.5 ? 0.8 : 1.0; // 长度差异大于2倍时惩罚
+                
+                // 边界检查：如果没有有效分数，返回0
+                if (scores.length === 0) {
+                    return 0;
+                }
+                
+                const maxScore = Math.max(...scores);
+                return maxScore * lengthPenalty;
+            }
+            
+            // 获取匹配详情（用于调试）
+            getMatchDetails(songName, targetName) {
+                const details = [];
+                
+                if (songName.replace(/\.[^/.]+$/, '') === targetName.replace(/\.[^/.]+$/, '')) {
+                    details.push('精确匹配');
+                } else {
+                    const normalizedSong = this.normalizeForMatching(songName);
+                    const normalizedTarget = this.normalizeForMatching(targetName);
+                    
+                    if (normalizedSong === normalizedTarget) {
+                        details.push('标准化后匹配');
+                    } else {
+                        const similarity = this.calculateSimilarity(normalizedSong, normalizedTarget);
+                        details.push(`相似度${Math.round(similarity * 100)}%`);
+                    }
+                    
+                    const songPrefix = songName.match(/^(\d+)/);
+                    const targetPrefix = targetName.match(/^(\d+)/);
+                    if (songPrefix && targetPrefix && songPrefix[1] === targetPrefix[1]) {
+                        details.push(`数字前缀${songPrefix[1]}`);
+                    }
+                }
+                
+                return details.join(', ');
+            }
+            
+            // 标准化文件名用于匹配
+            normalizeForMatching(name) {
+                return name
+                    .replace(/\.[^.]*$/, '') // 去除扩展名
+                    .replace(/^\d+[-_\s]*/, '') // 去除数字前缀 (如 "01_", "1-", "001 ")
+                    .replace(/[-_\s]+/g, '') // 去除连字符、下划线、空格
+                    .toLowerCase() // 转小写
+                    .trim();
             }
             
             fuzzyMatch(songName, targetName) {
-                // 标准化文件名：去除文件扩展名、数字前缀、特殊字符
-                const normalize = (name) => {
-                    return name
-                        .replace(/\.[^.]*$/, '') // 去除扩展名
-                        .replace(/^\d+[-_\s]*/, '') // 去除数字前缀 (如 "01_", "1-", "001 ")
-                        .replace(/[-_\s]+/g, '') // 去除连字符、下划线、空格
-                        .toLowerCase() // 转小写
-                        .trim();
-                };
-                
-                const normalizedSong = normalize(songName);
-                const normalizedTarget = normalize(targetName);
-                
-                // 完全匹配
-                if (normalizedSong === normalizedTarget) return true;
-                
-                // 包含匹配（支持部分匹配）
-                if (normalizedSong.includes(normalizedTarget) || normalizedTarget.includes(normalizedSong)) {
-                    return true;
-                }
-                
-                // 相似度匹配（使用简单的编辑距离算法）
-                const similarity = this.calculateSimilarity(normalizedSong, normalizedTarget);
-                return similarity > 0.8; // 80%以上相似度认为匹配
+                // 使用新的匹配分数系统
+                const score = this.calculateMatchScore(songName, targetName);
+                return score >= 0.85; // 85%以上相似度认为匹配
             }
             
             calculateSimilarity(str1, str2) {
@@ -3704,12 +3852,65 @@
                     `成功加载 ${validFiles.length} 个${type === 'lyrics' ? '歌词' : '音频'}文件${folderText}`, 
                     'success'
                 );
+                
+                // 如果是音频文件，显示匹配报告
+                if (type === 'audio') {
+                    setTimeout(() => {
+                        this.showMatchingReport();
+                    }, 1000);
+                }
+            }
+            
+            // 显示匹配报告
+            showMatchingReport() {
+                const syncSongs = this.songs.filter(song => song.mode === 'sync');
+                const audioOnlySongs = this.songs.filter(song => song.mode === 'audio');
+                const lyricsOnlySongs = this.songs.filter(song => song.mode === 'lyrics');
+                
+                console.log('🎵 文件匹配报告:');
+                console.log(`- 同步模式 (有歌词+音频): ${syncSongs.length} 首`);
+                console.log(`- 纯音频模式: ${audioOnlySongs.length} 首`);
+                console.log(`- 纯歌词模式: ${lyricsOnlySongs.length} 首`);
+                console.log(`- 总计: ${this.songs.length} 首歌曲`);
+                
+                if (syncSongs.length > 0) {
+                    console.log('\n✅ 成功匹配的歌曲:');
+                    syncSongs.forEach((song, index) => {
+                        console.log(`  ${index + 1}. "${song.name}" (同步模式)`);
+                    });
+                }
+                
+                if (audioOnlySongs.length > 0) {
+                    console.log('\n🎶 未匹配的音频文件:');
+                    audioOnlySongs.forEach((song, index) => {
+                        console.log(`  ${index + 1}. "${song.name}" (纯音频)`);
+                    });
+                }
+                
+                if (lyricsOnlySongs.length > 0) {
+                    console.log('\n📝 未匹配的歌词文件:');
+                    lyricsOnlySongs.forEach((song, index) => {
+                        console.log(`  ${index + 1}. "${song.name}" (纯歌词)`);
+                    });
+                }
+                
+                // 显示匹配统计通知
+                const matchRate = syncSongs.length / Math.max(this.songs.length, 1);
+                let message = `匹配完成: ${syncSongs.length}/${this.songs.length} 首歌曲成功配对`;
+                
+                if (matchRate >= 0.8) {
+                    this.showNotification(`${message} ✨`, 'success');
+                } else if (matchRate >= 0.5) {
+                    this.showNotification(`${message} ⚠️`, 'warning');
+                } else {
+                    this.showNotification(`${message} - 请检查文件名`, 'info');
+                }
             }
         }
 
         // 初始化播放器
         document.addEventListener('DOMContentLoaded', () => {
-            player = new LEDLyricsPlayer();
+            LyricsPlayerApp.player = new LEDLyricsPlayer();
             console.log('LED歌词播放器初始化完成');
         });
     </script>
