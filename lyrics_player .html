@@ -1286,6 +1286,26 @@
             player: null // 播放器实例
         };
 
+        // 调试日志系统
+        const DEBUG = true; // 生产环境设置为 false
+        
+        function log(...args) {
+            if (DEBUG) {
+                console.log(...args);
+            }
+        }
+        
+        function warn(...args) {
+            if (DEBUG) {
+                console.warn(...args);
+            }
+        }
+        
+        function error(...args) {
+            // 错误信息总是显示
+            console.error(...args);
+        }
+
         class LEDLyricsPlayer {
             constructor() {
                 this.playButton = document.getElementById('playButton');
@@ -1328,6 +1348,7 @@
                 this.searchResults = []; // 搜索结果
                 this.objectUrls = new Set(); // 跟踪创建的URL对象
                 this.eventListeners = new Map(); // 跟踪事件监听器
+                this.eventListenerRegistry = new Map(); // 增强的事件监听器注册表
                 this.timers = new Set(); // 跟踪定时器
                 this.cursorTimeout = null; // 光标隐藏定时器
                 
@@ -1358,6 +1379,47 @@
                 this.initDragAndDrop();
             }
 
+            // 增强的事件监听器管理方法
+            addEventListenerTracked(element, eventType, handler, options = {}) {
+                const key = `${element.constructor.name}_${eventType}_${Date.now()}_${Math.random()}`;
+                
+                // 存储事件监听器信息
+                this.eventListenerRegistry.set(key, {
+                    element,
+                    eventType,
+                    handler,
+                    options
+                });
+                
+                // 添加事件监听器
+                element.addEventListener(eventType, handler, options);
+                
+                return key; // 返回key用于后续移除
+            }
+
+            removeEventListenerTracked(key) {
+                const listenerInfo = this.eventListenerRegistry.get(key);
+                if (listenerInfo) {
+                    const { element, eventType, handler, options } = listenerInfo;
+                    element.removeEventListener(eventType, handler, options);
+                    this.eventListenerRegistry.delete(key);
+                    return true;
+                }
+                return false;
+            }
+
+            removeAllEventListeners() {
+                for (const [key, listenerInfo] of this.eventListenerRegistry) {
+                    const { element, eventType, handler, options } = listenerInfo;
+                    try {
+                        element.removeEventListener(eventType, handler, options);
+                    } catch (error) {
+                        warn('移除事件监听器时出错:', error);
+                    }
+                }
+                this.eventListenerRegistry.clear();
+            }
+
             initCursorHiding() {
                 const showCursor = () => {
                     document.body.classList.remove('auto-hide-cursor');
@@ -1370,12 +1432,13 @@
                     this.timers.add(this.cursorTimeout);
                 };
 
-                // 存储事件监听器引用用于清理
+                // 使用新的事件监听器跟踪系统
+                this.addEventListenerTracked(document, 'mousemove', showCursor);
+                this.addEventListenerTracked(document, 'mousedown', showCursor);
+                
+                // 存储事件监听器引用用于清理（保持兼容性）
                 this.eventListeners.set('mousemove', showCursor);
                 this.eventListeners.set('mousedown', showCursor);
-                
-                document.addEventListener('mousemove', showCursor);
-                document.addEventListener('mousedown', showCursor);
                 
                 // 初始显示光标
                 showCursor();
@@ -1387,32 +1450,36 @@
                 let dragCounter = 0;
                 
                 // 防止默认拖拽行为
+                const preventDefaultHandler = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                };
+                
                 ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-                    document.addEventListener(eventName, (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                    });
+                    this.addEventListenerTracked(document, eventName, preventDefaultHandler);
                 });
                 
                 // 拖拽进入
-                document.addEventListener('dragenter', (e) => {
+                const dragEnterHandler = (e) => {
                     dragCounter++;
                     if (e.dataTransfer.types.includes('Files')) {
                         dragOverlay.classList.add('active');
                     }
-                });
+                };
+                this.addEventListenerTracked(document, 'dragenter', dragEnterHandler);
                 
                 // 拖拽离开
-                document.addEventListener('dragleave', (e) => {
+                const dragLeaveHandler = (e) => {
                     dragCounter--;
                     if (dragCounter <= 0) {
                         dragCounter = 0;
                         dragOverlay.classList.remove('active');
                     }
-                });
+                };
+                this.addEventListenerTracked(document, 'dragleave', dragLeaveHandler);
                 
                 // 放开文件
-                document.addEventListener('drop', (e) => {
+                const dropHandler = (e) => {
                     dragCounter = 0;
                     dragOverlay.classList.remove('active');
                     
@@ -1420,7 +1487,8 @@
                     if (files.length > 0) {
                         this.handleDroppedFiles(files);
                     }
-                });
+                };
+                this.addEventListenerTracked(document, 'drop', dropHandler);
             }
             
             handleDroppedFiles(files) {
@@ -1739,9 +1807,10 @@
                 files.forEach((file, index) => {
                     if (file.name.toLowerCase().match(/\.(mp3|wav|ogg|m4a|aac|flac|mp4)$/)) {
                         // 错开加载时间，避免同时创建太多音频元素
-                        setTimeout(() => {
+                        const timerId = setTimeout(() => {
                             this.loadAudioFile(file, true); // skipCleanup = true
                         }, index * 50); // 50ms间隔
+                        this.addTimer(timerId);
                         
                         loadedCount++;
                     } else {
@@ -2059,7 +2128,8 @@
                             
                             const index = parseInt(item.dataset.index);
                             this.switchToSong(index);
-                            setTimeout(() => this.play(), 100);
+                            const timerId = setTimeout(() => this.play(), 100);
+                            this.addTimer(timerId);
                         });
                         
                         // 模式选择器变化事件
@@ -2109,11 +2179,12 @@
                     e.dataTransfer.setDragImage(dragImage, item.offsetWidth / 2, 20);
                     
                     // 清理临时元素
-                    setTimeout(() => {
+                    const timerId = setTimeout(() => {
                         if (document.body.contains(dragImage)) {
                             document.body.removeChild(dragImage);
                         }
                     }, 0);
+                    this.addTimer(timerId);
                     
                     console.log('开始拖拽歌曲:', this.songs[dragIndex].name);
                 });
@@ -2893,7 +2964,9 @@
                 if (this.objectUrls.has(url)) {
                     URL.revokeObjectURL(url);
                     this.objectUrls.delete(url);
-                    console.log('释放对象URL:', url);
+                    log('释放对象URL:', url);
+                } else {
+                    warn('尝试释放未跟踪的对象URL:', url);
                 }
             }
             
@@ -2909,7 +2982,7 @@
             }
             
             cleanup() {
-                console.log('清理资源...');
+                log('清理资源...');
                 
                 // 清理动画帧
                 if (this.animationId) {
@@ -2922,11 +2995,19 @@
                 
                 // 清理所有URL对象
                 this.objectUrls.forEach(url => {
-                    URL.revokeObjectURL(url);
+                    try {
+                        URL.revokeObjectURL(url);
+                    } catch (error) {
+                        warn('释放对象URL时出错:', url, error);
+                    }
                 });
                 this.objectUrls.clear();
                 
-                // 清理定时器
+                // 清理定时器（包括光标定时器）
+                if (this.cursorTimeout) {
+                    clearTimeout(this.cursorTimeout);
+                    this.cursorTimeout = null;
+                }
                 this.timers.forEach(timerId => {
                     clearTimeout(timerId);
                 });
@@ -2934,9 +3015,16 @@
                 
                 // 清理事件监听器
                 this.eventListeners.forEach((handler, eventType) => {
-                    document.removeEventListener(eventType, handler);
+                    try {
+                        document.removeEventListener(eventType, handler);
+                    } catch (error) {
+                        warn('移除事件监听器时出错:', eventType, error);
+                    }
                 });
                 this.eventListeners.clear();
+                
+                // 清理增强的事件监听器注册表
+                this.removeAllEventListeners();
                 
                 // 清理缓存
                 this.lyricsCache.clear();
@@ -2945,7 +3033,7 @@
                 // 释放屏幕唤醒锁
                 this.releaseWakeLock();
                 
-                console.log('资源清理完成');
+                log('资源清理完成');
             }
             
             // 通知系统
@@ -2976,11 +3064,12 @@
                         this.clearTimer(timerId);
                         if (notification.parentNode) {
                             notification.style.animation = 'fadeOut 0.2s ease forwards';
-                            setTimeout(() => {
+                            const fadeTimerId = setTimeout(() => {
                                 if (notification.parentNode) {
                                     notification.parentNode.removeChild(notification);
                                 }
                             }, 200);
+                            this.addTimer(fadeTimerId);
                         }
                     });
                 } catch (error) {
@@ -3582,10 +3671,11 @@
                 
                 // 恢复播放状态
                 if (wasPlaying) {
-                    setTimeout(() => {
+                    const timerId = setTimeout(() => {
                         this.setCurrentTime(currentTime);
                         this.play();
                     }, 100);
+                    this.addTimer(timerId);
                 }
             }
             
@@ -3856,9 +3946,10 @@
                 
                 // 如果是音频文件，显示匹配报告
                 if (type === 'audio') {
-                    setTimeout(() => {
+                    const timerId = setTimeout(() => {
                         this.showMatchingReport();
                     }, 1000);
+                    this.addTimer(timerId);
                 }
             }
             
