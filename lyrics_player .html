@@ -2007,8 +2007,7 @@
                             </div>
                         `;
                         
-                        // 设置拖拽属性和模式属性
-                        songItem.draggable = true;
+                        // 设置模式属性，但不设置draggable，由拖拽手柄控制
                         songItem.setAttribute('data-user-mode', song.userMode || 'auto');
                         
                         fragment.appendChild(songItem);
@@ -2065,22 +2064,23 @@
                             });
                         }
                         
-                        // 拖拽事件
-                        this.initSongItemDragEvents(item);
+                        // 拖拽事件 - 初始化拖拽手柄
+                        const dragHandle = item.querySelector('.drag-handle');
+                        if (dragHandle) {
+                            this.initSongItemDragEvents(item, dragHandle);
+                        }
                     });
 
                     console.log('播放列表更新完成，共', this.songs.length, '首歌曲');
                 });
             }
 
-            initSongItemDragEvents(item) {
-                item.addEventListener('dragstart', (e) => {
-                    // 只允许从拖拽手柄开始拖拽
-                    if (!e.target.classList.contains('drag-handle')) {
-                        e.preventDefault();
-                        return false;
-                    }
-                    
+            initSongItemDragEvents(item, dragHandle) {
+                // 设置拖拽手柄为可拖拽
+                dragHandle.draggable = true;
+                
+                // 拖拽开始事件 - 绑定到拖拽手柄
+                dragHandle.addEventListener('dragstart', (e) => {
                     this.draggedElement = item;
                     item.classList.add('dragging');
                     
@@ -2100,12 +2100,17 @@
                     e.dataTransfer.setDragImage(dragImage, item.offsetWidth / 2, 20);
                     
                     // 清理临时元素
-                    setTimeout(() => document.body.removeChild(dragImage), 0);
+                    setTimeout(() => {
+                        if (document.body.contains(dragImage)) {
+                            document.body.removeChild(dragImage);
+                        }
+                    }, 0);
                     
                     console.log('开始拖拽歌曲:', this.songs[dragIndex].name);
                 });
                 
-                item.addEventListener('dragend', (e) => {
+                // 拖拽结束事件 - 绑定到拖拽手柄
+                dragHandle.addEventListener('dragend', (e) => {
                     if (this.draggedElement) {
                         this.draggedElement.classList.remove('dragging');
                         this.draggedElement = null;
@@ -2118,19 +2123,24 @@
                         songItem.style.borderBottom = '';
                     });
                     
-                    // 隐藏所有插入指示器
-                    this.playlist.querySelectorAll('.drop-indicator').forEach(indicator => {
-                        indicator.classList.remove('active');
-                    });
-                    
                     console.log('拖拽结束');
                 });
                 
+                // 拖拽覆盖事件 - 绑定到歌曲项
                 item.addEventListener('dragover', (e) => {
                     e.preventDefault();
                     e.dataTransfer.dropEffect = 'move';
                     
                     if (item !== this.draggedElement) {
+                        // 清除其他项的样式
+                        this.playlist.querySelectorAll('.song-item').forEach(songItem => {
+                            if (songItem !== item) {
+                                songItem.classList.remove('drag-over');
+                                songItem.style.borderTop = '';
+                                songItem.style.borderBottom = '';
+                            }
+                        });
+                        
                         // 计算鼠标在元素中的位置，决定插入位置
                         const rect = item.getBoundingClientRect();
                         const midpoint = rect.top + rect.height / 2;
@@ -2148,10 +2158,12 @@
                     }
                 });
                 
+                // 拖拽进入事件 - 绑定到歌曲项
                 item.addEventListener('dragenter', (e) => {
                     e.preventDefault();
                 });
                 
+                // 拖拽离开事件 - 绑定到歌曲项
                 item.addEventListener('dragleave', (e) => {
                     // 只有当完全离开元素时才清除样式
                     if (!item.contains(e.relatedTarget)) {
@@ -2161,6 +2173,7 @@
                     }
                 });
                 
+                // 放置事件 - 绑定到歌曲项
                 item.addEventListener('drop', (e) => {
                     e.preventDefault();
                     item.classList.remove('drag-over');
@@ -2177,6 +2190,8 @@
                     const midpoint = rect.top + rect.height / 2;
                     const isTop = e.clientY < midpoint;
                     const finalIndex = isTop ? dropIndex : dropIndex + 1;
+                    
+                    console.log(`拖拽: 从位置 ${dragIndex} 移动到位置 ${finalIndex}`);
                     
                     if (dragIndex !== finalIndex && finalIndex <= this.songs.length) {
                         this.reorderSongs(dragIndex, Math.min(finalIndex, this.songs.length - 1));
