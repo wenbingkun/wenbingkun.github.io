@@ -1298,10 +1298,19 @@
                 this.playMode = 'loop'; // 'list': 列表播放, 'loop': 列表循环, 'single': 单曲循环, 'random': 随机播放
                 this.playHistory = []; // 随机播放历史记录
                 
+                // 防止屏幕熄屏
+                this.wakeLock = null; // Screen Wake Lock API
+                this.wakeLockSupported = 'wakeLock' in navigator; // 检查浏览器支持
+                
                 
                 // 页面卸载时清理资源
                 window.addEventListener('beforeunload', () => {
                     this.cleanup();
+                });
+                
+                // 页面可见性变化监听器
+                document.addEventListener('visibilitychange', () => {
+                    this.handleVisibilityChange();
                 });
                 
                 this.initEventListeners();
@@ -2420,6 +2429,9 @@
                 this.updateSongDisplay();
                 this.updateAudioMode();
                 
+                // 请求屏幕保持唤醒
+                this.requestWakeLock();
+                
                 console.log('开始播放:', currentSong.name, `(${songMode}模式)`);
             }
 
@@ -2438,6 +2450,9 @@
                 
                 this.updateStatusIndicator();
                 this.updateSongDisplay();
+                
+                // 释放屏幕唤醒锁
+                this.releaseWakeLock();
                 
                 console.log('暂停播放');
             }
@@ -2831,6 +2846,9 @@
                 // 清理缓存
                 this.lyricsCache.clear();
                 this.searchResults = [];
+                
+                // 释放屏幕唤醒锁
+                this.releaseWakeLock();
                 
                 console.log('资源清理完成');
             }
@@ -3495,6 +3513,59 @@
                     lyricProgressText.textContent = `歌词 ${progress.current} / ${progress.total}`;
                 } else {
                     lyricProgressEl.style.display = 'none';
+                }
+            }
+            
+            // 防止屏幕熄屏功能
+            async requestWakeLock() {
+                if (!this.wakeLockSupported) {
+                    console.log('浏览器不支持Screen Wake Lock API');
+                    return;
+                }
+                
+                try {
+                    if (this.wakeLock) {
+                        await this.wakeLock.release();
+                    }
+                    
+                    this.wakeLock = await navigator.wakeLock.request('screen');
+                    console.log('已启用屏幕保持唤醒');
+                    
+                    // 监听唤醒锁释放事件
+                    this.wakeLock.addEventListener('release', () => {
+                        console.log('屏幕唤醒锁已释放');
+                        this.wakeLock = null;
+                    });
+                    
+                    this.showNotification('已启用屏幕保持唤醒', 'success');
+                } catch (err) {
+                    console.error('无法启用屏幕保持唤醒:', err);
+                    this.showNotification('无法启用屏幕保持唤醒', 'warning');
+                }
+            }
+            
+            async releaseWakeLock() {
+                if (this.wakeLock) {
+                    try {
+                        await this.wakeLock.release();
+                        this.wakeLock = null;
+                        console.log('已释放屏幕唤醒锁');
+                        this.showNotification('已允许屏幕熄屏', 'info');
+                    } catch (err) {
+                        console.error('释放屏幕唤醒锁失败:', err);
+                    }
+                }
+            }
+            
+            // 检查并处理页面可见性变化
+            handleVisibilityChange() {
+                if (document.hidden) {
+                    // 页面隐藏时不需要特别处理，wakeLock会自动释放
+                } else {
+                    // 页面重新可见时，如果正在播放，重新请求唤醒锁
+                    if (this.isPlaying) {
+                        this.requestWakeLock();
+                    }
                 }
             }
         }
