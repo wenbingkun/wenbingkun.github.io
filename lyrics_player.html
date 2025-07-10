@@ -2632,6 +2632,7 @@
                     // 同步模式：音频+歌词同步播放
                     this.audioMode = true;
                     currentSong.audioElement.currentTime = Math.max(0, this.currentTime - this.audioOffset);
+                    currentSong.audioElement.playbackRate = this.playbackSpeed;
                     currentSong.audioElement.play().catch(e => {
                         console.error('音频播放失败:', e);
                         this.showNotification('音频播放失败，切换到纯歌词模式', 'error');
@@ -2647,6 +2648,7 @@
                     // 纯音频模式：只播放音频，不显示歌词
                     this.audioMode = true;
                     currentSong.audioElement.currentTime = Math.max(0, this.currentTime);
+                    currentSong.audioElement.playbackRate = this.playbackSpeed;
                     currentSong.audioElement.play().catch(e => {
                         console.error('音频播放失败:', e);
                         this.showNotification('音频播放失败', 'error');
@@ -2798,6 +2800,11 @@
                     this.playbackSpeed = speed;
                 }
                 
+                // 应用播放速度到当前音频元素
+                if (this.audioElement) {
+                    this.audioElement.playbackRate = speed;
+                }
+                
                 log('播放速度设置为:', speed + 'x');
             }
             
@@ -2820,6 +2827,17 @@
             updateLyricsFontSize() {
                 // 使用CSS变量来动态调整字体大小
                 document.documentElement.style.setProperty('--font-scale', this.fontScale);
+                
+                // 直接设置字体大小作为备用方案
+                const currentLyric = document.querySelector('.current-lyric');
+                const nextLyric = document.querySelector('.next-lyric');
+                
+                if (currentLyric) {
+                    currentLyric.style.fontSize = `${8 * this.fontScale}rem`;
+                }
+                if (nextLyric) {
+                    nextLyric.style.fontSize = `${4 * this.fontScale}rem`;
+                }
             }
             
             setTheme(theme) {
