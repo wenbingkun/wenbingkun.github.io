@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="重构后的LED歌词播放器 - 专业的歌词同步播放工具">
+    <meta name="keywords" content="歌词播放器,LRC,LED歌词,音频播放,歌词同步">
+    <meta name="author" content="LED歌词播放器团队">
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+    <!-- PWA manifest only works over HTTP/HTTPS, not file:// protocol -->
+    <!-- <link rel="manifest" href="assets/manifest.json"> -->
+    <title>LED歌词播放器 - 重构版</title>
+    <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+    <!-- 背景容器 -->
+    <div class="background-container" id="backgroundContainer">
+        <div class="background-overlay"></div>
+    </div>
+
+    <!-- 状态指示器 -->
+    <div class="status-indicator" id="statusIndicator"></div>
+
+    <!-- 歌曲信息 -->
+    <div class="song-info" id="songInfo" style="display: none;">
+        <div class="song-title" id="displaySongTitle">未选择歌曲</div>
+        <div class="song-index" id="displaySongIndex">0 / 0</div>
+        <div class="lyric-progress" id="lyricProgress" style="display: none;">
+            <span id="lyricProgressText">1 / 1</span>
+        </div>
+    </div>
+
+    <!-- 主歌词显示区域 -->
+    <div class="lyrics-display">
+        <div class="current-lyric" id="currentLyric">LED歌词播放器</div>
+        <div class="next-lyric" id="nextLyric">重构版本 - 更稳定，更高效</div>
+    </div>
+
+    <!-- 拖拽上传覆盖层 -->
+    <div class="drag-overlay" id="dragOverlay">
+        <div class="drag-hint">
+            🎵 放开文件到这里<br>
+            <small>支持 LRC 歌词文件和音频文件<br>可拖拽文件或使用📁按钮选择文件夹</small>
+        </div>
+    </div>
+    
+    <!-- 通知容器 -->
+    <div class="notification-container" id="notificationContainer"></div>
+
+    <!-- 触发区域 -->
+    <div class="trigger-zone"></div>
+
+    <!-- 控制面板 -->
+    <div class="control-panel">
+        <div class="panel-title">🎵 演出控制台<span class="shortcut-hint">Esc 全屏</span></div>
+        
+        <!-- 文件上传区域 -->
+        <div class="file-upload-group">
+            <label class="upload-label">歌词文件 (支持多选LRC)<span class="shortcut-hint">拖拽上传 | 📁文件夹</span></label>
+            <div style="display: flex; gap: 5px;">
+                <input type="file" id="lrcFile" accept=".lrc,.txt" class="file-input" multiple />
+                <button class="folder-button" id="lrcFolderBtn" title="选择文件夹加载">📁</button>
+            </div>
+            <input type="file" id="lrcFolder" webkitdirectory directory style="display: none;" />
+            <div class="compatibility-hint" id="lrcFolderHint" style="display: none;"></div>
+        </div>
+        
+        <div class="file-upload-group">
+            <label class="upload-label">音频文件 (支持多选音频)<span class="shortcut-hint">拖拽上传 | 📁文件夹</span></label>
+            <div style="display: flex; gap: 5px;">
+                <input type="file" id="audioFile" accept="audio/*,video/mp4,.mp4" class="file-input" multiple />
+                <button class="folder-button" id="audioFolderBtn" title="选择文件夹加载">📁</button>
+            </div>
+            <input type="file" id="audioFolder" webkitdirectory directory style="display: none;" />
+            <div class="compatibility-hint" id="audioFolderHint" style="display: none;"></div>
+        </div>
+
+        <div class="file-upload-group">
+            <label class="upload-label">背景图片<span class="shortcut-hint">拖拽上传</span></label>
+            <input type="file" id="backgroundFile" accept="image/*" class="file-input" />
+        </div>
+
+        <!-- 当前播放信息 -->
+        <div class="current-song-info" id="currentSongInfo" style="display: none;">
+            <div class="current-song-name" id="currentSongName">未选择歌曲</div>
+            <div class="current-song-status" id="currentSongStatus">准备播放</div>
+        </div>
+
+        <!-- 播放控制 -->
+        <div class="controls-row" style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+            <button class="play-button" id="playButton" disabled title="播放/暂停 (空格键)">▶</button>
+            <div class="time-info" style="color: rgba(255,255,255,0.8); font-size: 11px; min-width: 80px;">
+                <span id="currentTime">0:00</span> / <span id="totalTime">0:00</span>
+            </div>
+            <div class="progress-container" id="progressContainer" title="点击跳转 | ←→ 前后5秒">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+        </div>
+
+        <!-- 速度控制 -->
+        <div class="button-group">
+            <span style="color: rgba(255,255,255,0.6); font-size: 10px;">速度:</span>
+            <button class="control-button speed-button" data-speed="0.5">0.5×</button>
+            <button class="control-button speed-button active" data-speed="1">1×</button>
+            <button class="control-button speed-button" data-speed="1.5">1.5×</button>
+            <button class="control-button speed-button" data-speed="2">2×</button>
+        </div>
+        
+        <!-- 字体大小控制 -->
+        <div class="button-group">
+            <span style="color: rgba(255,255,255,0.6); font-size: 10px;">字体大小<span class="shortcut-hint">+/-</span>:</span>
+            <button class="control-button font-size-button" data-font-size="0.7">S</button>
+            <button class="control-button font-size-button" data-font-size="1">M</button>
+            <button class="control-button font-size-button active" data-font-size="1.3">L</button>
+            <button class="control-button font-size-button" data-font-size="1.6">XL</button>
+            <button class="control-button font-size-button" data-font-size="2">XXL</button>
+        </div>
+        
+        <!-- 主题控制 -->
+        <div class="button-group">
+            <span style="color: rgba(255,255,255,0.6); font-size: 10px;">歌词主题<span class="shortcut-hint">T</span>:</span>
+            <button class="control-button theme-button active" data-theme="classic">经典</button>
+            <button class="control-button theme-button" data-theme="gold">黄金</button>
+            <button class="control-button theme-button" data-theme="blue">蓝色</button>
+            <button class="control-button theme-button" data-theme="rainbow">彩虹</button>
+        </div>
+        
+        <!-- 播放模式控制 -->
+        <div class="button-group">
+            <span style="color: rgba(255,255,255,0.6); font-size: 10px;">播放模式<span class="shortcut-hint">M</span>:</span>
+            <button class="control-button play-mode-button" data-mode="list" title="列表播放">📋</button>
+            <button class="control-button play-mode-button active" data-mode="loop" title="列表循环">🔁</button>
+            <button class="control-button play-mode-button" data-mode="single" title="单曲循环">🔂</button>
+            <button class="control-button play-mode-button" data-mode="random" title="随机播放">🔀</button>
+        </div>
+        
+        <!-- 同步校准控制 -->
+        <div class="sync-controls" style="margin-bottom: 15px; display: none;" id="syncControls">
+            <div style="color: rgba(255,255,255,0.6); font-size: 10px; margin-bottom: 5px;">同步校准<span class="shortcut-hint">[ ]</span> (秒):</div>
+            <div class="button-group">
+                <button class="control-button sync-button" data-offset="-1">-1s</button>
+                <button class="control-button sync-button" data-offset="-0.1">-0.1s</button>
+                <span id="offsetDisplay" style="color: #fff; font-size: 11px; min-width: 40px; text-align: center;">0.0s</span>
+                <button class="control-button sync-button" data-offset="0.1">+0.1s</button>
+                <button class="control-button sync-button" data-offset="1">+1s</button>
+                <button class="control-button sync-button" id="resetOffset">重置</button>
+            </div>
+        </div>
+        
+        <!-- 搜索控制 -->
+        <div class="search-controls" style="margin-bottom: 15px;">
+            <div style="color: rgba(255,255,255,0.6); font-size: 10px; margin-bottom: 5px;">搜索歌词<span class="shortcut-hint">F</span>:</div>
+            <div style="display: flex; gap: 5px; align-items: center;">
+                <input type="text" id="lyricsSearch" placeholder="搜索当前歌曲歌词..." 
+                       style="flex: 1; padding: 8px 12px; background: linear-gradient(145deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.03) 100%); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.25); border-radius: 8px; color: rgba(255, 255, 255, 0.95); font-size: 11px; outline: none;" />
+                <button class="control-button search-button" id="searchButton">🔍</button>
+                <button class="control-button search-button" id="clearSearch">×</button>
+            </div>
+            <div class="search-results" id="searchResults" style="display: none;"></div>
+        </div>
+
+        <!-- 播放列表 -->
+        <div class="playlist-section">
+            <div class="playlist-header">
+                <span>播放列表<span class="shortcut-hint">↑↓ 切换 | 1-9 快选</span></span>
+                <span class="playlist-count" id="playlistCount">0 首歌曲</span>
+            </div>
+            <div class="playlist-actions" style="margin-bottom: 10px;">
+                <div class="button-group">
+                    <button class="control-button playlist-action-btn" id="sortPlaylist" title="按名称排序">🔤</button>
+                    <button class="control-button playlist-action-btn" id="exportPlaylist" title="导出播放列表">💾</button>
+                    <button class="control-button playlist-action-btn" id="importPlaylist" title="导入播放列表">📂</button>
+                    <button class="control-button playlist-action-btn" id="clearPlaylist" title="清空播放列表">🗑️</button>
+                </div>
+                <input type="file" id="playlistFile" accept=".json" style="display: none;" />
+            </div>
+            <div class="playlist" id="playlist">
+                <div class="empty-playlist">还没有歌曲，请上传LRC文件</div>
+            </div>
+        </div>
+
+        <!-- 性能信息（开发模式） -->
+        <div class="performance-info" id="performanceInfo" style="margin-top: 15px; display: none;">
+            <div style="color: rgba(255,255,255,0.6); font-size: 10px; margin-bottom: 5px;">性能信息:</div>
+            <div style="font-size: 9px; color: rgba(255,255,255,0.5);">
+                <div>渲染时间: <span id="renderTime">0ms</span></div>
+                <div>内存使用: <span id="memoryUsage">0MB</span></div>
+                <div>缓存命中率: <span id="cacheHitRate">0%</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript依赖 -->
+    <script src="js/state-manager.js"></script>
+    <script src="js/error-handler.js"></script>
+    <script src="js/resource-manager.js"></script>
+    <script src="js/event-manager.js"></script>
+    <script src="js/file-handler.js"></script>
+    <script src="js/performance-optimizer.js"></script>
+    <script src="js/smart-matcher.js"></script>
+    <script src="js/components.js"></script>
+    <script src="js/player.js"></script>
+    
+    <script>
+        // 全局应用命名空间
+        window.LyricsPlayerApp = {
+            player: null,
+            version: '2.0.0-refactored',
+            buildDate: new Date().toISOString(),
+            
+            // 初始化应用
+            async init() {
+                try {
+                    console.log(`🎵 LED歌词播放器 v${this.version} 正在初始化...`);
+                    console.log(`📅 构建时间: ${this.buildDate}`);
+                    
+                    // 检测开发模式
+                    const isDevelopment = window.location.hostname === 'localhost' || 
+                                        window.location.hostname === '127.0.0.1' ||
+                                        window.location.search.includes('debug=true');
+                    
+                    // 创建播放器实例
+                    this.player = new LEDLyricsPlayer({
+                        production: !isDevelopment,
+                        enablePerformanceMonitoring: isDevelopment
+                    });
+                    
+                    // 开发模式显示性能信息
+                    if (isDevelopment) {
+                        this.enableDevelopmentMode();
+                    }
+                    
+                    // 绑定全局错误处理
+                    this.bindGlobalErrorHandling();
+                    
+                    // 加载PWA manifest (仅在HTTP/HTTPS协议下)
+                    this.loadPWAManifest();
+                    
+                    // 显示初始化完成通知
+                    setTimeout(() => {
+                        if (this.player && this.player.showNotification) {
+                            this.player.showNotification({
+                                message: `LED歌词播放器 v${this.version} 已就绪`,
+                                level: 'success',
+                                duration: 3000
+                            });
+                        }
+                    }, 1000);
+                    
+                    console.log('✅ LED歌词播放器初始化完成');
+                    
+                } catch (error) {
+                    console.error('❌ LED歌词播放器初始化失败:', error);
+                    this.showFallbackError(error);
+                }
+            },
+            
+            // 启用开发模式
+            enableDevelopmentMode() {
+                console.log('🔧 开发模式已启用');
+                
+                const performanceInfo = document.getElementById('performanceInfo');
+                if (performanceInfo) {
+                    performanceInfo.style.display = 'block';
+                }
+                
+                // 定期更新性能信息
+                setInterval(() => {
+                    this.updatePerformanceInfo();
+                }, 2000);
+                
+                // 添加开发工具到全局
+                window.playerDebug = {
+                    getState: () => this.player?.stateManager?.getState(),
+                    getPerformance: () => this.player?.getPerformanceReport(),
+                    getErrors: () => this.player?.errorHandler?.getErrorHistory(),
+                    clearCache: () => this.player?.performanceOptimizer?.clearCache(),
+                    exportState: () => this.player?.stateManager?.export(),
+                    player: this.player
+                };
+                
+                console.log('🛠️ 开发工具已添加到 window.playerDebug');
+            },
+            
+            // 更新性能信息
+            updatePerformanceInfo() {
+                if (!this.player) return;
+                
+                try {
+                    const report = this.player.getPerformanceReport();
+                    
+                    const renderTimeEl = document.getElementById('renderTime');
+                    const memoryUsageEl = document.getElementById('memoryUsage');
+                    const cacheHitRateEl = document.getElementById('cacheHitRate');
+                    
+                    if (renderTimeEl && report.optimizer) {
+                        renderTimeEl.textContent = `${report.optimizer.averageRenderTime.toFixed(1)}ms`;
+                    }
+                    
+                    if (memoryUsageEl && report.resources.heap) {
+                        memoryUsageEl.textContent = `${report.resources.heap.used}MB`;
+                    }
+                    
+                    if (cacheHitRateEl && report.optimizer.cacheStats) {
+                        const hitRate = (report.optimizer.cacheStats.hitRate * 100).toFixed(1);
+                        cacheHitRateEl.textContent = `${hitRate}%`;
+                    }
+                } catch (error) {
+                    console.warn('性能信息更新失败:', error);
+                }
+            },
+            
+            // 绑定全局错误处理
+            bindGlobalErrorHandling() {
+                window.addEventListener('error', (event) => {
+                    console.error('全局错误:', event.error);
+                    if (this.player?.errorHandler) {
+                        this.player.errorHandler.handle(event.error, {
+                            source: 'global',
+                            filename: event.filename,
+                            lineno: event.lineno
+                        });
+                    }
+                });
+                
+                window.addEventListener('unhandledrejection', (event) => {
+                    console.error('未处理的Promise拒绝:', event.reason);
+                    if (this.player?.errorHandler) {
+                        this.player.errorHandler.handle(event.reason, {
+                            source: 'promise'
+                        });
+                    }
+                });
+            },
+            
+            // 显示回退错误信息
+            showFallbackError(error) {
+                const errorDiv = document.createElement('div');
+                errorDiv.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: rgba(220, 53, 69, 0.9);
+                    color: white;
+                    padding: 15px 20px;
+                    border-radius: 8px;
+                    font-size: 14px;
+                    z-index: 10000;
+                    max-width: 300px;
+                    word-wrap: break-word;
+                `;
+                errorDiv.innerHTML = `
+                    <strong>初始化失败</strong><br>
+                    ${error.message}<br>
+                    <small>请刷新页面重试</small>
+                `;
+                
+                document.body.appendChild(errorDiv);
+                
+                setTimeout(() => {
+                    if (document.body.contains(errorDiv)) {
+                        document.body.removeChild(errorDiv);
+                    }
+                }, 5000);
+            },
+            
+            // 加载PWA manifest
+            loadPWAManifest() {
+                // 只在HTTP/HTTPS协议下加载manifest
+                if (location.protocol === 'http:' || location.protocol === 'https:') {
+                    try {
+                        const link = document.createElement('link');
+                        link.rel = 'manifest';
+                        link.href = 'assets/manifest.json';
+                        document.head.appendChild(link);
+                        console.log('📱 PWA manifest 已加载');
+                    } catch (error) {
+                        console.warn('⚠️ PWA manifest 加载失败:', error);
+                    }
+                } else {
+                    console.log('ℹ️ file:// 协议下跳过 PWA manifest 加载');
+                }
+            },
+            
+            // 销毁应用
+            destroy() {
+                if (this.player) {
+                    this.player.destroy();
+                    this.player = null;
+                }
+                
+                // 清理全局对象
+                delete window.playerDebug;
+                
+                console.log('🧹 应用已清理');
+            }
+        };
+        
+        // 页面加载完成后初始化
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                window.LyricsPlayerApp.init();
+            });
+        } else {
+            window.LyricsPlayerApp.init();
+        }
+        
+        // 页面卸载时清理
+        window.addEventListener('beforeunload', () => {
+            window.LyricsPlayerApp.destroy();
+        });
+    </script>
+</body>
+</html>

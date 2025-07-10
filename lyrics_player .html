@@ -1148,9 +1148,9 @@
     <!-- 歌曲信息 -->
     <div class="song-info" id="songInfo" style="display: none;">
         <div class="song-title" id="displaySongTitle">未选择歌曲</div>
-        <div class="song-index" id="displaySongIndex">0 / 0</div>
+        <div class="song-index" id="displaySongIndex" style="display: none;">0 / 0</div>
         <div class="lyric-progress" id="lyricProgress" style="display: none;">
-            <span id="lyricProgressText">1 / 1</span>
+            <span id="lyricProgressText" style="display: none;">1 / 1</span>
         </div>
     </div>
 
@@ -2547,13 +2547,13 @@
                 if (this.currentSongIndex >= 0 && this.currentSongIndex < this.songs.length) {
                     const currentSong = this.songs[this.currentSongIndex];
                     
-                    // 更新顶部显示
-                    this.displaySongTitle.textContent = currentSong.name;
+                    // 更新顶部显示（隐藏数字前缀）
+                    this.displaySongTitle.textContent = this.formatSongNameForDisplay(currentSong.name);
                     this.displaySongIndex.textContent = `${this.currentSongIndex + 1} / ${this.songs.length}`;
                     this.songInfo.style.display = 'block';
                     
-                    // 更新控制面板显示
-                    this.currentSongName.textContent = currentSong.name;
+                    // 更新控制面板显示（隐藏数字前缀）
+                    this.currentSongName.textContent = this.formatSongNameForDisplay(currentSong.name);
                     this.currentSongStatus.textContent = this.isPlaying ? '播放中' : '已暂停';
                     this.currentSongInfo.style.display = 'block';
                 } else {
@@ -3585,6 +3585,14 @@
                     .replace(/^\d+[-_\s]*/, '') // 去除数字前缀 (如 "01_", "1-", "001 ")
                     .replace(/[-_\s]+/g, '') // 去除连字符、下划线、空格
                     .toLowerCase() // 转小写
+                    .trim();
+            }
+            
+            // 格式化歌曲名称用于主页面显示（去除数字前缀和下划线）
+            formatSongNameForDisplay(name) {
+                return name
+                    .replace(/\.[^.]*$/, '') // 去除扩展名
+                    .replace(/^\d+[-_\s]*/, '') // 去除数字前缀 (如 "01_", "1-", "001 ")
                     .trim();
             }
             

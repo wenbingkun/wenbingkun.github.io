@@ -1,0 +1,40 @@
+<svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="loadingGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#4ecdc4;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#45b7d1;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#96c93d;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <circle cx="20" cy="20" r="15" fill="none" stroke="url(#loadingGradient)" stroke-width="3" stroke-linecap="round" stroke-dasharray="70" stroke-dashoffset="70">
+    <animate attributeName="stroke-dashoffset" values="70;0;70" dur="2s" repeatCount="indefinite"/>
+    <animateTransform attributeName="transform" type="rotate" values="0 20 20;360 20 20" dur="2s" repeatCount="indefinite"/>
+  </circle>
+  
+  <!-- 中心点 -->
+  <circle cx="20" cy="20" r="3" fill="url(#loadingGradient)">
+    <animate attributeName="opacity" values="0.3;1;0.3" dur="1s" repeatCount="indefinite"/>
+  </circle>
+  
+  <!-- 装饰点 -->
+  <circle cx="20" cy="6" r="2" fill="#4ecdc4" opacity="0.6">
+    <animate attributeName="opacity" values="0.6;1;0.6" dur="1.5s" repeatCount="indefinite"/>
+    <animateTransform attributeName="transform" type="rotate" values="0 20 20;360 20 20" dur="2s" repeatCount="indefinite"/>
+  </circle>
+  
+  <circle cx="34" cy="20" r="2" fill="#45b7d1" opacity="0.6">
+    <animate attributeName="opacity" values="0.6;1;0.6" dur="1.5s" begin="0.5s" repeatCount="indefinite"/>
+    <animateTransform attributeName="transform" type="rotate" values="0 20 20;360 20 20" dur="2s" repeatCount="indefinite"/>
+  </circle>
+  
+  <circle cx="20" cy="34" r="2" fill="#96c93d" opacity="0.6">
+    <animate attributeName="opacity" values="0.6;1;0.6" dur="1.5s" begin="1s" repeatCount="indefinite"/>
+    <animateTransform attributeName="transform" type="rotate" values="0 20 20;360 20 20" dur="2s" repeatCount="indefinite"/>
+  </circle>
+  
+  <circle cx="6" cy="20" r="2" fill="#ff6b6b" opacity="0.6">
+    <animate attributeName="opacity" values="0.6;1;0.6" dur="1.5s" begin="1.5s" repeatCount="indefinite"/>
+    <animateTransform attributeName="transform" type="rotate" values="0 20 20;360 20 20" dur="2s" repeatCount="indefinite"/>
+  </circle>
+</svg>
