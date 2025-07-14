@@ -4,7 +4,7 @@
 # @UpdateTime        2025年7月融合版
 # @Function          全球节点覆盖、智能分流、游戏优化、AI服务支持
 # @ConfigVersion     3.1.0
-# @Features          🌍全球全覆盖节点 | 🎮游戏专线 | 🤖主流AI支持 | 📋智能分流
+# @Features          🌍全球49国节点 | 🎮游戏专线 | 🤖主流AI支持 | 📋智能分流
 #==========================================
 
 # 基础配置
@@ -100,7 +100,7 @@ dns:
       - +.github.com
 
 # 建立锚点（增强容错性）
-pr:   &a3 {type: select,   proxies: [♻️ 自动选择, 🚀 手动切换, 🇭🇰 香港节点, 🇯🇵 日本节点, 🇺🇲 美国节点, 🇨🇳 台湾节点, 🇸🇬 狮城节点, 🇰🇷 韩国节点, 🇬🇧 英国节点, 🇪🇺 欧洲节点, 🇨🇦 加拿大节点, 🇦🇺 澳洲节点, 🇳🇿 新西兰节点, 🌎 南美节点, 🕌 中东节点, 🌍 非洲节点, 🌏 东南亚节点, 🌐 其他节点, 🌐 故障转移, DIRECT] }
+pr:   &a3 {type: select,   proxies: [♻️ 自动选择, 🚀 手动切换, 🇭🇰 香港节点, 🇯🇵 日本节点, 🇺🇲 美国节点, 🇨🇳 台湾节点, 🇸🇬 狮城节点, 🇰🇷 韩国节点, 🇬🇧 英国节点, 🇪🇺 欧洲节点, 🇨🇦 加拿大节点, 🇦🇺 澳洲节点, 🇳🇿 新西兰节点, 🌎 南美节点, 🕌 中东节点, 🌍 非洲节点, 🌏 东南亚节点, 🌐 故障转移, DIRECT] }
 p:    &a1 {type: http,     interval: 86400,  health-check: {enable: true, url: http://www.gstatic.com/generate_204, interval: 1800, timeout: 5000, lazy: true} }
 auto: &a4 {type: url-test, lazy: true,  url: http://www.gstatic.com/generate_204, interval: 1800, tolerance: 50, timeout: 5000, use: [Sub] }
 use:  &a2 {type: select,   use: [Sub] }
@@ -134,12 +134,12 @@ proxy-groups:
   - {name: 🚀 手动切换, <<: *a2}
   
   # 核心策略组
-  - {name: 🌏 全球加速, type: select, proxies: [♻️ 自动选择, 🚀 手动切换, 🇭🇰 香港节点, 🇯🇵 日本节点, 🇺🇲 美国节点, 🇨🇳 台湾节点, 🇸🇬 狮城节点, 🇬🇧 英国节点, 🇨🇦 加拿大节点, 🇦🇺 澳洲节点, 🇳🇿 新西兰节点, 🌎 南美节点, 🕌 中东节点, 🌍 非洲节点, 🌏 东南亚节点, 🌐 其他节点, 🔄 备用线路, DIRECT]}
+  - {name: 🌏 全球加速, type: select, proxies: [♻️ 自动选择, 🚀 手动切换, 🇭🇰 香港节点, 🇯🇵 日本节点, 🇺🇲 美国节点, 🇨🇳 台湾节点, 🇸🇬 狮城节点, 🇬🇧 英国节点, 🇨🇦 加拿大节点, 🇦🇺 澳洲节点, 🇳🇿 新西兰节点, 🌎 南美节点, 🕌 中东节点, 🌍 非洲节点, 🌏 东南亚节点, 🔄 备用线路, DIRECT]}
   - {name: 🎬 流媒体, type: select, proxies: [🇺🇲 美国节点, 🇸🇬 狮城节点, 🇭🇰 香港节点, 🇨🇳 台湾节点, 🇬🇧 英国节点, 🇯🇵 日本节点, 🌎 南美节点, 🔄 备用线路]}
   - {name: 📺 哔哩哔哩, type: select, proxies: [DIRECT, 🇭🇰 香港节点, 🇨🇳 台湾节点, 🇸🇬 狮城节点, 🚀 手动切换, ♻️ 自动选择]}
-  - {name: 🌐 社交平台, type: select, proxies: [🇸🇬 狮城节点, 🇺🇲 美国节点, 🇭🇰 香港节点, 🇬🇧 英国节点, 🌎 南美节点, 🌏 东南亚节点, 🌐 其他节点, 🔄 备用线路]}
+  - {name: 🌐 社交平台, type: select, proxies: [🇸🇬 狮城节点, 🇺🇲 美国节点, 🇭🇰 香港节点, 🇬🇧 英国节点, 🌎 南美节点, 🌏 东南亚节点, 🔄 备用线路]}
   - {name: 🤖 人工智能, type: select, proxies: [🇺🇲 美国节点, 🇯🇵 日本节点, 🇸🇬 狮城节点, 🇬🇧 英国节点, 🔄 备用线路]}
-  - {name: 🎮 游戏平台, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)游戏|game|gaming", proxies: [DIRECT, 🇭🇰 香港节点, 🇯🇵 日本节点, 🇸🇬 狮城节点, 🇺🇲 美国节点, 🇰🇷 韩国节点, 🌎 南美节点, 🌏 东南亚节点, 🇬🇧 英国节点, 🇪🇺 欧洲节点, 🌐 其他节点]}
+  - {name: 🎮 游戏平台, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)游戏|game|gaming", proxies: [DIRECT, 🇭🇰 香港节点, 🇯🇵 日本节点, 🇸🇬 狮城节点, 🇺🇲 美国节点, 🇰🇷 韩国节点, 🌎 南美节点, 🌏 东南亚节点, 🇬🇧 英国节点, 🇪🇺 欧洲节点]}
   - {name: 👨‍💻 开发服务, type: select, proxies: [🇺🇲 美国节点, 🇸🇬 狮城节点, 🇯🇵 日本节点, 🇭🇰 香港节点, 🇬🇧 英国节点, DIRECT]}
   
   # 科技服务策略组  
@@ -159,8 +159,8 @@ proxy-groups:
   - {name: 🌐 故障转移, <<: *a8, filter: ".*"}
   - {name: 🔄 备用线路, type: select, proxies: [♻️ 自动选择, 🌐 故障转移, DIRECT]}
   
-  # 地区节点组（覆盖全球7大洲 + 其他地区，增强容错性）
-  # 支持全球所有节点：亚洲12国、欧洲8国、北美3国、南美3国、大洋洲2国、中东3国、非洲2国 + 其他未分类地区
+  # 地区节点组（覆盖全球7大洲，增强容错性）
+  # 支持全球所有节点：亚洲16国、欧洲14国、北美2国、南美10国、大洋洲2国、中东3国、非洲2国
   
   # 亚洲地区
   - {name: 🇭🇰 香港节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇭🇰|港|hk|hongkong|hong kong"}
@@ -169,7 +169,7 @@ proxy-groups:
   - {name: 🇯🇵 日本节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇯🇵|日本|jp|japan"}
   - {name: 🇰🇷 韩国节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇰🇷|韩国|kr|korea"}
   - {name: 🇸🇬 狮城节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇸🇬|新加坡|狮城|sg|singapore"}
-  - {name: 🌏 东南亚节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇲🇾|🇹🇭|🇻🇳|🇵🇭|🇮🇩|🇮🇳|马来|泰国|越南|菲律宾|印尼|印度|\bmy\b|\bth\b|\bvn\b|\bph\b|\bid\b|\bin\b|\bmalaysia\b|\bthailand\b|\bvietnam\b|\bphilippines\b|\bindonesia\b|\bindia\b"}
+  - {name: 🌏 东南亚节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇲🇾|🇹🇭|🇻🇳|🇵🇭|🇮🇩|🇮🇳|🇲🇻|🇰🇭|🇲🇲|🇱🇦|马来|泰国|越南|菲律宾|印尼|印度|马尔代夫|柬埔寨|缅甸|老挝|\bmy\b|\bth\b|\bvn\b|\bph\b|\bid\b|\bin\b|\bmv\b|\bkh\b|\bmm\b|\bla\b|\bmalaysia\b|\bthailand\b|\bvietnam\b|\bphilippines\b|\bindonesia\b|\bindia\b|\bmaldives\b|\bcambodia\b|\bmyanmar\b|\blaos\b"}
   
   # 欧洲地区
   - {name: 🇬🇧 英国节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇬🇧|英|uk|britain|united kingdom"}
@@ -179,14 +179,14 @@ proxy-groups:
   - {name: 🇨🇦 加拿大节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇨🇦|加拿大|ca|canada"}
   
   # 南美地区
-  - {name: 🌎 南美节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇧🇷|🇦🇷|🇨🇱|🇲🇽|巴西|阿根廷|智利|墨西哥|\bbr\b|\bar\b|\bcl\b|\bmx\b|\bbrazil\b|\bargentina\b|\bchile\b|\bmexico\b"}
+  - {name: 🌎 南美节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇧🇷|🇦🇷|🇨🇱|🇲🇽|🇵🇪|🇨🇺|🇺🇾|🇵🇦|🇨🇷|🇨🇴|巴西|阿根廷|智利|墨西哥|秘鲁|古巴|乌拉圭|巴拿马|哥斯达黎加|哥伦比亚|\bbr\b|\bar\b|\bcl\b|\bmx\b|\bpe\b|\bcu\b|\buy\b|\bpa\b|\bcr\b|\bco\b|\bbrazil\b|\bargentina\b|\bchile\b|\bmexico\b|\bperu\b|\bcuba\b|\buruguay\b|\bpanama\b|\bcosta rica\b|\bcolombia\b"}
   
   # 大洋洲地区
   - {name: 🇦🇺 澳洲节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇦🇺|澳洲|澳大利亚|au|australia"}
   - {name: 🇳🇿 新西兰节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇳🇿|新西兰|nz|new zealand"}
   
   # 欧洲联合节点组（用于游戏等服务）
-  - {name: 🇪🇺 欧洲节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇬🇧|🇫🇷|🇩🇪|🇳🇱|🇮🇹|🇪🇸|🇨🇭|🇷🇺|英|法国|德国|荷兰|意大利|西班牙|瑞士|俄罗斯|\buk\b|\bfr\b|\bde\b|\bnl\b|\bit\b|\bes\b|\bch\b|\bru\b|\bbritain\b|\bfrance\b|\bgermany\b|\bnetherlands\b|\bitaly\b|\bspain\b|\bswitzerland\b|\brussia\b"}
+  - {name: 🇪🇺 欧洲节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇬🇧|🇫🇷|🇩🇪|🇳🇱|🇮🇹|🇪🇸|🇨🇭|🇷🇺|🇩🇰|🇳🇴|🇸🇪|🇫🇮|🇨🇿|🇵🇱|英|法国|德国|荷兰|意大利|西班牙|瑞士|俄罗斯|丹麦|挪威|瑞典|芬兰|捷克|波兰|\buk\b|\bfr\b|\bde\b|\bnl\b|\bit\b|\bes\b|\bch\b|\bru\b|\bdk\b|\bno\b|\bse\b|\bfi\b|\bcz\b|\bpl\b|\bbritain\b|\bfrance\b|\bgermany\b|\bnetherlands\b|\bitaly\b|\bspain\b|\bswitzerland\b|\brussia\b|\bdenmark\b|\bnorway\b|\bsweden\b|\bfinland\b|\bczech\b|\bpoland\b"}
   
   # 中东地区
   - {name: 🕌 中东节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇦🇪|🇸🇦|🇹🇷|阿联酋|沙特|土耳其|\bae\b|\bsa\b|\btr\b|\bemirates\b|\bsaudi\b|\bturkey\b"}
@@ -196,9 +196,6 @@ proxy-groups:
   
   # 南极洲地区（第七大洲）
   - {name: 🇦🇶 南极节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 8000, use: [Sub], filter: "(?i)🇦🇶|南极|antarctica|antarctic"}
-  
-  # 其他地区节点（未被上述区域覆盖的所有节点）
-  - {name: 🌐 其他节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "^(?!.*((?i)🇭🇰|港|hk|hongkong|hong kong|🇲🇴|澳门|macao|macau|mo|🇹🇼|台|tw|taiwan|🇯🇵|日本|jp|japan|🇰🇷|韩国|kr|korea|🇸🇬|新加坡|狮城|sg|singapore|🇲🇾|🇹🇭|🇻🇳|🇵🇭|🇮🇩|🇮🇳|马来|泰国|越南|菲律宾|印尼|印度|\\bmy\\b|\\bth\\b|\\bvn\\b|\\bph\\b|\\bid\\b|\\bin\\b|\\bmalaysia\\b|\\bthailand\\b|\\bvietnam\\b|\\bphilippines\\b|\\bindonesia\\b|\\bindia\\b|🇬🇧|英|uk|britain|united kingdom|🇫🇷|🇩🇪|🇳🇱|🇮🇹|🇪🇸|🇨🇭|🇷🇺|法国|德国|荷兰|意大利|西班牙|瑞士|俄罗斯|\\bfr\\b|\\bde\\b|\\bnl\\b|\\bit\\b|\\bes\\b|\\bch\\b|\\bru\\b|\\bfrance\\b|\\bgermany\\b|\\bnetherlands\\b|\\bitaly\\b|\\bspain\\b|\\bswitzerland\\b|\\brussia\\b|🇺🇸|美国|us|unitedstates|united states|🇨🇦|加拿大|ca|canada|🇧🇷|🇦🇷|🇨🇱|🇲🇽|巴西|阿根廷|智利|墨西哥|\\bbr\\b|\\bar\\b|\\bcl\\b|\\bmx\\b|\\bbrazil\\b|\\bargentina\\b|\\bchile\\b|\\bmexico\\b|🇦🇺|澳洲|澳大利亚|au|australia|🇳🇿|新西兰|nz|new zealand|🇦🇪|🇸🇦|🇹🇷|阿联酋|沙特|土耳其|\\bae\\b|\\bsa\\b|\\btr\\b|\\bemirates\\b|\\bsaudi\\b|\\bturkey\\b|🇿🇦|🇪🇬|南非|埃及|\\bza\\b|\\beg\\b|\\bsouth africa\\b|\\begypt\\b|🇦🇶|南极|antarctica|antarctic)).*$"}
   
 
 # 规则提供者
