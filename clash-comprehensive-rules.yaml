@@ -100,7 +100,7 @@ dns:
       - +.github.com
 
 # 建立锚点（增强容错性）
-pr:   &a3 {type: select,   proxies: [♻️ 自动选择, 🚀 手动切换, 🇭🇰 香港节点, 🇯🇵 日本节点, 🇺🇲 美国节点, 🇨🇳 台湾节点, 🇸🇬 狮城节点, 🇰🇷 韩国节点, 🇬🇧 英国节点, 🇫🇷 法国节点, 🇩🇪 德国节点, 🇨🇦 加拿大节点, 🇦🇺 澳洲节点, 🌐 故障转移, DIRECT] }
+pr:   &a3 {type: select,   proxies: [♻️ 自动选择, 🚀 手动切换, 🇭🇰 香港节点, 🇯🇵 日本节点, 🇺🇲 美国节点, 🇨🇳 台湾节点, 🇸🇬 狮城节点, 🇰🇷 韩国节点, 🇬🇧 英国节点, 🇪🇺 欧洲节点, 🇨🇦 加拿大节点, 🇦🇺 澳洲节点, 🌐 故障转移, DIRECT] }
 p:    &a1 {type: http,     interval: 86400,  health-check: {enable: true, url: http://www.gstatic.com/generate_204, interval: 1800, timeout: 5000, lazy: true} }
 auto: &a4 {type: url-test, lazy: true,  url: http://www.gstatic.com/generate_204, interval: 1800, tolerance: 50, timeout: 5000, use: [Sub] }
 use:  &a2 {type: select,   use: [Sub] }
@@ -179,13 +179,6 @@ proxy-groups:
   
   # 欧洲地区
   - {name: 🇬🇧 英国节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇬🇧|英|uk|britain|united kingdom"}
-  - {name: 🇫🇷 法国节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇫🇷|法国|fr|france"}
-  - {name: 🇩🇪 德国节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇩🇪|德国|de|germany"}
-  - {name: 🇳🇱 荷兰节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇳🇱|荷兰|nl|netherlands"}
-  - {name: 🇮🇹 意大利节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇮🇹|意大利|it|italy"}
-  - {name: 🇪🇸 西班牙节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇪🇸|西班牙|es|spain"}
-  - {name: 🇨🇭 瑞士节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇨🇭|瑞士|ch|switzerland"}
-  - {name: 🇷🇺 俄罗斯节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇷🇺|俄罗斯|\bru\b|\brussia\b"}
   
   # 北美地区
   - {name: 🇺🇲 美国节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇺🇸|美国|us|unitedstates|united states"}
