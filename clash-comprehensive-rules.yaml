@@ -185,7 +185,7 @@ proxy-groups:
   - {name: 🇮🇹 意大利节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇮🇹|意大利|it|italy"}
   - {name: 🇪🇸 西班牙节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇪🇸|西班牙|es|spain"}
   - {name: 🇨🇭 瑞士节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇨🇭|瑞士|ch|switzerland"}
-  - {name: 🇷🇺 俄罗斯节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇷🇺|俄罗斯|ru|russia"}
+  - {name: 🇷🇺 俄罗斯节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇷🇺|俄罗斯|\bru\b|\brussia\b"}
   
   # 北美地区
   - {name: 🇺🇲 美国节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇺🇸|美国|us|unitedstates|united states"}
@@ -202,7 +202,7 @@ proxy-groups:
   - {name: 🇳🇿 新西兰节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇳🇿|新西兰|nz|new zealand"}
   
   # 欧洲联合节点组（用于游戏等服务）
-  - {name: 🇪🇺 欧洲节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇬🇧|🇫🇷|🇩🇪|🇳🇱|🇮🇹|🇪🇸|🇨🇭|🇷🇺|英|法国|德国|荷兰|意大利|西班牙|瑞士|俄罗斯|uk|fr|de|nl|it|es|ch|ru|britain|france|germany|netherlands|italy|spain|switzerland|russia"}
+  - {name: 🇪🇺 欧洲节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇬🇧|🇫🇷|🇩🇪|🇳🇱|🇮🇹|🇪🇸|🇨🇭|🇷🇺|英|法国|德国|荷兰|意大利|西班牙|瑞士|俄罗斯|\buk\b|\bfr\b|\bde\b|\bnl\b|\bit\b|\bes\b|\bch\b|\bru\b|\bbritain\b|\bfrance\b|\bgermany\b|\bnetherlands\b|\bitaly\b|\bspain\b|\bswitzerland\b|\brussia\b"}
   
   # 中东地区
   - {name: 🇦🇪 阿联酋节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇦🇪|阿联酋|ae|emirates"}
