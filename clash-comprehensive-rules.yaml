@@ -183,12 +183,9 @@ proxy-groups:
   # 北美地区
   - {name: 🇺🇲 美国节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇺🇸|美国|us|unitedstates|united states"}
   - {name: 🇨🇦 加拿大节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇨🇦|加拿大|ca|canada"}
-  - {name: 🇲🇽 墨西哥节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇲🇽|墨西哥|mx|mexico"}
   
   # 南美地区
-  - {name: 🇧🇷 巴西节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇧🇷|巴西|br|brazil"}
-  - {name: 🇦🇷 阿根廷节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇦🇷|阿根廷|ar|argentina"}
-  - {name: 🇨🇱 智利节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇨🇱|智利|cl|chile"}
+  - {name: 🌎 南美节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇧🇷|🇦🇷|🇨🇱|🇲🇽|巴西|阿根廷|智利|墨西哥|\bbr\b|\bar\b|\bcl\b|\bmx\b|\bbrazil\b|\bargentina\b|\bchile\b|\bmexico\b"}
   
   # 大洋洲地区
   - {name: 🇦🇺 澳洲节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇦🇺|澳洲|澳大利亚|au|australia"}
@@ -198,13 +195,10 @@ proxy-groups:
   - {name: 🇪🇺 欧洲节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇬🇧|🇫🇷|🇩🇪|🇳🇱|🇮🇹|🇪🇸|🇨🇭|🇷🇺|英|法国|德国|荷兰|意大利|西班牙|瑞士|俄罗斯|\buk\b|\bfr\b|\bde\b|\bnl\b|\bit\b|\bes\b|\bch\b|\bru\b|\bbritain\b|\bfrance\b|\bgermany\b|\bnetherlands\b|\bitaly\b|\bspain\b|\bswitzerland\b|\brussia\b"}
   
   # 中东地区
-  - {name: 🇦🇪 阿联酋节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇦🇪|阿联酋|ae|emirates"}
-  - {name: 🇸🇦 沙特节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇸🇦|沙特|sa|saudi"}
-  - {name: 🇹🇷 土耳其节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇹🇷|土耳其|tr|turkey"}
+  - {name: 🕌 中东节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇦🇪|🇸🇦|🇹🇷|阿联酋|沙特|土耳其|\bae\b|\bsa\b|\btr\b|\bemirates\b|\bsaudi\b|\bturkey\b"}
 
   # 非洲地区
-  - {name: 🇿🇦 南非节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇿🇦|南非|za|south africa"}
-  - {name: 🇪🇬 埃及节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇪🇬|埃及|eg|egypt"}
+  - {name: 🌍 非洲节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇿🇦|🇪🇬|南非|埃及|\bza\b|\beg\b|\bsouth africa\b|\begypt\b"}
   
   # 南极洲地区（第七大洲）
   - {name: 🇦🇶 南极节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 8000, use: [Sub], filter: "(?i)🇦🇶|南极|antarctica|antarctic"}
