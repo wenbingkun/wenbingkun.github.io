@@ -202,7 +202,7 @@ proxy-groups:
   - {name: 🇳🇿 新西兰节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇳🇿|新西兰|nz|new zealand"}
   
   # 欧洲联合节点组（用于游戏等服务）
-  - {name: 🇪🇺 欧洲节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇬🇧|🇫🇷|🇩🇪|🇳🇱|🇮🇹|🇪🇸|🇨🇭|🇷🇺|英|法|德|荷兰|意大利|西班牙|瑞士|俄|uk|fr|de|nl|it|es|ch|ru|britain|france|germany|netherlands|italy|spain|switzerland|russia"}
+  - {name: 🇪🇺 欧洲节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇬🇧|🇫🇷|🇩🇪|🇳🇱|🇮🇹|🇪🇸|🇨🇭|🇷🇺|英|法国|德国|荷兰|意大利|西班牙|瑞士|俄罗斯|uk|fr|de|nl|it|es|ch|ru|britain|france|germany|netherlands|italy|spain|switzerland|russia"}
   
   # 中东地区
   - {name: 🇦🇪 阿联酋节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇦🇪|阿联酋|ae|emirates"}
