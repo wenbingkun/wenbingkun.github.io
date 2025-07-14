@@ -170,12 +170,7 @@ proxy-groups:
   - {name: 🇯🇵 日本节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇯🇵|日本|jp|japan"}
   - {name: 🇰🇷 韩国节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇰🇷|韩国|kr|korea"}
   - {name: 🇸🇬 狮城节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇸🇬|新加坡|狮城|sg|singapore"}
-  - {name: 🇲🇾 马来节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇲🇾|马来|my|malaysia"}
-  - {name: 🇹🇭 泰国节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇹🇭|泰|th|thailand"}
-  - {name: 🇻🇳 越南节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇻🇳|越南|vn|vietnam"}
-  - {name: 🇵🇭 菲律宾节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇵🇭|菲律宾|ph|philippines"}
-  - {name: 🇮🇩 印尼节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇮🇩|印尼|id|indonesia"}
-  - {name: 🇮🇳 印度节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇮🇳|印度|in|india"}
+  - {name: 🌏 东南亚节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇲🇾|🇹🇭|🇻🇳|🇵🇭|🇮🇩|🇮🇳|马来|泰国|越南|菲律宾|印尼|印度|\bmy\b|\bth\b|\bvn\b|\bph\b|\bid\b|\bin\b|\bmalaysia\b|\bthailand\b|\bvietnam\b|\bphilippines\b|\bindonesia\b|\bindia\b"}
   
   # 欧洲地区
   - {name: 🇬🇧 英国节点, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇬🇧|英|uk|britain|united kingdom"}
