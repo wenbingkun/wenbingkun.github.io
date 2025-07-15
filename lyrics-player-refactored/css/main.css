@@ -784,6 +784,66 @@ body.auto-hide-cursor {
     font-style: italic;
 }
 
+/* 搜索结果样式 */
+.search-results {
+    margin-top: 10px;
+    max-height: 300px;
+    overflow-y: auto;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+}
+
+.search-result-item {
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.search-result-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.search-result-item:last-child {
+    border-bottom: none;
+}
+
+.search-result-time {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 10px;
+    font-family: monospace;
+    min-width: 40px;
+    text-align: right;
+}
+
+.search-result-text {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 11px;
+    flex: 1;
+    line-height: 1.4;
+}
+
+.search-highlight {
+    background: rgba(255, 255, 0, 0.3);
+    color: #fff;
+    padding: 1px 3px;
+    border-radius: 3px;
+    font-weight: bold;
+}
+
+.search-message {
+    padding: 15px;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 11px;
+    font-style: italic;
+}
+
 /* 兼容性提示 */
 .compatibility-hint {
     font-size: 10px;

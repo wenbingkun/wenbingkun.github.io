@@ -37,6 +37,9 @@ class LEDLyricsPlayer {
         // 智能匹配器
         this.smartMatcher = new window.SmartMatcher();
         
+        // 歌词搜索管理器
+        this.lyricsSearchManager = new window.LyricsSearchManager(this.stateManager, this.eventManager, this.playlistManager);
+        
         // 绑定状态变化
         this.bindStateChanges();
         
@@ -117,6 +120,10 @@ class LEDLyricsPlayer {
     initializeUI() {
         this.uiManager.initialize(this.elements);
         this.notificationSystem.initialize(this.elements.notificationContainer);
+        this.lyricsSearchManager.initialize();
+        
+        // 初始化播放模式按钮状态
+        this.updatePlayModeButtons();
     }
     
     // 绑定事件
@@ -225,6 +232,54 @@ class LEDLyricsPlayer {
                 this.setTheme(theme);
             }
         );
+        
+        // 搜索按钮
+        this.eventManager.addDOMEventListener(
+            document.getElementById('searchButton'),
+            'click',
+            () => {
+                const searchInput = document.getElementById('lyricsSearch');
+                if (searchInput) {
+                    this.lyricsSearchManager.searchLyrics(searchInput.value);
+                }
+            }
+        );
+        
+        // 清除搜索按钮
+        this.eventManager.addDOMEventListener(
+            document.getElementById('clearSearch'),
+            'click',
+            () => {
+                this.lyricsSearchManager.clearSearch();
+            }
+        );
+        
+        // 同步校准按钮
+        this.eventManager.delegate(
+            document.body,
+            '.sync-button',
+            'click',
+            (e) => {
+                const button = e.delegateTarget;
+                if (button.id === 'resetOffset') {
+                    this.resetSyncOffset();
+                } else if (button.dataset.offset) {
+                    const offset = parseFloat(button.dataset.offset);
+                    this.adjustSyncOffset(offset);
+                }
+            }
+        );
+        
+        // 播放模式按钮
+        this.eventManager.delegate(
+            document.body,
+            '.play-mode-button',
+            'click',
+            (e) => {
+                const mode = e.delegateTarget.dataset.mode;
+                this.setPlayMode(mode);
+            }
+        );
     }
     
     // 预加载下一首歌曲
@@ -242,8 +297,11 @@ class LEDLyricsPlayer {
 
     // 绑定播放列表事件
     bindPlaylistEvents() {
+        const playlistElement = document.getElementById('playlist');
+        if (!playlistElement) return;
+        
         this.eventManager.delegate(
-            this.elements.playlist,
+            playlistElement,
             '.song-item',
             'click',
             (e) => {
@@ -260,7 +318,7 @@ class LEDLyricsPlayer {
         );
 
         this.eventManager.delegate(
-            this.elements.playlist,
+            playlistElement,
             '.song-item',
             'dblclick',
             (e) => {
@@ -275,7 +333,7 @@ class LEDLyricsPlayer {
         );
 
         this.eventManager.delegate(
-            this.elements.playlist,
+            playlistElement,
             '.mode-selector',
             'change',
             (e) => {
@@ -354,7 +412,11 @@ class LEDLyricsPlayer {
             // 音量控制（如果支持）
             'ctrl+arrowup': () => this.adjustVolume(0.1),
             'ctrl+arrowdown': () => this.adjustVolume(-0.1),
-            'ctrl+0': () => this.toggleMute()
+            'ctrl+0': () => this.toggleMute(),
+            
+            // 帮助
+            'h': () => this.showShortcutsHelp(),
+            'ctrl+h': () => this.showShortcutsHelp()
         };
         
         Object.entries(shortcuts).forEach(([keys, handler]) => {
@@ -385,6 +447,7 @@ class LEDLyricsPlayer {
             this.updateProgressBar();
             this.updateTimeDisplay();
             this.updateLyrics();
+            this.updateSyncControls();
         });
         
         // 歌曲变化
@@ -394,9 +457,24 @@ class LEDLyricsPlayer {
             this.preloadNextSong();
         });
         
+        // 歌曲列表变化
+        this.stateManager.subscribe('songs.list', (songs) => {
+            this.updatePlaylist();
+        });
+        
         // 主题变化
         this.stateManager.subscribe('ui.theme', (theme) => {
             this.uiManager.applyTheme(theme);
+        });
+        
+        // 播放模式变化
+        this.stateManager.subscribe('songs.playMode', (mode) => {
+            this.updatePlayModeButtons();
+        });
+        
+        // 歌曲结束事件
+        this.eventManager.on('song-ended', () => {
+            this.onSongEnded();
         });
     }
     
@@ -406,6 +484,7 @@ class LEDLyricsPlayer {
         this.stateManager.setState('ui.fontScale', 1.3);
         this.stateManager.setState('songs.playMode', 'loop');
         this.stateManager.setState('player.playbackSpeed', 1.0);
+        this.stateManager.setState('lyrics.syncOffset', 0);
     }
     
     // 处理歌词文件
@@ -499,7 +578,7 @@ class LEDLyricsPlayer {
             // 更新播放列表显示
             this.updatePlaylist();
             
-            // 显示总结
+            // 显示总结和匹配统计
             let summaryMessage = `处理完成: `;
             if (matchedCount > 0) {
                 summaryMessage += `${matchedCount}个音频与歌词匹配, `;
@@ -512,6 +591,27 @@ class LEDLyricsPlayer {
                 message: summaryMessage,
                 level: 'success'
             });
+            
+            // 显示详细匹配统计
+            const stats = this.smartMatcher.getMatchingStats(matchResults);
+            if (stats.total > 0) {
+                console.log('📊 智能匹配统计:', {
+                    总文件数: stats.total,
+                    精确匹配: stats.exact,
+                    模糊匹配: stats.fuzzy,
+                    未匹配: stats.unmatched,
+                    平均得分: stats.averageScore.toFixed(2)
+                });
+                
+                // 如果匹配效果较好，显示成功提示
+                if (stats.averageScore >= 0.8) {
+                    this.showNotification({
+                        message: `🎯 智能匹配效果良好 (平均得分: ${stats.averageScore.toFixed(2)})`,
+                        level: 'success',
+                        duration: 3000
+                    });
+                }
+            }
             
         } catch (error) {
             this.errorHandler.handle(error, { operation: 'handleAudioFiles' });
@@ -733,11 +833,128 @@ class LEDLyricsPlayer {
         this.uiManager.toggleFullscreen();
     }
     
-    focusSearch() {
-        const searchInput = document.getElementById('lyricsSearch');
-        if (searchInput) {
-            searchInput.focus();
+    // 同步校准方法
+    adjustSyncOffset(offsetDelta) {
+        try {
+            const currentOffset = this.stateManager.getState('lyrics.syncOffset');
+            const newOffset = currentOffset + offsetDelta;
+            
+            // 限制偏移范围在-10到+10秒之间
+            const clampedOffset = Math.max(-10, Math.min(10, newOffset));
+            
+            this.stateManager.setState('lyrics.syncOffset', clampedOffset);
+            
+            this.showNotification({
+                message: `同步偏移: ${clampedOffset >= 0 ? '+' : ''}${clampedOffset.toFixed(1)}s`,
+                level: 'info',
+                duration: 1500
+            });
+            
+        } catch (error) {
+            this.errorHandler.handle(error, { operation: 'adjustSyncOffset' });
         }
+    }
+    
+    resetSyncOffset() {
+        try {
+            this.stateManager.setState('lyrics.syncOffset', 0);
+            
+            this.showNotification({
+                message: '同步偏移已重置',
+                level: 'info',
+                duration: 1500
+            });
+            
+        } catch (error) {
+            this.errorHandler.handle(error, { operation: 'resetSyncOffset' });
+        }
+    }
+    
+    // 歌曲结束处理
+    onSongEnded() {
+        try {
+            this.stateManager.setState('player.isPlaying', false);
+            
+            // 根据播放模式决定下一步操作
+            const playMode = this.stateManager.getState('songs.playMode');
+            const nextIndex = this.playlistManager.peekNextSongIndex();
+            
+            if (playMode === 'single') {
+                // 单曲循环 - 重新播放当前歌曲
+                this.stateManager.setState('player.currentTime', 0);
+                setTimeout(() => this.play(), 100);
+            } else if (nextIndex >= 0) {
+                // 播放下一首歌曲
+                this.playlistManager.nextSong();
+                setTimeout(() => this.play(), 100);
+            } else {
+                // 没有下一首歌曲，停止播放
+                this.showNotification({
+                    message: '播放列表已全部播放完毕',
+                    level: 'info'
+                });
+            }
+            
+        } catch (error) {
+            this.errorHandler.handle(error, { operation: 'onSongEnded' });
+        }
+    }
+    
+    focusSearch() {
+        this.lyricsSearchManager.focusSearch();
+    }
+    
+    showShortcutsHelp() {
+        const helpText = `
+🎵 LED歌词播放器 - 快捷键帮助
+
+📍 基本播放控制:
+• 空格键 - 播放/暂停
+• ↑/↓ - 上一首/下一首歌曲
+• ←/→ - 快退/快进5秒
+• Shift+←/→ - 快退/快进10秒
+• Ctrl+←/→ - 上一句/下一句歌词
+
+🎯 歌曲选择:
+• 数字键1-9 - 快速选择歌曲
+
+🎨 界面控制:
+• T - 切换主题
+• F - 聚焦搜索框
+• +/- - 调整字体大小
+• Esc - 全屏切换
+• H - 显示此帮助
+
+🔄 播放模式:
+• M - 循环播放模式
+• R - 随机播放
+• L - 列表循环
+• S - 单曲循环
+
+⚡ 播放速度:
+• Ctrl+1-6 - 设置播放速度(0.5x-2.0x)
+
+🎧 同步校准:
+• [ / ] - 微调同步偏移(±0.1秒)
+• Shift+[ / ] - 粗调同步偏移(±1秒)
+
+📂 文件操作:
+• Ctrl+O - 打开文件
+• Ctrl+S - 保存播放列表
+• Ctrl+A - 全选歌曲
+• Delete - 删除当前歌曲
+• Ctrl+Shift+Delete - 清空播放列表
+
+🔊 音量控制:
+• Ctrl+↑/↓ - 调节音量
+• Ctrl+0 - 静音切换
+        `;
+        
+        this.showNotification({
+            message: helpText,
+            level: 'info',
+            duration: 10000
+        });
     }
     
     // 快速选择歌曲
@@ -785,19 +1002,6 @@ class LEDLyricsPlayer {
         return modeTexts[mode] || mode;
     }
     
-    // 同步偏移调整
-    adjustSyncOffset(delta) {
-        const currentOffset = this.stateManager.getState('lyrics.syncOffset') || 0;
-        const newOffset = currentOffset + delta;
-        
-        this.stateManager.setState('lyrics.syncOffset', newOffset);
-        
-        this.showNotification({
-            message: `同步偏移: ${newOffset >= 0 ? '+' : ''}${newOffset.toFixed(1)}s`,
-            level: 'info',
-            duration: 1500
-        });
-    }
     
     // 删除当前歌曲
     deleteCurrentSong() {
@@ -943,6 +1147,36 @@ class LEDLyricsPlayer {
         }
     }
     
+    updateSyncControls() {
+        const currentSong = this.playlistManager.getCurrentSong();
+        const syncControls = document.getElementById('syncControls');
+        const offsetDisplay = document.getElementById('offsetDisplay');
+        
+        if (!syncControls || !currentSong) return;
+        
+        // 检查是否为同步模式
+        const finalMode = this.audioManager.determineFinalMode(currentSong);
+        const showSyncControls = finalMode === 'sync';
+        
+        syncControls.style.display = showSyncControls ? 'block' : 'none';
+        
+        if (showSyncControls && offsetDisplay) {
+            const offset = this.stateManager.getState('lyrics.syncOffset');
+            const sign = offset >= 0 ? '+' : '';
+            offsetDisplay.textContent = `${sign}${offset.toFixed(1)}s`;
+        }
+    }
+    
+    updatePlayModeButtons() {
+        const currentMode = this.stateManager.getState('songs.playMode');
+        
+        this.performanceOptimizer.batchDOMUpdate('play-mode-buttons', () => {
+            document.querySelectorAll('.play-mode-button').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.mode === currentMode);
+            });
+        });
+    }
+    
     updateProgressBar() {
         const currentTime = this.stateManager.getState('player.currentTime');
         const duration = this.stateManager.getState('player.duration');
@@ -971,7 +1205,16 @@ class LEDLyricsPlayer {
         const currentTime = this.stateManager.getState('player.currentTime');
         
         if (currentSong && currentSong.lyrics) {
-            this.lyricsRenderer.render(currentSong.lyrics, currentTime);
+            // 在同步模式下应用同步偏移
+            const finalMode = this.audioManager.determineFinalMode(currentSong);
+            let adjustedTime = currentTime;
+            
+            if (finalMode === 'sync') {
+                const syncOffset = this.stateManager.getState('lyrics.syncOffset');
+                adjustedTime = currentTime + syncOffset;
+            }
+            
+            this.lyricsRenderer.render(currentSong.lyrics, adjustedTime);
         }
     }
     
@@ -998,7 +1241,7 @@ class LEDLyricsPlayer {
     updatePlaylist() {
         const songs = this.stateManager.getState('songs.list');
         const currentIndex = this.stateManager.getState('songs.currentIndex');
-        this.uiManager.renderPlaylist(songs, currentIndex);
+        this.playlistManager.renderPlaylist(songs, currentIndex);
     }
     
     updateStatusIndicator() {
@@ -1058,6 +1301,7 @@ class LEDLyricsPlayer {
         this.lyricsRenderer?.destroy();
         this.notificationSystem?.destroy();
         this.shortcutManager?.destroy();
+        this.lyricsSearchManager?.destroy();
         
         // 销毁依赖
         this.performanceOptimizer?.destroy();
