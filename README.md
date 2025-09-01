@@ -8,6 +8,9 @@
   - 🎲 [lottery-app](lovecan-lottery.html)：LOVECAN重映-幸运弦迷抽奖工具。
   - 🎵 [music-player](lyrics_player%20.html)：LED演出歌词显示器。
   - 🌐 [clash-rules](clash-comprehensive-rules.yaml)：全球196国节点覆盖配置。
+  - ⚡ [setup-pwsh.ps1](setup-pwsh.ps1)：PowerShell 7 现代化环境配置。
+  - 🐧 [setup-wsl2.sh](setup-wsl2.sh)：WSL2 现代化开发环境配置。
+  - 🔧 [fix-wsl2.sh](fix-wsl2.sh)：WSL2 环境修复与优化。
 
 ## lottery-app（lovecan-lottery.html）
 - 影院座位抽奖工具，支持自定义座位布局。
@@ -45,6 +48,44 @@
   - 一劳永逸的地理全覆盖方案
   - 100%节点覆盖保证，不会有遗漏
   - 地理逻辑清晰，符合用户认知习惯
+
+## 环境配置脚本
+
+### setup-pwsh.ps1 ⭐
+**PowerShell 7 现代化环境一键配置工具**
+- **功能**: 自动配置 Windows PowerShell 7 现代化开发环境
+- **特色**:
+  - ✓ PowerShell 7 - 现代化 Shell
+  - ✓ oh-my-posh + Terminal-Icons - 美观终端 + Git 状态显示
+  - ✓ PSReadLine - 智能补全与历史搜索
+  - ✓ Posh-Git - Git 完整集成
+  - ✓ z 模块 - 智能目录跳转
+  - ✓ Scoop Completion - 命令自动补全
+- **使用方法**: 在 PowerShell 7 中运行 `.\setup-pwsh.ps1`
+- **支持参数**: `-Force` 强制重写配置、`-Diagnose` 诊断模式、`-Minimal` 最小化安装
+
+### setup-wsl2.sh ⭐
+**WSL2 现代化开发环境一键配置脚本**
+- **功能**: 全自动配置 WSL2 Ubuntu 现代化开发环境
+- **特色**:
+  - 🚀 Zsh + Oh-My-Zsh + Powerlevel10k - 现代化 Shell 与美观主题
+  - 🔍 fzf + bat + eza + fd + ripgrep - 现代化命令行工具套件
+  - 🎯 智能补全 - zsh-autosuggestions + zsh-syntax-highlighting
+  - 📍 autojump/z - 目录快速跳转
+  - 🌐 WSL2 与 Windows 互操作优化
+  - 🛠️ Node.js/Python/Go 开发环境支持
+- **使用方法**: `bash setup-wsl2.sh`
+- **支持参数**: `--diagnose` 诊断环境、`--minimal` 最小安装、`--force` 强制重装
+
+### fix-wsl2.sh
+**WSL2 环境快速修复与优化工具**
+- **功能**: 补充缺失组件，修复常见 WSL2 环境问题
+- **适用场景**: 已有环境的快速修复和优化
+- **特色**:
+  - 🔧 安装缺失的 fzf、Zsh 插件
+  - 🎨 配置 Powerlevel10k 主题
+  - ⚡ 优化 Zsh 配置文件
+  - 🔗 修复 Node.js 别名（nodejs → node）
 
 ## 使用说明
 
