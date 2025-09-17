@@ -455,11 +455,175 @@ function gc { param(`$m) git commit -m `$m }
 function gp { git push }
 function gl { git log --oneline --graph --decorate }
 
+# Clash 代理管理命令
+Set-Alias -Name clash-check -Value Test-ClashProxy
+Set-Alias -Name clash-start -Value Start-ClashProxy
+Set-Alias -Name clash-reset -Value Reset-Proxy
+
 # 系统信息
 function sysinfo {
     Write-Host "PowerShell `$(`$PSVersionTable.PSVersion)" -ForegroundColor Cyan
     Write-Host "Windows `$([System.Environment]::OSVersion.Version)" -ForegroundColor Cyan
     Write-Host "User: `$env:USERNAME@`$env:COMPUTERNAME" -ForegroundColor Green
+}
+
+# Clash 代理检测和配置
+function Get-ClashConfig {
+    # 常见的 Clash 配置文件路径
+    $configPaths = @(
+        "$env:USERPROFILE\.config\clash\config.yaml",
+        "$env:USERPROFILE\.config\clash\config.yml",
+        "$env:APPDATA\clash\config.yaml",
+        "$env:APPDATA\clash\config.yml",
+        "$env:USERPROFILE\Documents\clash\config.yaml",
+        "C:\Users\*\.config\clash\config.yaml"
+    )
+    
+    foreach ($path in $configPaths) {
+        $expandedPath = $ExecutionContext.InvokeCommand.ExpandString($path)
+        if (Test-Path $expandedPath -ErrorAction SilentlyContinue) {
+            try {
+                $content = Get-Content $expandedPath -Raw -Encoding UTF8
+                # 解析端口配置
+                if ($content -match 'port:\s*(\d+)') {
+                    $httpPort = $matches[1]
+                }
+                if ($content -match 'socks-port:\s*(\d+)') {
+                    $socksPort = $matches[1]
+                }
+                if ($content -match 'external-controller:\s*[''"]?.*:(\d+)[''"]?') {
+                    $controllerPort = $matches[1]
+                }
+                
+                return @{
+                    ConfigPath = $expandedPath
+                    HttpPort = $httpPort
+                    SocksPort = $socksPort
+                    ControllerPort = $controllerPort
+                }
+            } catch {
+                Write-Warning "无法解析配置文件: $expandedPath"
+            }
+        }
+    }
+    return $null
+}
+
+function Test-ClashProxy {
+    param(
+        [switch]$AutoConfigure,
+        [switch]$ShowDetails
+    )
+    
+    Write-Host "🔍 正在检测 Clash 代理状态..." -ForegroundColor Cyan
+    
+    # 检查 Clash 进程
+    $clashProcesses = Get-Process -Name "*clash*" -ErrorAction SilentlyContinue
+    if (-not $clashProcesses) {
+        Write-Host "❌ 未检测到 Clash 进程" -ForegroundColor Red
+        Write-Host "   请确保 Clash 已启动" -ForegroundColor Yellow
+        return $false
+    }
+    
+    Write-Host "✅ 检测到 Clash 进程: $($clashProcesses.ProcessName -join ', ')" -ForegroundColor Green
+    
+    # 获取配置信息
+    $config = Get-ClashConfig
+    if (-not $config) {
+        Write-Host "⚠️  无法找到 Clash 配置文件，使用默认端口检测" -ForegroundColor Yellow
+        $config = @{
+            HttpPort = 7890
+            SocksPort = 7891
+            ControllerPort = 9090
+        }
+    } else {
+        Write-Host "📄 找到配置文件: $(Split-Path -Leaf $config.ConfigPath)" -ForegroundColor Green
+    }
+    
+    if ($ShowDetails) {
+        Write-Host "`n📋 配置详情:" -ForegroundColor Cyan
+        Write-Host "   HTTP 代理端口: $($config.HttpPort)" -ForegroundColor White
+        Write-Host "   SOCKS 代理端口: $($config.SocksPort)" -ForegroundColor White
+        Write-Host "   控制器端口: $($config.ControllerPort)" -ForegroundColor White
+    }
+    
+    # 测试端口连通性
+    $httpPortActive = $false
+    $socksPortActive = $false
+    $controllerPortActive = $false
+    
+    if ($config.HttpPort) {
+        $httpPortActive = Test-NetConnection -ComputerName "127.0.0.1" -Port $config.HttpPort -InformationLevel Quiet -ErrorAction SilentlyContinue
+        if ($httpPortActive) {
+            Write-Host "✅ HTTP 代理端口 $($config.HttpPort) 已开启" -ForegroundColor Green
+        } else {
+            Write-Host "❌ HTTP 代理端口 $($config.HttpPort) 未响应" -ForegroundColor Red
+        }
+    }
+    
+    if ($config.SocksPort) {
+        $socksPortActive = Test-NetConnection -ComputerName "127.0.0.1" -Port $config.SocksPort -InformationLevel Quiet -ErrorAction SilentlyContinue
+        if ($socksPortActive) {
+            Write-Host "✅ SOCKS 代理端口 $($config.SocksPort) 已开启" -ForegroundColor Green
+        }
+    }
+    
+    if ($config.ControllerPort) {
+        $controllerPortActive = Test-NetConnection -ComputerName "127.0.0.1" -Port $config.ControllerPort -InformationLevel Quiet -ErrorAction SilentlyContinue
+        if ($controllerPortActive) {
+            Write-Host "✅ 控制器端口 $($config.ControllerPort) 已开启" -ForegroundColor Green
+            Write-Host "   管理界面: http://127.0.0.1:$($config.ControllerPort)/ui" -ForegroundColor Cyan
+        }
+    }
+    
+    # 自动配置代理
+    if ($AutoConfigure -and $httpPortActive) {
+        Write-Host "`n🔧 正在自动配置系统代理..." -ForegroundColor Yellow
+        
+        # 设置系统代理
+        Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings" -Name ProxyEnable -Value 1
+        Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings" -Name ProxyServer -Value "127.0.0.1:$($config.HttpPort)"
+        
+        # 配置环境变量
+        $env:HTTP_PROXY = "http://127.0.0.1:$($config.HttpPort)"
+        $env:HTTPS_PROXY = "http://127.0.0.1:$($config.HttpPort)"
+        $env:ALL_PROXY = "http://127.0.0.1:$($config.HttpPort)"
+        
+        Write-Host "✅ 系统代理已配置" -ForegroundColor Green
+        Write-Host "   HTTP_PROXY: $env:HTTP_PROXY" -ForegroundColor Cyan
+        Write-Host "   HTTPS_PROXY: $env:HTTPS_PROXY" -ForegroundColor Cyan
+        
+        # 测试代理连接
+        Write-Host "`n🌐 测试代理连接..." -ForegroundColor Cyan
+        try {
+            $response = Invoke-WebRequest -Uri "https://api.github.com" -TimeoutSec 10 -UseBasicParsing -ErrorAction Stop
+            Write-Host "✅ 代理连接测试成功 (状态码: $($response.StatusCode))" -ForegroundColor Green
+        } catch {
+            Write-Host "⚠️  代理连接测试失败，可能需要手动配置规则" -ForegroundColor Yellow
+            Write-Host "   错误: $($_.Exception.Message)" -ForegroundColor Red
+        }
+    }
+    
+    return ($httpPortActive -or $socksPortActive)
+}
+
+function Reset-Proxy {
+    Write-Host "🔄 正在重置代理设置..." -ForegroundColor Yellow
+    
+    # 禁用系统代理
+    Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings" -Name ProxyEnable -Value 0
+    
+    # 清除环境变量
+    Remove-Item Env:HTTP_PROXY -ErrorAction SilentlyContinue
+    Remove-Item Env:HTTPS_PROXY -ErrorAction SilentlyContinue
+    Remove-Item Env:ALL_PROXY -ErrorAction SilentlyContinue
+    
+    Write-Host "✅ 代理设置已重置" -ForegroundColor Green
+}
+
+function Start-ClashProxy {
+    Write-Host "🚀 自动检测并配置 Clash 代理..." -ForegroundColor Cyan
+    Test-ClashProxy -AutoConfigure
 }
 
 # 增强的 ls
@@ -490,8 +654,18 @@ Write-Host "  🚀 PowerShell `$(`$PSVersionTable.PSVersion.ToString()) " -Foreg
 Write-Host "| 📍 z (目录跳转) " -ForegroundColor Green -NoNewline
 Write-Host "| 🔀 Git 集成 " -ForegroundColor Yellow -NoNewline
 Write-Host "| 📦 Scoop 补全" -ForegroundColor Magenta
-Write-Host "  💡 输入 'sysinfo' 查看系统信息 | 'reload' 重载配置" -ForegroundColor DarkGray
+Write-Host "  💡 输入 'sysinfo' 查看系统信息 | 'reload' 重载配置 | 'clash-check' 检测代理" -ForegroundColor DarkGray
 Write-Host ""
+
+# 自动检测 Clash 代理
+try {
+    $clashRunning = Get-Process -Name "*clash*" -ErrorAction SilentlyContinue
+    if ($clashRunning) {
+        Write-Host "🌐 检测到 Clash 正在运行，输入 'clash-start' 自动配置代理" -ForegroundColor Green
+    }
+} catch {
+    # 静默忽略错误
+}
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # ✨ 配置完成

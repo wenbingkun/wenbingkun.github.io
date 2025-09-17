@@ -551,11 +551,230 @@ alias notepad='notepad.exe'
 # 获取 Windows 用户目录
 export WINHOME="/mnt/c/Users/$(cmd.exe /c 'echo %USERNAME%' 2>/dev/null | tr -d '\r')"
 
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 🌐 Clash 代理检测和配置
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# 获取 Windows 主机 IP
+get_windows_host_ip() {
+    # 方法1: 通过路由表获取
+    local host_ip=$(ip route show | grep -i default | awk '{print $3}' | head -1)
+    if [ -n "$host_ip" ] && [ "$host_ip" != "0.0.0.0" ]; then
+        echo "$host_ip"
+        return 0
+    fi
+    
+    # 方法2: 通过 /etc/resolv.conf 获取
+    host_ip=$(grep -oP "(?<=nameserver\s)(\d+\.){3}\d+" /etc/resolv.conf | head -1)
+    if [ -n "$host_ip" ]; then
+        echo "$host_ip"
+        return 0
+    fi
+    
+    # 默认值
+    echo "172.16.0.1"
+}
+
+# 检测 Clash 配置文件
+detect_clash_config() {
+    local config_paths=(
+        "$WINHOME/.config/clash/config.yaml"
+        "$WINHOME/.config/clash/config.yml" 
+        "$WINHOME/Documents/clash/config.yaml"
+        "/mnt/c/Users/*/.config/clash/config.yaml"
+    )
+    
+    for path in "${config_paths[@]}"; do
+        if [ -f "$path" ] 2>/dev/null; then
+            echo "$path"
+            return 0
+        fi
+    done
+    
+    return 1
+}
+
+# 解析 Clash 配置获取端口
+parse_clash_ports() {
+    local config_file="$1"
+    local http_port socks_port controller_port
+    
+    if [ -f "$config_file" ]; then
+        # 解析 HTTP 代理端口
+        http_port=$(grep -E "^port\s*:" "$config_file" | sed -E 's/port\s*:\s*([0-9]+).*/\1/')
+        
+        # 解析 SOCKS 代理端口
+        socks_port=$(grep -E "^socks-port\s*:" "$config_file" | sed -E 's/socks-port\s*:\s*([0-9]+).*/\1/')
+        
+        # 解析控制器端口
+        controller_port=$(grep -E "^external-controller\s*:" "$config_file" | sed -E 's/.*:([0-9]+).*/\1/')
+        
+        # 输出结果
+        echo "HTTP_PORT=${http_port:-7890}"
+        echo "SOCKS_PORT=${socks_port:-7891}"
+        echo "CONTROLLER_PORT=${controller_port:-9090}"
+        return 0
+    fi
+    
+    # 默认端口
+    echo "HTTP_PORT=7890"
+    echo "SOCKS_PORT=7891" 
+    echo "CONTROLLER_PORT=9090"
+    return 1
+}
+
+# 测试端口连通性
+test_port() {
+    local host="$1"
+    local port="$2"
+    local timeout=3
+    
+    if command -v nc >/dev/null 2>&1; then
+        nc -z -w$timeout "$host" "$port" 2>/dev/null
+    elif command -v timeout >/dev/null 2>&1; then
+        timeout $timeout bash -c "</dev/tcp/$host/$port" 2>/dev/null
+    else
+        # 使用 curl 作为备选
+        curl -s --connect-timeout $timeout "http://$host:$port" >/dev/null 2>&1
+    fi
+}
+
+# Clash 代理检测主函数
+clash_check() {
+    local show_details=false
+    local auto_configure=false
+    
+    # 解析参数
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -d|--details) show_details=true; shift ;;
+            -a|--auto) auto_configure=true; shift ;;
+            *) shift ;;
+        esac
+    done
+    
+    echo -e "\n🔍 正在检测 Clash 代理状态..."
+    
+    # 获取 Windows 主机 IP
+    local host_ip=$(get_windows_host_ip)
+    echo "🖥️  Windows 主机 IP: $host_ip"
+    
+    # 检测配置文件
+    local config_file
+    config_file=$(detect_clash_config)
+    if [ $? -eq 0 ]; then
+        echo "📄 找到配置文件: $(basename "$config_file")"
+        eval $(parse_clash_ports "$config_file")
+    else
+        echo "⚠️  未找到 Clash 配置文件，使用默认端口"
+        HTTP_PORT=7890
+        SOCKS_PORT=7891
+        CONTROLLER_PORT=9090
+    fi
+    
+    if [ "$show_details" = true ]; then
+        echo -e "\n📋 配置详情:"
+        echo "   HTTP 代理端口: $HTTP_PORT"
+        echo "   SOCKS 代理端口: $SOCKS_PORT" 
+        echo "   控制器端口: $CONTROLLER_PORT"
+    fi
+    
+    # 测试端口连通性
+    local http_active=false
+    local socks_active=false
+    local controller_active=false
+    
+    echo -e "\n🔌 测试端口连通性..."
+    
+    if test_port "$host_ip" "$HTTP_PORT"; then
+        echo "✅ HTTP 代理端口 $HTTP_PORT 已开启"
+        http_active=true
+    else
+        echo "❌ HTTP 代理端口 $HTTP_PORT 未响应"
+    fi
+    
+    if test_port "$host_ip" "$SOCKS_PORT"; then
+        echo "✅ SOCKS 代理端口 $SOCKS_PORT 已开启"
+        socks_active=true
+    else
+        echo "❌ SOCKS 代理端口 $SOCKS_PORT 未响应"
+    fi
+    
+    if test_port "$host_ip" "$CONTROLLER_PORT"; then
+        echo "✅ 控制器端口 $CONTROLLER_PORT 已开启"
+        echo "   管理界面: http://$host_ip:$CONTROLLER_PORT/ui"
+        controller_active=true
+    else
+        echo "❌ 控制器端口 $CONTROLLER_PORT 未响应"
+    fi
+    
+    # 自动配置代理
+    if [ "$auto_configure" = true ] && [ "$http_active" = true ]; then
+        echo -e "\n🔧 正在配置代理环境变量..."
+        
+        export HTTP_PROXY="http://$host_ip:$HTTP_PORT"
+        export HTTPS_PROXY="http://$host_ip:$HTTP_PORT"
+        export ALL_PROXY="http://$host_ip:$HTTP_PORT"
+        export http_proxy="$HTTP_PROXY"
+        export https_proxy="$HTTPS_PROXY" 
+        export all_proxy="$ALL_PROXY"
+        
+        # 设置 Git 代理
+        git config --global http.proxy "$HTTP_PROXY"
+        git config --global https.proxy "$HTTPS_PROXY"
+        
+        echo "✅ 代理环境变量已配置"
+        echo "   HTTP_PROXY: $HTTP_PROXY"
+        echo "   HTTPS_PROXY: $HTTPS_PROXY"
+        
+        # 测试代理连接
+        echo -e "\n🌐 测试代理连接..."
+        if curl -s --connect-timeout 10 --max-time 10 -o /dev/null -w "%{http_code}" "https://www.google.com" | grep -q "200"; then
+            echo "✅ 代理连接测试成功"
+        else
+            echo "⚠️  代理连接测试失败，请检查 Clash 规则配置"
+        fi
+    fi
+    
+    # 返回状态
+    if [ "$http_active" = true ] || [ "$socks_active" = true ]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+# 重置代理设置
+clash_reset() {
+    echo "🔄 正在重置代理设置..."
+    
+    # 清除环境变量
+    unset HTTP_PROXY HTTPS_PROXY ALL_PROXY
+    unset http_proxy https_proxy all_proxy
+    
+    # 清除 Git 代理配置
+    git config --global --unset http.proxy 2>/dev/null
+    git config --global --unset https.proxy 2>/dev/null
+    
+    echo "✅ 代理设置已重置"
+}
+
+# 自动启用代理
+clash_start() {
+    echo "🚀 自动检测并配置 Clash 代理..."
+    clash_check --auto
+}
+
 # 快速导航到 Windows 目录
 alias winhome="cd $WINHOME"
 alias desktop="cd $WINHOME/Desktop"
 alias downloads="cd $WINHOME/Downloads"
 alias documents="cd $WINHOME/Documents"
+
+# Clash 代理管理别名
+alias clash-check='clash_check'
+alias clash-start='clash_start'
+alias clash-reset='clash_reset'
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # 🎨 自动补全增强
@@ -586,8 +805,16 @@ fi
 # 欢迎信息
 echo ""
 echo "  🚀 WSL2 Modern Shell | 📍 autojump/z | 🔍 fzf | 🦇 bat | 📁 eza"
-echo "  💡 输入 'sysinfo' 查看系统信息 | 'p10k configure' 配置主题"
+echo "  💡 输入 'sysinfo' 查看系统信息 | 'p10k configure' 配置主题 | 'clash-check' 检测代理"
 echo ""
+
+# 自动检测 Clash 代理（静默检测）
+if command -v curl >/dev/null 2>&1; then
+    host_ip=$(get_windows_host_ip 2>/dev/null)
+    if [ -n "$host_ip" ] && test_port "$host_ip" "7890" 2>/dev/null; then
+        echo "🌐 检测到 Clash 代理正在运行，输入 'clash-start' 自动配置"
+    fi
+fi
 EOF
     
     print_success "配置文件生成完成"
