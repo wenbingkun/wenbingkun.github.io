@@ -6,8 +6,9 @@
 - 个人介绍、联系方式（邮箱、GitHub）。
 - 展示和入口：
   - 🎲 [lottery-app](lovecan-lottery.html)：LOVECAN重映-幸运弦迷抽奖工具。
-  - 🎵 [music-player](lyrics_player%20.html)：LED演出歌词显示器。
+  - 🎵 [music-player](lyrics_player.html)：LED演出歌词显示器。
   - 🌐 [clash-rules](clash-comprehensive-rules.yaml)：全球196国节点覆盖配置。
+  - 📱 [quantumultx-config](quantumultx-comprehensive.conf)：QuantumultX全功能配置。
   - ⚡ [setup-pwsh.ps1](setup-pwsh.ps1)：PowerShell 7 现代化环境配置。
   - 🐧 [setup-wsl2.sh](setup-wsl2.sh)：WSL2 现代化开发环境配置。
   - 🔧 [fix-wsl2.sh](fix-wsl2.sh)：WSL2 环境修复与优化。
@@ -17,13 +18,13 @@
 - 可设置中奖人数，动画揭晓，支持背景图片自定义。
 - 适合活动现场抽奖、座位分配等场景。
 
-## music-player（lyrics_player .html）
+## music-player（lyrics_player.html）
 - 支持LRC歌词文件和音频文件（MP3/WAV等）同步播放。
 - 歌词大屏显示，支持多主题、字体大小、播放模式切换。
 - 拖拽上传歌词/音频/背景图片，适合演出、KTV、活动现场。
 - 支持歌词搜索、播放列表导入导出、同步校准。
 
-## Clash 代理配置文件
+## 代理配置文件
 
 ### clash-comprehensive-rules.yaml ⭐
 **全球精品机场融合配置 - 地理全覆盖版**
@@ -48,6 +49,44 @@
   - 一劳永逸的地理全覆盖方案
   - 100%节点覆盖保证，不会有遗漏
   - 地理逻辑清晰，符合用户认知习惯
+
+- **使用方法**:
+  1. 下载对应的YAML配置文件
+  2. 替换文件中的机场订阅链接
+  3. 导入到Clash客户端
+  4. 根据需要选择对应的代理组
+
+### quantumultx-comprehensive.conf ⭐
+**QuantumultX 全功能代理配置**
+- **版本**: v1.0.0 | **更新**: 2025年9月
+- **核心特色**:
+  - 🌍 **继承Clash全球覆盖**: 完整移植196国节点支持
+  - 🛡️ **多源规则集成**: blackmatrix7、墨鱼规则、iRingo等
+  - 🔄 **自动更新机制**: 规则每12-24小时自动更新
+  - 🎯 **精准分流**: AI服务、流媒体、游戏专线优化
+  - 🚫 **强力去广告**: 多重广告拦截规则覆盖
+  - 🔓 **VIP功能解锁**: 主流应用会员功能增强
+
+- **规则来源**:
+  - 📊 **blackmatrix7**: 每日更新的iOS规则脚本集
+  - 🐙 **墨鱼规则**: ddgksf2013重写规则库
+  - 🍎 **iRingo**: Apple服务地区解锁增强
+  - 🛠️ **sve1r规则**: 补充性QuantumultX规则集
+  - 🔒 **隐私保护**: Hijacking、Privacy等安全规则
+
+- **功能模块**:
+  - 🌐 **智能DNS**: DoH/DoT支持，境内外分流
+  - 🎮 **游戏优化**: Steam、Epic、PlayStation专线
+  - 📱 **应用增强**: 微信、QQ、淘宝等功能解锁
+  - 🎬 **流媒体**: Netflix、Disney+、YouTube Premium
+  - 💰 **去广告**: 开屏广告、应用内广告全面拦截
+
+- **使用方法**:
+  1. 下载 `quantumultx-comprehensive.conf` 配置文件
+  2. 修改 `[server_remote]` 部分的机场订阅链接
+  3. 导入到QuantumultX应用中
+  4. 启用所需的重写规则和分流规则
+  5. 根据网络环境选择合适的策略组
 
 ## 环境配置脚本
 
@@ -87,21 +126,14 @@
   - ⚡ 优化 Zsh 配置文件
   - 🔗 修复 Node.js 别名（nodejs → node）
 
-## 使用说明
-
-### Clash配置使用步骤
-1. 下载对应的YAML配置文件
-2. 替换文件中的机场订阅链接
-3. 导入到Clash客户端
-4. 根据需要选择对应的代理组
-
-### 适用场景
+## 适用场景
 - **全球用户**: 支持全球196个国家和地区的节点
 - **AI开发**: 支持主流AI服务独立路由
 - **流媒体**: Netflix、Disney+、YouTube等优化
 - **游戏**: Steam、Epic、PlayStation等平台支持
 - **开发**: GitHub、GitLab等开发平台优化
 - **零维护**: 节点新增删除无需修改配置
+- **iOS用户**: QuantumultX专用，支持Siri快捷指令
 
 ## 更新日志
 
@@ -111,6 +143,13 @@
 - ✅ 零维护成本设计，节点新增删除无需手动配置
 - ✅ 优化地区代理组架构，按七大洲科学分类
 - ✅ 修复地区匹配冲突问题（澳洲→澳门，日本→尼日利亚等）
+
+### v1.0.0 (2025-09) - QuantumultX配置
+- ✅ 完整移植Clash配置功能到QuantumultX格式
+- ✅ 集成多源规则库：blackmatrix7、墨鱼规则、iRingo等
+- ✅ 实现自动更新机制，规则每12-24小时更新
+- ✅ 优化iOS设备性能，支持Siri快捷指令集成
+- ✅ 强化去广告和隐私保护功能
 
 ## 技术支持
 
