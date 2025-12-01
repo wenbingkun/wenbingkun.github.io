@@ -1,10 +1,11 @@
 #==========================================
 # @ConfigName        全球精品机场融合配置 (优化版)
 # @Author            基于墨鱼配置 + 全球机场订阅优化
-# @UpdateTime        2025年7月融合版
+# @UpdateTime        2025年11月优化版
 # @Function          全球节点覆盖、智能分流、游戏优化、AI服务支持
-# @ConfigVersion     3.1.0
-# @Features          🌍全球196国节点 | 🎮游戏专线 | 🤖主流AI支持 | 📋智能分流
+# @ConfigVersion     3.2.0
+# @Features          🌍全球196国节点 | 🎮游戏专线 | 🤖14个AI平台 | 📋智能分流 | 📥下载优化
+# @Changelog         v3.2.0: AI规则升级(5→14平台)、新增下载优化、新增Bahamut
 #==========================================
 
 # 基础配置
@@ -238,31 +239,13 @@ rule-providers:
     url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Malware/Malware.yaml"
     path: ./ruleset/Malware.yaml
 
-  # AI 服务规则集（组合规则 - 5个平台）
-  OpenAI:
+  # AI 服务规则集（墨鱼统一规则 - 覆盖14个AI平台）
+  # 包含：OpenAI, Claude, Copilot, Gemini, Perplexity, Cursor, Dify AI,
+  # JetBrains AI, Meta AI, Microsoft Copilot, Midjourney, xAI/Grok, Poe等
+  AI:
     <<: *a6
-    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/OpenAI/OpenAI.yaml"
-    path: ./ruleset/OpenAI.yaml
-    
-  Claude:
-    <<: *a6
-    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Claude/Claude.yaml"
-    path: ./ruleset/Claude.yaml
-    
-  Copilot:
-    <<: *a6
-    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Copilot/Copilot.yaml"
-    path: ./ruleset/Copilot.yaml
-    
-  Gemini:
-    <<: *a6
-    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Gemini/Gemini.yaml"
-    path: ./ruleset/Gemini.yaml
-    
-  Perplexity:
-    <<: *a6
-    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Perplexity/Perplexity.yaml"
-    path: ./ruleset/Perplexity.yaml
+    url: "https://gist.githubusercontent.com/ddgksf2013/cb4121e8b5c5d865cc949cb8120320c4/raw/Ai.yaml"
+    path: ./ruleset/AI.yaml
 
   # 流媒体服务规则集（专用规则优先，避免被GlobalMedia通用规则误捕获）
   Netflix:
@@ -310,6 +293,18 @@ rule-providers:
     <<: *a6
     url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/BiliBili/BiliBili.yaml"
     path: ./ruleset/BiliBili.yaml
+
+  # 巴哈姆特动漫规则集（台湾动漫平台）
+  Bahamut:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Bahamut/Bahamut.yaml"
+    path: ./ruleset/Bahamut.yaml
+
+  # 下载服务规则集（BT、PT、磁力链接等，避免占用代理流量）
+  Download:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Download/Download.yaml"
+    path: ./ruleset/Download.yaml
 
   # 社交平台规则集（专用规则优先，避免被SocialMedia通用规则误捕获）
   Telegram:
@@ -481,18 +476,15 @@ rules:
   - RULE-SET,Hijacking,🛡️ 安全防护
   - RULE-SET,Malware,🛡️ 安全防护
   
-  # AI 服务优化（组合规则 - 5个平台）
-  - RULE-SET,OpenAI,🤖 人工智能
-  - RULE-SET,Claude,🤖 人工智能
-  - RULE-SET,Copilot,🤖 人工智能
-  - RULE-SET,Gemini,🤖 人工智能
-  - RULE-SET,Perplexity,🤖 人工智能
+  # AI 服务优化（墨鱼统一规则 - 覆盖14个AI平台）
+  - RULE-SET,AI,🤖 人工智能
   
   # 专用平台规则（按优先级顺序排列，确保精确匹配）
   
   # 特殊分组的视频平台
   - RULE-SET,YouTube,🌌 谷歌服务
   - RULE-SET,BiliBili,📺 哔哩哔哩
+  - RULE-SET,Bahamut,🎬 流媒体
   
   # 社交平台专用规则（避免被通用规则误捕获）
   - RULE-SET,TikTok,🌐 社交平台
@@ -536,7 +528,10 @@ rules:
   
   # 腾讯服务
   - RULE-SET,Tencent,🇨🇳 国内服务
-  
+
+  # 下载服务优化（BT/PT/磁力链接直连，避免占用代理流量）
+  - RULE-SET,Download,DIRECT
+
   # 国内直连优化
   - RULE-SET,ChinaDirect,🇨🇳 国内服务
   - RULE-SET,ChinaCompany,🇨🇳 国内服务
@@ -680,10 +675,12 @@ tun:
 #
 #==========================================
 # 
-# 🤖 AI服务支持（5个主流平台）：
-# 聊天AI：OpenAI ChatGPT、Claude、Gemini/Bard、Perplexity
-# 代码AI：GitHub Copilot
-# 说明：专用规则仅覆盖主流AI平台，其他AI服务通过通用规则处理
+# 🤖 AI服务支持（墨鱼统一规则 - 14个AI平台）：
+# 聊天AI：OpenAI ChatGPT、Claude、Gemini/Bard、Perplexity、Poe、Character.ai
+# 代码AI：GitHub Copilot、Cursor、JetBrains AI、Dify AI
+# 绘图AI：Midjourney、Stability AI
+# 其他AI：xAI Grok、Meta AI、Microsoft Copilot
+# 说明：使用墨鱼维护的统一AI规则，覆盖更全面，自动更新
 # 
 # ⚙️ 高级设置：
 # - 自动健康检查：每10分钟检测节点可用性
