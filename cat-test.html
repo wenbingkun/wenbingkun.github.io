@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测测你是哪种猫咪</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap');
+        body {
+            font-family: 'ZCOOL KuaiLe', sans-serif;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .text-shadow { text-shadow: 2px 2px 4px rgba(0,0,0,0.2); }
+        .text-shadow-lg { text-shadow: 3px 3px 6px rgba(0,0,0,0.3); }
+        .progress-ring-circle {
+            transition: stroke-dashoffset 0.1s linear;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+        @keyframes float-animation {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+        .float-animation {
+            animation: float-animation 3s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="bg-orange-100 flex items-center justify-center min-h-screen">
+
+    <div class="container max-w-sm mx-auto text-center p-4">
+        
+        <!-- Test Area -->
+        <div id="test-area" class="relative w-64 h-64 mx-auto transition-transform duration-300">
+            <div class="progress-container absolute inset-0 flex items-center justify-center">
+                <svg class="w-full h-full">
+                    <circle class="text-gray-300" stroke-width="15" stroke="currentColor" fill="transparent" r="110" cx="128" cy="128"/>
+                    <circle id="progressCircle" class="text-orange-400 progress-ring-circle" stroke-width="15" stroke-linecap="round" stroke="currentColor" fill="transparent" r="110" cx="128" cy="128"/>
+                </svg>
+                <div id="press-hint" class="absolute text-gray-500 text-lg">长按这里测试</div>
+                <div id="progressPercentage" class="absolute text-3xl font-bold text-orange-500 hidden">0%</div>
+            </div>
+        </div>
+        
+        <p id="instruction-text" class="mt-8 text-xl text-gray-700">长按屏幕，看看你是哪种可爱猫咪！</p>
+
+        <!-- Result Area -->
+        <div id="result-area" class="hidden mt-8">
+            <div class="bg-white rounded-2xl shadow-xl p-6 transform transition-all duration-500">
+                <div id="result-emoji" class="text-8xl float-animation"></div>
+                <h2 id="result-title" class="text-3xl font-bold mt-4 text-orange-500"></h2>
+                <p id="result-description" class="mt-2 text-gray-600"></p>
+                <p id="result-analysis" class="mt-4 text-sm text-left bg-orange-50 p-3 rounded-lg"></p>
+                <button id="retestButton" class="mt-6 bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-6 rounded-full transition-colors duration-300">重新测试</button>
+            </div>
+            <p class="mt-4 text-xs text-gray-400">提示：结果已保存，刷新也不会改变哦！</p>
+        </div>
+
+        <!-- Footer -->
+        <footer class="mt-8 text-center text-sm text-gray-500">
+            <p>作者：Gemini 🐾</p>
+        </footer>
+
+    </div>
+
+    <script>
+        const catResults = [
+            { id: 1, name: "好奇宝宝猫", emoji: "😼", description: "对世界充满无限好奇，哪里有风吹草动都少不了你。", analysis: "你像一只对毛线球充满兴趣的小猫，乐于探索未知，总能发现生活中的小惊喜。你的好奇心是你最大的魅力！" },
+            { id: 2, name: "懒洋洋的猫", emoji: "😴", description: "如果能躺着，绝不坐着。最大的爱好是晒太阳和打盹。", analysis: "你深谙“猫生哲学”，懂得享受安逸和舒适。对你来说，最惬意的事莫过于在一个温暖的午后，什么都不做，静静发呆。" },
+            { id: 3, name: "优雅贵族猫", emoji: "💅", description: "步伐轻盈，举止优雅，自带一种不可侵犯的贵族气质。", analysis: "你就像一只出身名门的猫咪，对生活品质有要求，注重细节和美感。你独立而自信，总能保持自己的节奏。" },
+            { id: 4, name: "捣蛋鬼猫", emoji: "😹", description: "家里所有能推下桌子的东西，都逃不过你的魔爪。", analysis: "你活泼好动，是家里的“开心果”和“破坏王”。你的生活充满了乐趣和恶作剧，总能给身边的人带来欢笑（和无奈）。" },
+            { id: 5, name: "粘人精猫", emoji: "😻", description: "最喜欢在主人身边蹭来蹭去，求抱抱求摸摸。", analysis: "你情感丰富，非常依恋你喜欢的人。陪伴是你最长情的告白，你渴望与人建立亲密的联系，并从中获得安全感。" },
+            { id: 6, name: "社恐自闭猫", emoji: "🙀", description: "生人勿近！一有陌生人来访，床底就是你永远的家。", analysis: "你内心世界丰富，但更喜欢独处。在熟悉的环境和人面前，你会很放松，但面对陌生环境会感到紧张，需要时间来适应。" }
+        ];
+
+        const progressCircle = document.getElementById('progressCircle');
+        const progressPercentage = document.getElementById('progressPercentage');
+        const pressHint = document.getElementById('press-hint');
+        const testArea = document.getElementById('test-area');
+        const instructionText = document.getElementById('instruction-text');
+        
+        const resultArea = document.getElementById('result-area');
+        const resultEmoji = document.getElementById('result-emoji');
+        const resultTitle = document.getElementById('result-title');
+        const resultDescription = document.getElementById('result-description');
+        const resultAnalysis = document.getElementById('result-analysis');
+        const retestButton = document.getElementById('retestButton');
+        const progressContainer = document.querySelector('.progress-container');
+
+        const radius = progressCircle.r.baseVal.value;
+        const circumference = 2 * Math.PI * radius;
+        progressCircle.style.strokeDasharray = `${circumference} ${circumference}`;
+        progressCircle.style.strokeDashoffset = circumference;
+
+        const requiredHoldTime = 3000; // 3 seconds
+        let startTime;
+        let isHolding = false;
+        let progressInterval;
+        
+        let audioContext;
+
+        function initializeAudio() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playSound(type) {
+            if (!audioContext) return;
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.05);
+            
+            if (type === 'complete') {
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime); // C5
+                oscillator.frequency.exponentialRampToValueAtTime(1046.50, audioContext.currentTime + 0.2); // C6
+            }
+            
+            oscillator.start();
+            gainNode.gain.exponentialRampToValueAtTime(0.00001, audioContext.currentTime + 0.3);
+            oscillator.stop(audioContext.currentTime + 0.3);
+        }
+
+        function setProgress(percent) {
+            const offset = circumference - (percent / 100) * circumference;
+            progressCircle.style.strokeDashoffset = offset;
+            progressPercentage.textContent = `${Math.round(percent)}%`;
+        }
+
+        function handleHoldStart(e) {
+            e.preventDefault();
+            if (localStorage.getItem('catTestResult')) return;
+            
+            initializeAudio();
+
+            isHolding = true;
+            startTime = Date.now();
+            pressHint.classList.add('hidden');
+            progressPercentage.classList.remove('hidden');
+            instructionText.textContent = "请不要松手...";
+
+            testArea.classList.add('scale-105');
+
+            progressInterval = setInterval(updateProgress, 30);
+        }
+
+        function handleHoldEnd() {
+            if (!isHolding) return;
+            isHolding = false;
+            clearInterval(progressInterval);
+            resetProgress();
+            instructionText.textContent = "长按屏幕，看看你是哪种可爱猫咪！";
+            testArea.classList.remove('scale-105');
+        }
+
+        function updateProgress() {
+            const elapsedTime = Date.now() - startTime;
+            let progress = (elapsedTime / requiredHoldTime) * 100;
+            if (progress > 100) progress = 100;
+
+            setProgress(progress);
+
+            if (progress >= 100) {
+                clearInterval(progressInterval);
+                generateResult();
+            }
+        }
+        
+        function resetProgress() {
+            setProgress(0);
+            pressHint.classList.remove('hidden');
+            progressPercentage.classList.add('hidden');
+        }
+
+        function generateResult() {
+            playSound('complete');
+            const result = catResults[Math.floor(Math.random() * catResults.length)];
+            localStorage.setItem('catTestResult', JSON.stringify(result));
+            showResult(result);
+        }
+
+        function showResult(result) {
+            testArea.classList.add('hidden');
+            instructionText.classList.add('hidden');
+            resultArea.classList.remove('hidden');
+            
+            resultEmoji.textContent = result.emoji;
+            resultTitle.textContent = result.name;
+            resultDescription.textContent = result.description;
+            resultAnalysis.textContent = result.analysis;
+
+            resultArea.style.opacity = 0;
+            resultArea.style.transform = 'translateY(20px)';
+            setTimeout(() => {
+                resultArea.style.opacity = 1;
+                resultArea.style.transform = 'translateY(0)';
+            }, 100);
+        }
+
+        function handleRetest() {
+            localStorage.removeItem('catTestResult');
+            resetProgress();
+            
+            resultArea.classList.add('hidden');
+            testArea.classList.remove('hidden');
+            instructionText.classList.remove('hidden');
+            instructionText.textContent = "长按屏幕，看看你是哪种可爱猫咪！";
+        }
+        
+        // Event Listeners
+        progressContainer.addEventListener('mousedown', handleHoldStart);
+        document.addEventListener('mouseup', handleHoldEnd);
+        progressContainer.addEventListener('touchstart', handleHoldStart, { passive: false });
+        document.addEventListener('touchend', handleHoldEnd);
+        document.addEventListener('touchcancel', handleHoldEnd);
+        retestButton.addEventListener('click', handleRetest);
+
+        // Check for saved result on load
+        window.addEventListener('load', () => {
+            const savedResult = localStorage.getItem('catTestResult');
+            if (savedResult) {
+                showResult(JSON.parse(savedResult));
+            } else {
+                setProgress(0);
+            }
+        });
+    </script>
+</body>
+</html>
