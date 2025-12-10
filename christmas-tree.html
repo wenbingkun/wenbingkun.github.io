@@ -542,8 +542,12 @@
                     if (STATE.mode !== CONFIG.modes.SCATTER && item !== STATE.focusTarget) {
                          item.mesh.rotation.x = THREE.MathUtils.lerp(item.mesh.rotation.x, 0, 0.1);
                          item.mesh.rotation.z = THREE.MathUtils.lerp(item.mesh.rotation.z, 0, 0.1);
-                         // Face outwards for tree
-                         if(STATE.mode === CONFIG.modes.TREE) item.mesh.lookAt(0, item.mesh.position.y, 0);
+                         // Face outwards for tree - 朝向外部（从中心向外延伸）
+                         if(STATE.mode === CONFIG.modes.TREE) {
+                             const pos = item.mesh.position;
+                             // 计算从中心向外的方向，让照片正面朝外
+                             item.mesh.lookAt(pos.x * 2, pos.y, pos.z * 2);
+                         }
                     }
                 });
 
