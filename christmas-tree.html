@@ -308,6 +308,7 @@
 
         <div class="upload-wrapper">
             <button class="btn-glass" onclick="document.getElementById('file-input').click()">ADD MEMORIES</button>
+            <button class="btn-glass" id="enable-gesture-btn" style="display: none;">ENABLE GESTURES</button>
             <span class="hint-text" id="hint-text">Double-tap photo to browse | Drag to rotate</span>
             <input type="file" id="file-input" accept="image/*" multiple>
         </div>
@@ -836,22 +837,45 @@
                 
                 this.clock = new THREE.Clock();
                 
-                // Init flow - 所有设备都尝试启用手势识别
-                // 用户可以选择是否允许摄像头权限
-                this.vision.init().then(() => {
-                    console.log("Vision Ready - Hand gesture control enabled");
-                    const hintText = document.getElementById('hint-text');
-                    if (hintText) {
-                        hintText.textContent = "Open hand to browse photos | Swipe to navigate";
+                // Init flow - 手势识别初始化
+                const enableGestureBtn = document.getElementById('enable-gesture-btn');
+                const hintText = document.getElementById('hint-text');
+
+                const initVision = () => {
+                    this.vision.init().then(() => {
+                        console.log("Vision Ready - Hand gesture control enabled");
+                        if (enableGestureBtn) enableGestureBtn.style.display = 'none';
+                        if (hintText) {
+                            hintText.textContent = "Open hand to browse photos | Swipe to navigate";
+                        }
+                    }).catch((error) => {
+                        console.warn("Vision System unavailable:", error.message);
+                        console.log("Running in fallback mode - Use touch/mouse to interact");
+                        if (enableGestureBtn) enableGestureBtn.style.display = 'none';
+                        if (hintText) {
+                            hintText.textContent = "Double-tap photo to browse | Drag to rotate";
+                        }
+                    });
+                };
+
+                // 移动端需要用户交互才能请求摄像头权限
+                if (CONFIG.isMobile) {
+                    // 显示按钮让用户手动启用
+                    if (enableGestureBtn) {
+                        enableGestureBtn.style.display = 'block';
+                        enableGestureBtn.addEventListener('click', () => {
+                            enableGestureBtn.textContent = 'LOADING...';
+                            enableGestureBtn.disabled = true;
+                            initVision();
+                        });
                     }
-                }).catch((error) => {
-                    console.warn("Vision System unavailable:", error.message);
-                    console.log("Running in fallback mode - Use touch/mouse to interact");
-                    const hintText = document.getElementById('hint-text');
                     if (hintText) {
-                        hintText.textContent = "Double-tap photo to browse | Drag to rotate";
+                        hintText.textContent = "Tap 'ENABLE GESTURES' for hand control";
                     }
-                });
+                } else {
+                    // 桌面端直接初始化
+                    initVision();
+                }
 
                 // Loader fade out
                 const pmremGenerator = new THREE.PMREMGenerator(this.renderer);
