@@ -153,6 +153,59 @@
             opacity: 1;
         }
 
+        /* 照片导航指示器 */
+        .gallery-nav {
+            position: fixed;
+            bottom: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .gallery-nav.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .nav-arrow {
+            width: 50px;
+            height: 50px;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--gold);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: var(--gold);
+            font-size: 20px;
+        }
+
+        .nav-arrow:hover {
+            background: rgba(212, 175, 55, 0.3);
+            transform: scale(1.1);
+        }
+
+        .nav-arrow:active {
+            transform: scale(0.95);
+        }
+
+        .photo-counter {
+            font-family: 'Cinzel', serif;
+            font-size: 16px;
+            color: var(--gold);
+            min-width: 60px;
+            text-align: center;
+        }
+
         #file-input { display: none; }
 
         /* --- Vision Container --- */
@@ -255,12 +308,19 @@
 
         <div class="upload-wrapper">
             <button class="btn-glass" onclick="document.getElementById('file-input').click()">ADD MEMORIES</button>
-            <span class="hint-text" id="hint-text">Tap photo to enlarge | Drag to rotate</span>
+            <span class="hint-text" id="hint-text">Double-tap photo to browse | Drag to rotate</span>
             <input type="file" id="file-input" accept="image/*" multiple>
         </div>
     </div>
 
-    <div id="focus-hint" class="focus-hint">Tap anywhere to return</div>
+    <div id="focus-hint" class="focus-hint">Double-tap to enlarge | Tap to return</div>
+
+    <!-- 照片导航 -->
+    <div id="gallery-nav" class="gallery-nav">
+        <div class="nav-arrow" id="nav-prev">◀</div>
+        <div class="photo-counter"><span id="photo-current">1</span> / <span id="photo-total">1</span></div>
+        <div class="nav-arrow" id="nav-next">▶</div>
+    </div>
 
     <div id="vision-container">
         <video id="webcam" autoplay playsinline></video>
@@ -289,8 +349,8 @@
                 main: isMobile || isLowEndDevice ? 800 : 1500,
                 dust: isMobile || isLowEndDevice ? 1200 : 2500
             },
-            modes: { TREE: 0, SCATTER: 1, FOCUS: 2 },
-            maxPhotos: 20, // 最大照片数量限制
+            modes: { TREE: 0, SCATTER: 1, FOCUS: 2, GALLERY: 3 }, // 新增 GALLERY 回忆浏览模式
+            maxPhotos: 20,
             isMobile: isMobile
         };
 
@@ -298,7 +358,13 @@
             mode: CONFIG.modes.TREE,
             focusTarget: null,
             handRotation: { x: 0, y: 0 },
-            time: 0
+            time: 0,
+            // 新增：回忆浏览模式状态
+            galleryIndex: 0,        // 当前照片索引
+            galleryRotation: 0,     // 圣诞树旋转角度
+            isHandOpen: false,      // 手掌是否张开
+            lastSwipeX: 0,          // 上次滑动位置
+            swipeDirection: 0       // 滑动方向：-1左 0无 1右
         };
 
         // --- Utilities ---
@@ -534,6 +600,36 @@
                             targetScale.set(0.3, 0.3, 0.3); // 缩小
                         }
                     }
+                    else if (STATE.mode === CONFIG.modes.GALLERY) {
+                        // GALLERY 模式：圣诞树旋转，逐一展示照片
+                        const photos = this.items.filter(i => i.type === 'PHOTO');
+                        const currentPhoto = photos[STATE.galleryIndex];
+
+                        if (item === currentPhoto) {
+                            // 当前照片在前方放大显示
+                            targetPos.set(0, 2, 28);
+                            targetScale.set(7, 7, 7);
+                            item.mesh.lookAt(0, 2, 50);
+                            return;
+                        } else if (item.type === 'PHOTO') {
+                            // 其他照片缩小并围绕圣诞树排列
+                            const photoIdx = photos.indexOf(item);
+                            const angle = (photoIdx / photos.length) * Math.PI * 2 + STATE.galleryRotation;
+                            const radius = 12;
+                            targetPos.set(
+                                Math.sin(angle) * radius,
+                                2 + Math.sin(photoIdx * 0.5) * 2,
+                                Math.cos(angle) * radius
+                            );
+                            targetScale.set(1.5, 1.5, 1.5);
+                            item.mesh.lookAt(0, 2, 0);
+                        } else {
+                            // 装饰粒子正常显示在圣诞树上
+                            targetPos.copy(item.posTree);
+                            targetPos.y += Math.sin(STATE.time + item.rand * 10) * 0.2;
+                            targetScale.set(0.8, 0.8, 0.8);
+                        }
+                    }
 
                     // Lerp Position
                     item.mesh.position.lerp(targetPos, 0.05);
@@ -613,49 +709,110 @@
                 if (!this.results || !this.results.landmarks || this.results.landmarks.length === 0) {
                     // Reset interaction when no hand
                     STATE.handRotation = { x: 0, y: 0 };
+                    STATE.isHandOpen = false;
+                    STATE.swipeDirection = 0;
                     return;
                 }
 
                 const lm = this.results.landmarks[0]; // First hand
 
                 // 1. Interaction Mapping (Center: 9)
-                // Normalize -1 to 1. MediaPipe is 0 to 1.
-                // Invert X because webcam is mirrored usually
-                STATE.handRotation.x = (0.5 - lm[9].x) * 2; 
+                STATE.handRotation.x = (0.5 - lm[9].x) * 2;
                 STATE.handRotation.y = (lm[9].y - 0.5) * 2;
 
                 // 2. Gesture Recognition
                 const thumb = new THREE.Vector3(lm[4].x, lm[4].y, lm[4].z);
                 const index = new THREE.Vector3(lm[8].x, lm[8].y, lm[8].z);
                 const wrist = new THREE.Vector3(lm[0].x, lm[0].y, lm[0].z);
+                const palm = new THREE.Vector3(lm[9].x, lm[9].y, lm[9].z);
                 const tips = [lm[8], lm[12], lm[16], lm[20]]; // Index, Middle, Ring, Pinky
 
-                // Pinch
+                // Pinch distance
                 const pinchDist = Math.hypot(thumb.x - index.x, thumb.y - index.y);
-                
-                // Calculate Avg Dist to Wrist
+
+                // Calculate Avg Dist to Wrist (hand openness)
                 let avgDist = 0;
                 tips.forEach(t => {
                     avgDist += Math.hypot(t.x - wrist.x, t.y - wrist.y);
                 });
                 avgDist /= 4;
 
-                // Logic
-                if (pinchDist < 0.05) {
+                // 检测手掌是否张开（所有手指都远离手腕）
+                const isOpen = avgDist > 0.35;
+                const wasOpen = STATE.isHandOpen;
+                STATE.isHandOpen = isOpen;
+
+                // 3. 滑动检测（手掌张开时）
+                if (isOpen && STATE.mode === CONFIG.modes.GALLERY) {
+                    const currentX = palm.x;
+                    const deltaX = currentX - STATE.lastSwipeX;
+
+                    // 检测明显的左右滑动
+                    if (Math.abs(deltaX) > 0.08) {
+                        if (deltaX > 0 && STATE.swipeDirection !== 1) {
+                            STATE.swipeDirection = 1; // 右滑 -> 上一张
+                            this.onSwipe(-1);
+                        } else if (deltaX < 0 && STATE.swipeDirection !== -1) {
+                            STATE.swipeDirection = -1; // 左滑 -> 下一张
+                            this.onSwipe(1);
+                        }
+                    } else {
+                        STATE.swipeDirection = 0;
+                    }
+                    STATE.lastSwipeX = currentX;
+                }
+
+                // 4. 模式切换逻辑
+                if (isOpen && !wasOpen) {
+                    // 手掌刚张开 -> 进入 GALLERY 模式
+                    if (STATE.mode === CONFIG.modes.TREE || STATE.mode === CONFIG.modes.FOCUS) {
+                        STATE.mode = CONFIG.modes.GALLERY;
+                        STATE.galleryIndex = 0;
+                        STATE.lastSwipeX = palm.x;
+                        if (typeof app !== 'undefined' && app.onEnterGallery) {
+                            app.onEnterGallery();
+                        }
+                    }
+                } else if (!isOpen && wasOpen) {
+                    // 手掌收起 -> 返回 TREE 模式
+                    if (STATE.mode === CONFIG.modes.GALLERY) {
+                        STATE.mode = CONFIG.modes.TREE;
+                        STATE.focusTarget = null;
+                        if (typeof app !== 'undefined' && app.onExitGallery) {
+                            app.onExitGallery();
+                        }
+                    }
+                } else if (pinchDist < 0.05 && STATE.mode !== CONFIG.modes.GALLERY) {
+                    // 捏合手势 -> FOCUS 模式（选择随机照片）
                     if (STATE.mode !== CONFIG.modes.FOCUS) {
                         STATE.mode = CONFIG.modes.FOCUS;
-                        // Select random photo
                         const photos = app.particles.items.filter(i => i.type === 'PHOTO');
                         if (photos.length > 0) {
                             STATE.focusTarget = photos[Math.floor(Math.random() * photos.length)];
                         }
                     }
-                } else if (avgDist < 0.25) {
+                } else if (avgDist < 0.2 && STATE.mode !== CONFIG.modes.GALLERY) {
+                    // 握拳 -> TREE 模式
                     STATE.mode = CONFIG.modes.TREE;
                     STATE.focusTarget = null;
-                } else if (avgDist > 0.4) {
-                    STATE.mode = CONFIG.modes.SCATTER;
-                    STATE.focusTarget = null;
+                }
+            }
+
+            onSwipe(direction) {
+                // direction: 1 = 下一张, -1 = 上一张
+                const photos = app.particles.items.filter(i => i.type === 'PHOTO');
+                if (photos.length === 0) return;
+
+                STATE.galleryIndex += direction;
+                if (STATE.galleryIndex < 0) STATE.galleryIndex = photos.length - 1;
+                if (STATE.galleryIndex >= photos.length) STATE.galleryIndex = 0;
+
+                // 旋转圣诞树
+                STATE.galleryRotation += direction * (Math.PI / 4);
+
+                // 更新 UI
+                if (typeof app !== 'undefined' && app.updateGalleryUI) {
+                    app.updateGalleryUI();
                 }
             }
         }
@@ -685,16 +842,14 @@
                     console.log("Vision Ready - Hand gesture control enabled");
                     const hintText = document.getElementById('hint-text');
                     if (hintText) {
-                        hintText.textContent = CONFIG.isMobile
-                            ? "Gesture control ON | Tap photo to enlarge"
-                            : "Use hand gestures | Tap photo to enlarge";
+                        hintText.textContent = "Open hand to browse photos | Swipe to navigate";
                     }
                 }).catch((error) => {
                     console.warn("Vision System unavailable:", error.message);
                     console.log("Running in fallback mode - Use touch/mouse to interact");
                     const hintText = document.getElementById('hint-text');
                     if (hintText) {
-                        hintText.textContent = "Tap photo to enlarge | Drag to rotate";
+                        hintText.textContent = "Double-tap photo to browse | Drag to rotate";
                     }
                 });
 
@@ -780,16 +935,34 @@
                     }
                 });
 
-                // 点击/触摸照片检测
+                // UI 元素
                 const focusHint = document.getElementById('focus-hint');
                 const uiLayer = document.getElementById('ui-layer');
+                const galleryNav = document.getElementById('gallery-nav');
+                const photoCurrent = document.getElementById('photo-current');
+                const photoTotal = document.getElementById('photo-total');
+                const navPrev = document.getElementById('nav-prev');
+                const navNext = document.getElementById('nav-next');
 
+                // 双击检测变量
+                let lastTapTime = 0;
+                let lastTapTarget = null;
+                const DOUBLE_TAP_DELAY = 300;
+
+                // 触摸滑动检测
+                let touchStartX = 0;
+                let touchStartY = 0;
+                let isSwiping = false;
+
+                // 模式切换函数
                 const enterFocusMode = (item) => {
                     STATE.mode = CONFIG.modes.FOCUS;
                     STATE.focusTarget = item;
                     this.controls.autoRotate = false;
+                    focusHint.textContent = 'Tap anywhere to return';
                     focusHint.classList.add('visible');
                     uiLayer.style.opacity = '0.3';
+                    galleryNav.classList.remove('visible');
                 };
 
                 const exitFocusMode = () => {
@@ -798,23 +971,60 @@
                     this.controls.autoRotate = true;
                     focusHint.classList.remove('visible');
                     uiLayer.style.opacity = '1';
+                    galleryNav.classList.remove('visible');
                 };
 
-                const onPointerDown = (event) => {
-                    // 如果正在聚焦模式，点击任意区域退出
-                    if (STATE.mode === CONFIG.modes.FOCUS) {
-                        exitFocusMode();
-                        return;
-                    }
+                // Gallery 模式函数
+                this.onEnterGallery = () => {
+                    this.controls.autoRotate = false;
+                    focusHint.textContent = 'Swipe to browse | Close hand to exit';
+                    focusHint.classList.add('visible');
+                    galleryNav.classList.add('visible');
+                    uiLayer.style.opacity = '0.3';
+                    this.updateGalleryUI();
+                };
 
-                    // 计算鼠标/触摸位置
-                    const clientX = event.touches ? event.touches[0].clientX : event.clientX;
-                    const clientY = event.touches ? event.touches[0].clientY : event.clientY;
+                this.onExitGallery = () => {
+                    this.controls.autoRotate = true;
+                    focusHint.classList.remove('visible');
+                    galleryNav.classList.remove('visible');
+                    uiLayer.style.opacity = '1';
+                };
 
+                this.updateGalleryUI = () => {
+                    const photos = this.particles.items.filter(i => i.type === 'PHOTO');
+                    photoCurrent.textContent = STATE.galleryIndex + 1;
+                    photoTotal.textContent = photos.length;
+                };
+
+                // 导航照片
+                const navigatePhoto = (direction) => {
+                    const photos = this.particles.items.filter(i => i.type === 'PHOTO');
+                    if (photos.length === 0) return;
+
+                    STATE.galleryIndex += direction;
+                    if (STATE.galleryIndex < 0) STATE.galleryIndex = photos.length - 1;
+                    if (STATE.galleryIndex >= photos.length) STATE.galleryIndex = 0;
+
+                    STATE.galleryRotation += direction * (Math.PI / 4);
+                    this.updateGalleryUI();
+                };
+
+                // 导航按钮事件
+                navPrev.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    navigatePhoto(-1);
+                });
+                navNext.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    navigatePhoto(1);
+                });
+
+                // 检测点击的照片
+                const getClickedPhoto = (clientX, clientY) => {
                     this.mouse.x = (clientX / window.innerWidth) * 2 - 1;
                     this.mouse.y = -(clientY / window.innerHeight) * 2 + 1;
 
-                    // 射线检测
                     this.raycaster.setFromCamera(this.mouse, this.camera);
                     const photoMeshes = this.particles.items
                         .filter(item => item.type === 'PHOTO')
@@ -823,26 +1033,140 @@
                     const intersects = this.raycaster.intersectObjects(photoMeshes, true);
 
                     if (intersects.length > 0) {
-                        // 找到被点击的照片
                         const clickedMesh = intersects[0].object.parent || intersects[0].object;
-                        const clickedItem = this.particles.items.find(item =>
+                        return this.particles.items.find(item =>
                             item.mesh === clickedMesh || item.mesh.children.includes(intersects[0].object)
                         );
+                    }
+                    return null;
+                };
 
-                        if (clickedItem && clickedItem.type === 'PHOTO') {
-                            enterFocusMode(clickedItem);
+                // 主点击/触摸处理
+                const handleTap = (clientX, clientY) => {
+                    const now = Date.now();
+                    const clickedItem = getClickedPhoto(clientX, clientY);
+
+                    // FOCUS 或 GALLERY 模式下，点击空白区域退出
+                    if (STATE.mode === CONFIG.modes.FOCUS) {
+                        exitFocusMode();
+                        return;
+                    }
+
+                    if (STATE.mode === CONFIG.modes.GALLERY) {
+                        // 在 GALLERY 模式点击当前照片进入 FOCUS
+                        if (clickedItem) {
+                            const photos = this.particles.items.filter(i => i.type === 'PHOTO');
+                            if (clickedItem === photos[STATE.galleryIndex]) {
+                                enterFocusMode(clickedItem);
+                            }
+                        } else {
+                            // 点击空白区域退出 GALLERY
+                            STATE.mode = CONFIG.modes.TREE;
+                            this.onExitGallery();
+                        }
+                        return;
+                    }
+
+                    // TREE 模式下的双击检测
+                    if (clickedItem && clickedItem.type === 'PHOTO') {
+                        if (now - lastTapTime < DOUBLE_TAP_DELAY && lastTapTarget === clickedItem) {
+                            // 双击 -> 进入 GALLERY 模式并定位到该照片
+                            const photos = this.particles.items.filter(i => i.type === 'PHOTO');
+                            STATE.galleryIndex = photos.indexOf(clickedItem);
+                            STATE.mode = CONFIG.modes.GALLERY;
+                            this.onEnterGallery();
+                            lastTapTime = 0;
+                            lastTapTarget = null;
+                        } else {
+                            // 单击 -> 记录，等待可能的双击
+                            lastTapTime = now;
+                            lastTapTarget = clickedItem;
+
+                            // 延迟执行单击（进入 FOCUS）
+                            setTimeout(() => {
+                                if (lastTapTime === now && lastTapTarget === clickedItem) {
+                                    enterFocusMode(clickedItem);
+                                    lastTapTime = 0;
+                                    lastTapTarget = null;
+                                }
+                            }, DOUBLE_TAP_DELAY);
                         }
                     }
                 };
 
-                // 添加鼠标和触摸事件监听
-                this.renderer.domElement.addEventListener('click', onPointerDown);
+                // 鼠标双击直接进入 GALLERY
+                this.renderer.domElement.addEventListener('dblclick', (e) => {
+                    const clickedItem = getClickedPhoto(e.clientX, e.clientY);
+                    if (clickedItem && clickedItem.type === 'PHOTO') {
+                        const photos = this.particles.items.filter(i => i.type === 'PHOTO');
+                        STATE.galleryIndex = photos.indexOf(clickedItem);
+                        STATE.mode = CONFIG.modes.GALLERY;
+                        this.onEnterGallery();
+                    }
+                });
+
+                // 触摸事件
+                this.renderer.domElement.addEventListener('touchstart', (e) => {
+                    if (e.touches.length === 1) {
+                        touchStartX = e.touches[0].clientX;
+                        touchStartY = e.touches[0].clientY;
+                        isSwiping = false;
+                    }
+                });
+
+                this.renderer.domElement.addEventListener('touchmove', (e) => {
+                    if (e.touches.length === 1 && STATE.mode === CONFIG.modes.GALLERY) {
+                        const deltaX = e.touches[0].clientX - touchStartX;
+                        if (Math.abs(deltaX) > 50) {
+                            isSwiping = true;
+                        }
+                    }
+                });
+
                 this.renderer.domElement.addEventListener('touchend', (e) => {
-                    // 防止触摸滑动时触发点击
-                    if (e.changedTouches && e.changedTouches.length === 1) {
+                    if (e.changedTouches.length === 1) {
                         const touch = e.changedTouches[0];
-                        // 简单判断是否为点击（非滑动）
-                        onPointerDown({ clientX: touch.clientX, clientY: touch.clientY });
+                        const deltaX = touch.clientX - touchStartX;
+                        const deltaY = touch.clientY - touchStartY;
+
+                        // GALLERY 模式下的滑动切换
+                        if (STATE.mode === CONFIG.modes.GALLERY && Math.abs(deltaX) > 80 && Math.abs(deltaY) < 100) {
+                            navigatePhoto(deltaX > 0 ? -1 : 1);
+                            return;
+                        }
+
+                        // 非滑动情况下的点击处理
+                        if (!isSwiping && Math.abs(deltaX) < 20 && Math.abs(deltaY) < 20) {
+                            handleTap(touch.clientX, touch.clientY);
+                        }
+                    }
+                    isSwiping = false;
+                });
+
+                // 鼠标单击（带延迟以区分双击）
+                this.renderer.domElement.addEventListener('click', (e) => {
+                    // 双击事件会单独处理，这里只处理单击
+                    if (STATE.mode === CONFIG.modes.FOCUS || STATE.mode === CONFIG.modes.GALLERY) {
+                        handleTap(e.clientX, e.clientY);
+                    } else {
+                        // TREE 模式下的单击延迟处理已在 handleTap 中实现
+                        handleTap(e.clientX, e.clientY);
+                    }
+                });
+
+                // 键盘导航
+                window.addEventListener('keydown', (e) => {
+                    if (STATE.mode === CONFIG.modes.GALLERY) {
+                        if (e.key === 'ArrowLeft') {
+                            navigatePhoto(-1);
+                        } else if (e.key === 'ArrowRight') {
+                            navigatePhoto(1);
+                        } else if (e.key === 'Escape') {
+                            STATE.mode = CONFIG.modes.TREE;
+                            this.onExitGallery();
+                        }
+                    } else if (STATE.mode === CONFIG.modes.FOCUS && e.key === 'Escape') {
+                        exitFocusMode();
                     }
                 });
 
