@@ -126,6 +126,31 @@
             font-size: 12px;
             opacity: 0.7;
             color: var(--cream);
+            transition: opacity 0.3s ease;
+        }
+
+        /* 聚焦模式提示 */
+        .focus-hint {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            padding: 15px 30px;
+            border: 1px solid var(--gold);
+            border-radius: 10px;
+            font-family: 'Cinzel', serif;
+            font-size: 14px;
+            color: var(--gold);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 100;
+        }
+
+        .focus-hint.visible {
+            opacity: 1;
         }
 
         #file-input { display: none; }
@@ -227,13 +252,15 @@
 
     <div id="ui-layer">
         <h1>Merry Christmas</h1>
-        
+
         <div class="upload-wrapper">
             <button class="btn-glass" onclick="document.getElementById('file-input').click()">ADD MEMORIES</button>
-            <span class="hint-text" id="hint-text">Drag to rotate | Pinch to zoom</span>
-            <input type="file" id="file-input" accept="image/*">
+            <span class="hint-text" id="hint-text">Tap photo to enlarge | Drag to rotate</span>
+            <input type="file" id="file-input" accept="image/*" multiple>
         </div>
     </div>
+
+    <div id="focus-hint" class="focus-hint">Tap anywhere to return</div>
 
     <div id="vision-container">
         <video id="webcam" autoplay playsinline></video>
@@ -257,13 +284,13 @@
         // --- Configuration & State ---
         const CONFIG = {
             colors: { gold: 0xd4af37, cream: 0xfceea7, red: 0xaa0000, green: 0x003300 },
-            // 移动端/低性能设备减少粒子数量以提升性能
+            // 移动端/低性能设备减少粒子数量以提升渲染性能
             count: {
                 main: isMobile || isLowEndDevice ? 800 : 1500,
                 dust: isMobile || isLowEndDevice ? 1200 : 2500
             },
             modes: { TREE: 0, SCATTER: 1, FOCUS: 2 },
-            maxPhotos: 10, // 最大照片数量限制
+            maxPhotos: 20, // 最大照片数量限制
             isMobile: isMobile
         };
 
@@ -495,14 +522,16 @@
                     }
                     else if (STATE.mode === CONFIG.modes.FOCUS) {
                         if (item === STATE.focusTarget) {
-                            targetPos.set(0, 2, 35); // Front of camera
-                            targetScale.set(4.5, 4.5, 4.5);
-                            // Look at camera
+                            // 照片移动到相机前方，居中且放大显示
+                            targetPos.set(0, 2, 30); // 更靠近相机
+                            targetScale.set(6, 6, 6); // 更大的缩放
+                            // 面向相机
                             item.mesh.lookAt(0, 2, 50);
-                            return; // Handle separately to lock rotation
+                            return; // 不应用后续变换
                         } else {
-                            // Background scatter
-                            targetPos.copy(item.posScatter).multiplyScalar(1.5); // Push further out
+                            // 其他粒子淡出到背景
+                            targetPos.copy(item.posScatter).multiplyScalar(2); // 推到更远处
+                            targetScale.set(0.3, 0.3, 0.3); // 缩小
                         }
                     }
 
@@ -637,35 +666,37 @@
                 this.container = document.createElement('div');
                 document.body.appendChild(this.container);
 
+                // Raycaster 用于点击检测
+                this.raycaster = new THREE.Raycaster();
+                this.mouse = new THREE.Vector2();
+
                 this.setupScene();
                 this.setupPostProcessing();
                 this.setupInputs();
-                
+
                 this.particles = new ParticleManager(this.scene);
                 this.vision = new VisionSystem();
                 
                 this.clock = new THREE.Clock();
                 
-                // Init flow - 支持无摄像头降级模式
-                // 移动端跳过手势识别（性能考虑），直接使用触摸控制
-                if (CONFIG.isMobile) {
-                    console.log("Mobile device detected - Using touch controls");
+                // Init flow - 所有设备都尝试启用手势识别
+                // 用户可以选择是否允许摄像头权限
+                this.vision.init().then(() => {
+                    console.log("Vision Ready - Hand gesture control enabled");
                     const hintText = document.getElementById('hint-text');
                     if (hintText) {
-                        hintText.textContent = "Drag to rotate | Pinch to zoom";
+                        hintText.textContent = CONFIG.isMobile
+                            ? "Gesture control ON | Tap photo to enlarge"
+                            : "Use hand gestures | Tap photo to enlarge";
                     }
-                } else {
-                    this.vision.init().then(() => {
-                        console.log("Vision Ready - Hand gesture control enabled");
-                        const hintText = document.getElementById('hint-text');
-                        if (hintText) {
-                            hintText.textContent = "Use hand gestures or drag to rotate";
-                        }
-                    }).catch((error) => {
-                        console.warn("Vision System unavailable:", error.message);
-                        console.log("Running in fallback mode - Use mouse/touch to interact");
-                    });
-                }
+                }).catch((error) => {
+                    console.warn("Vision System unavailable:", error.message);
+                    console.log("Running in fallback mode - Use touch/mouse to interact");
+                    const hintText = document.getElementById('hint-text');
+                    if (hintText) {
+                        hintText.textContent = "Tap photo to enlarge | Drag to rotate";
+                    }
+                });
 
                 // Loader fade out
                 const pmremGenerator = new THREE.PMREMGenerator(this.renderer);
@@ -749,35 +780,99 @@
                     }
                 });
 
-                // File Upload
+                // 点击/触摸照片检测
+                const focusHint = document.getElementById('focus-hint');
+                const uiLayer = document.getElementById('ui-layer');
+
+                const enterFocusMode = (item) => {
+                    STATE.mode = CONFIG.modes.FOCUS;
+                    STATE.focusTarget = item;
+                    this.controls.autoRotate = false;
+                    focusHint.classList.add('visible');
+                    uiLayer.style.opacity = '0.3';
+                };
+
+                const exitFocusMode = () => {
+                    STATE.mode = CONFIG.modes.TREE;
+                    STATE.focusTarget = null;
+                    this.controls.autoRotate = true;
+                    focusHint.classList.remove('visible');
+                    uiLayer.style.opacity = '1';
+                };
+
+                const onPointerDown = (event) => {
+                    // 如果正在聚焦模式，点击任意区域退出
+                    if (STATE.mode === CONFIG.modes.FOCUS) {
+                        exitFocusMode();
+                        return;
+                    }
+
+                    // 计算鼠标/触摸位置
+                    const clientX = event.touches ? event.touches[0].clientX : event.clientX;
+                    const clientY = event.touches ? event.touches[0].clientY : event.clientY;
+
+                    this.mouse.x = (clientX / window.innerWidth) * 2 - 1;
+                    this.mouse.y = -(clientY / window.innerHeight) * 2 + 1;
+
+                    // 射线检测
+                    this.raycaster.setFromCamera(this.mouse, this.camera);
+                    const photoMeshes = this.particles.items
+                        .filter(item => item.type === 'PHOTO')
+                        .map(item => item.mesh);
+
+                    const intersects = this.raycaster.intersectObjects(photoMeshes, true);
+
+                    if (intersects.length > 0) {
+                        // 找到被点击的照片
+                        const clickedMesh = intersects[0].object.parent || intersects[0].object;
+                        const clickedItem = this.particles.items.find(item =>
+                            item.mesh === clickedMesh || item.mesh.children.includes(intersects[0].object)
+                        );
+
+                        if (clickedItem && clickedItem.type === 'PHOTO') {
+                            enterFocusMode(clickedItem);
+                        }
+                    }
+                };
+
+                // 添加鼠标和触摸事件监听
+                this.renderer.domElement.addEventListener('click', onPointerDown);
+                this.renderer.domElement.addEventListener('touchend', (e) => {
+                    // 防止触摸滑动时触发点击
+                    if (e.changedTouches && e.changedTouches.length === 1) {
+                        const touch = e.changedTouches[0];
+                        // 简单判断是否为点击（非滑动）
+                        onPointerDown({ clientX: touch.clientX, clientY: touch.clientY });
+                    }
+                });
+
+                // File Upload - 支持多文件上传
                 const input = document.getElementById('file-input');
                 input.addEventListener('change', (ev) => {
-                    if (ev.target.files && ev.target.files[0]) {
-                        const f = ev.target.files[0];
+                    const files = ev.target.files;
+                    if (!files || files.length === 0) return;
+
+                    // 处理所有选中的文件
+                    Array.from(files).forEach((file) => {
                         const reader = new FileReader();
                         reader.onload = (e) => {
                             new THREE.TextureLoader().load(
                                 e.target.result,
-                                // 成功回调
                                 (t) => {
                                     t.colorSpace = THREE.SRGBColorSpace;
                                     this.particles.addPhoto(t);
                                 },
-                                // 进度回调（可选）
                                 undefined,
-                                // 错误回调
                                 (error) => {
                                     console.error('Failed to load texture:', error);
-                                    alert('Failed to load image. Please try another file.');
                                 }
                             );
                         };
-                        reader.onerror = () => {
-                            console.error('Failed to read file');
-                            alert('Failed to read file. Please try again.');
-                        };
-                        reader.readAsDataURL(f);
-                    }
+                        reader.readAsDataURL(file);
+                    });
+
+                    // 清空 input 以便可以重新选择相同文件
+                    input.value = '';
                 });
             }
 
