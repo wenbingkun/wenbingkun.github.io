@@ -1325,6 +1325,19 @@
             console.error(...args);
         }
 
+        // 配置常量
+        const CONFIG = {
+            // 字体大小配置 (rem)
+            FONT_SIZE: {
+                CURRENT_LYRIC_BASE: 8,  // 当前歌词基础字号
+                NEXT_LYRIC_BASE: 4      // 下一句歌词基础字号
+            },
+            // 节流配置 (ms)
+            THROTTLE: {
+                LYRICS_UPDATE: 50       // 歌词更新节流间隔
+            }
+        };
+
         class LEDLyricsPlayer {
             constructor() {
                 this.playButton = document.getElementById('playButton');
@@ -1979,55 +1992,51 @@
             syncWithAudio() {
                 if (this.audioElement && this.audioMode) {
                     this.currentTime = this.audioElement.currentTime + this.audioOffset;
-                    // 强制更新进度条和歌词
-                    requestAnimationFrame(() => {
-                        this.updateProgress();
-                        this.updateLyricsDisplay();
-                    });
+
+                    // 节流：限制歌词更新频率，减少 DOM 操作
+                    const now = performance.now();
+                    if (now - this.lastLyricsUpdate >= CONFIG.THROTTLE.LYRICS_UPDATE) {
+                        this.lastLyricsUpdate = now;
+                        requestAnimationFrame(() => {
+                            this.updateProgress();
+                            this.updateLyricsDisplay();
+                        });
+                    }
                 }
             }
 
             loadBackgroundImage(file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    try {
-                        // 释放之前的背景图片URL
-                        const currentBg = this.backgroundContainer.style.backgroundImage;
-                        if (currentBg && currentBg.includes('blob:')) {
-                            const match = currentBg.match(/url\("?([^"\)]+)"?\)/);
-                            if (match && match[1]) {
-                                this.revokeObjectUrl(match[1]);
-                            }
-                        }
-                        
-                        this.backgroundContainer.style.backgroundImage = `url(${e.target.result})`;
-                        log('背景图片加载成功');
-                        if (this.showNotification) {
-                            this.showNotification(`背景图片加载成功: ${file.name}`, 'success');
-                        }
-                    } catch (error) {
-                        console.error('背景图片处理错误:', error);
-                        if (this.showNotification) {
-                            this.showNotification('背景图片处理失败', 'error');
+                try {
+                    // 释放之前的背景图片URL
+                    const currentBg = this.backgroundContainer.style.backgroundImage;
+                    if (currentBg && currentBg.includes('blob:')) {
+                        const match = currentBg.match(/url\("?([^"\)]+)"?\)/);
+                        if (match && match[1]) {
+                            this.revokeObjectUrl(match[1]);
                         }
                     }
-                };
-                reader.onerror = (error) => {
-                    console.error('背景图片加载失败:', error);
-                    if (this.showNotification) {
-                        this.showNotification(`背景图片加载失败: ${file.name}`, 'error');
-                    }
-                };
-                reader.readAsDataURL(file);
+
+                    // 使用 ObjectURL 替代 DataURL，减少内存占用
+                    const objectUrl = URL.createObjectURL(file);
+                    this.trackObjectUrl(objectUrl);
+                    this.backgroundContainer.style.backgroundImage = `url(${objectUrl})`;
+
+                    log('背景图片加载成功');
+                    this.showNotification(`背景图片加载成功: ${file.name}`, 'success');
+                } catch (error) {
+                    console.error('背景图片处理错误:', error);
+                    this.showNotification('背景图片处理失败', 'error');
+                }
             }
 
             parseLrc(lrcContent) {
-                const lyrics = [];
-                const lines = lrcContent.split('\n');
-                
+                // 先校验参数，避免空值导致异常
                 if (!lrcContent || typeof lrcContent !== 'string') {
                     throw new Error('无效的歌词文件内容');
                 }
+
+                const lyrics = [];
+                const lines = lrcContent.split('\n');
                 
                 lines.forEach((line, index) => {
                     try {
@@ -2209,12 +2218,12 @@
                 dragHandle.addEventListener('dragstart', (e) => {
                     this.draggedElement = item;
                     item.classList.add('dragging');
-                    
+
                     // 设置拖拽数据
                     const dragIndex = parseInt(item.dataset.index);
                     e.dataTransfer.setData('text/plain', dragIndex.toString());
                     e.dataTransfer.effectAllowed = 'move';
-                    
+
                     // 创建自定义拖拽图像
                     const dragImage = item.cloneNode(true);
                     dragImage.style.opacity = '0.8';
@@ -2224,32 +2233,33 @@
                     dragImage.style.top = '-1000px';
                     document.body.appendChild(dragImage);
                     e.dataTransfer.setDragImage(dragImage, item.offsetWidth / 2, 20);
-                    
-                    // 清理临时元素
-                    const timerId = setTimeout(() => {
-                        if (document.body.contains(dragImage)) {
-                            document.body.removeChild(dragImage);
-                        }
-                    }, 0);
-                    this.addTimer(timerId);
-                    
+
+                    // 存储 dragImage 引用，在 dragend 时清理
+                    this.currentDragImage = dragImage;
+
                     log('开始拖拽歌曲:', this.songs[dragIndex].name);
                 });
-                
+
                 // 拖拽结束事件 - 绑定到拖拽手柄
                 dragHandle.addEventListener('dragend', (e) => {
                     if (this.draggedElement) {
                         this.draggedElement.classList.remove('dragging');
                         this.draggedElement = null;
                     }
-                    
+
+                    // 清理拖拽图像元素
+                    if (this.currentDragImage && document.body.contains(this.currentDragImage)) {
+                        document.body.removeChild(this.currentDragImage);
+                        this.currentDragImage = null;
+                    }
+
                     // 清除所有拖拽相关样式
                     this.playlist.querySelectorAll('.song-item').forEach(songItem => {
                         songItem.classList.remove('drag-over');
                         songItem.style.borderTop = '';
                         songItem.style.borderBottom = '';
                     });
-                    
+
                     log('拖拽结束');
                 });
                 
@@ -2585,20 +2595,13 @@
             showLyrics(current, next = '') {
                 // 避免不必要的DOM更新
                 if (this.currentLyricEl.textContent !== current) {
-                    // 使用documentFragment减少重排
-                    const fragment = document.createDocumentFragment();
-                    const tempDiv = document.createElement('div');
-                    tempDiv.textContent = current;
-                    fragment.appendChild(tempDiv);
-                    
-                    // 批量更新DOM
+                    // 使用 requestAnimationFrame 批量更新DOM，减少重排
                     requestAnimationFrame(() => {
                         this.currentLyricEl.textContent = current;
                         this.nextLyricEl.textContent = next;
-                        
-                        // 添加入场动画
+
+                        // 添加入场动画 - 使用双重 rAF 确保动画正常执行
                         this.currentLyricEl.classList.remove('entering');
-                        // 使用requestAnimationFrame确保动画正常执行
                         requestAnimationFrame(() => {
                             this.currentLyricEl.classList.add('entering');
                         });
@@ -2801,16 +2804,16 @@
             updateLyricsFontSize() {
                 // 使用CSS变量来动态调整字体大小
                 document.documentElement.style.setProperty('--font-scale', this.fontScale);
-                
+
                 // 直接设置字体大小作为备用方案
                 const currentLyric = document.querySelector('.current-lyric');
                 const nextLyric = document.querySelector('.next-lyric');
-                
+
                 if (currentLyric) {
-                    currentLyric.style.fontSize = `${8 * this.fontScale}rem`;
+                    currentLyric.style.fontSize = `${CONFIG.FONT_SIZE.CURRENT_LYRIC_BASE * this.fontScale}rem`;
                 }
                 if (nextLyric) {
-                    nextLyric.style.fontSize = `${4 * this.fontScale}rem`;
+                    nextLyric.style.fontSize = `${CONFIG.FONT_SIZE.NEXT_LYRIC_BASE * this.fontScale}rem`;
                 }
             }
             
