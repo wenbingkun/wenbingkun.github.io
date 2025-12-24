@@ -5,6 +5,7 @@
 ## 主页（index.html）
 - 个人介绍、联系方式（邮箱、GitHub）。
 - 展示和入口：
+  - 🐈 [cat-personality-test](cat-test.html)：一个有趣的猫咪性格测试网页应用。
   - 🎲 [lottery-app](lovecan-lottery.html)：LOVECAN重映-幸运弦迷抽奖工具。
   - 🎵 [music-player](lyrics_player.html)：LED演出歌词显示器。
   - 🌐 [clash-rules](clash-comprehensive-rules.yaml)：全球196国节点覆盖配置。
