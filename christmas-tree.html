@@ -100,6 +100,12 @@
             flex-direction: column;
             align-items: center;
             gap: 10px;
+            transition: opacity 0.5s ease;
+        }
+
+        .upload-wrapper.fade-out {
+            opacity: 0;
+            pointer-events: none;
         }
 
         .btn-glass {
@@ -527,7 +533,6 @@
                             targetScale.set(6, 6, 6); // 更大的缩放
                             // 面向相机
                             item.mesh.lookAt(0, 2, 50);
-                            return; // 不应用后续变换
                         } else {
                             // 其他粒子淡出到背景
                             targetPos.copy(item.posScatter).multiplyScalar(2); // 推到更远处
@@ -564,6 +569,7 @@
                 this.canvas = document.getElementById('vision_canvas');
                 this.lastVideoTime = -1;
                 this.results = undefined;
+                this.lastSwipeTime = 0; // Cooldown for photo switching
             }
 
             async init() {
@@ -628,6 +634,22 @@
                 STATE.handRotation.x = (0.5 - lm[9].x) * 2; 
                 STATE.handRotation.y = (lm[9].y - 0.5) * 2;
 
+                const now = performance.now();
+
+                // Swipe to switch photos in FOCUS mode
+                if (STATE.mode === CONFIG.modes.FOCUS && now - this.lastSwipeTime > 500) { // 500ms cooldown
+                    const handX = STATE.handRotation.x;
+                    if (handX > 0.7) { // Swipe Right (next)
+                        app.switchFocusedPhoto('next');
+                        this.lastSwipeTime = now;
+                        return; // Gesture handled, exit
+                    } else if (handX < -0.7) { // Swipe Left (prev)
+                        app.switchFocusedPhoto('previous');
+                        this.lastSwipeTime = now;
+                        return; // Gesture handled, exit
+                    }
+                }
+
                 // 2. Gesture Recognition
                 const thumb = new THREE.Vector3(lm[4].x, lm[4].y, lm[4].z);
                 const index = new THREE.Vector3(lm[8].x, lm[8].y, lm[8].z);
@@ -644,7 +666,7 @@
                 });
                 avgDist /= 4;
 
-                // Logic
+                // Logic to enter/exit focus mode
                 if (pinchDist < 0.05) {
                     if (STATE.mode !== CONFIG.modes.FOCUS) {
                         STATE.mode = CONFIG.modes.FOCUS;
@@ -784,6 +806,30 @@
                     }
                 });
 
+                // Auto-hide UI for upload button
+                const uploadWrapper = document.querySelector('.upload-wrapper');
+                let uiFadeTimeout;
+
+                const resetUIFadeTimer = () => {
+                    uploadWrapper.classList.remove('fade-out');
+                    clearTimeout(uiFadeTimeout);
+                    uiFadeTimeout = setTimeout(() => {
+                        // Only fade out if not in focus mode
+                        if (STATE.mode !== CONFIG.modes.FOCUS) {
+                            uploadWrapper.classList.add('fade-out');
+                        }
+                    }, 3000); // 3-second delay
+                };
+
+                // Add event listeners to reset the timer on any activity
+                window.addEventListener('mousemove', resetUIFadeTimer);
+                window.addEventListener('touchstart', resetUIFadeTimer);
+                window.addEventListener('click', resetUIFadeTimer);
+                this.controls.addEventListener('start', resetUIFadeTimer); // For orbit controls drag
+
+                // Initial call to start the timer
+                resetUIFadeTimer();
+
                 // 点击/触摸照片检测
                 const focusHint = document.getElementById('focus-hint');
                 const uiLayer = document.getElementById('ui-layer');
@@ -878,6 +924,25 @@
                     // 清空 input 以便可以重新选择相同文件
                     input.value = '';
                 });
+            }
+
+            switchFocusedPhoto(direction) {
+                if (STATE.mode !== CONFIG.modes.FOCUS || !STATE.focusTarget) return;
+
+                const photos = this.particles.items.filter(item => item.type === 'PHOTO');
+                if (photos.length <= 1) return;
+
+                const currentIndex = photos.findIndex(item => item === STATE.focusTarget);
+                if (currentIndex === -1) return;
+
+                let nextIndex;
+                if (direction === 'next') {
+                    nextIndex = (currentIndex + 1) % photos.length;
+                } else { // 'previous'
+                    nextIndex = (currentIndex - 1 + photos.length) % photos.length;
+                }
+
+                STATE.focusTarget = photos[nextIndex];
             }
 
             animate() {
