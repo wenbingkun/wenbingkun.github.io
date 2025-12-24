@@ -531,6 +531,7 @@
                     }
                     else if (STATE.mode === CONFIG.modes.FOCUS) {
                         if (item === STATE.focusTarget) {
+                            console.log(`Debug: Animating focus target. Target Pos: (0, 2, 30), Target Scale: (6, 6, 6)`);
                             // 照片移动到相机前方，居中且放大显示
                             targetPos.set(0, 2, 30); // 更靠近相机
                             targetScale.set(6, 6, 6); // 更大的缩放
@@ -577,9 +578,9 @@
                 this.lastVideoTime = -1;
                 this.results = undefined;
 
-                // For pinch-and-move gesture
-                this.initialPinchX = 0;
-                this.switchLock = false;
+                // Gesture state
+                this.isPinched = false;
+                this.handAnchorX = 0;
             }
 
             async init() {
@@ -630,10 +631,11 @@
             }
 
             processGestures() {
+                // 1. Get landmarks or return if no hand.
                 if (!this.results || !this.results.landmarks || this.results.landmarks.length === 0) {
-                    // If hand is lost, and we were pinching, release the pinch.
-                    if (STATE.isPinching) {
-                        STATE.isPinching = false;
+                    if (this.isPinched) { // Gracefully exit focus mode if hand is lost
+                        console.log("Debug: Hand lost, releasing pinch.");
+                        this.isPinched = false;
                         STATE.mode = CONFIG.modes.TREE;
                         STATE.focusTarget = null;
                         this.controls.enabled = true;
@@ -642,90 +644,86 @@
                     return;
                 }
 
-                const lm = this.results.landmarks[0]; // First hand
+                const lm = this.results.landmarks[0];
                 const thumbTip = lm[4];
                 const indexTip = lm[8];
                 const palmCenter = lm[9];
 
-                // --- Pinch Detection ---
+                // 2. Calculate pinch distance.
                 const pinchDist = Math.hypot(thumbTip.x - indexTip.x, thumbTip.y - indexTip.y);
-                const isPinched = pinchDist < 0.07; // Increased threshold slightly for easier detection
+                const isCurrentlyPinched = pinchDist < 0.07;
 
-                // --- State Machine for Pinching ---
-                if (isPinched) {
-                    if (!STATE.isPinching) {
-                        // --- Pinch Just Started ---
-                        STATE.isPinching = true;
-                        STATE.mode = CONFIG.modes.FOCUS;
-                        this.controls.enabled = false;
-                        this.initialPinchX = palmCenter.x;
-                        this.switchLock = false;
+                // --- State Transitions ---
 
-                        // Find photo to focus using raycasting from index finger
-                        const handX = indexTip.x * 2 - 1;
-                        const handY = -(indexTip.y * 2) + 1;
-                        this.raycaster.setFromCamera({ x: handX, y: handY }, this.camera);
-                        
-                        const photoMeshes = this.particleManager.items
-                            .filter(item => item.type === 'PHOTO')
-                            .map(item => item.mesh);
-                        
-                        const intersects = this.raycaster.intersectObjects(photoMeshes, true);
-                        if (intersects.length > 0) {
-                            const clickedMesh = intersects[0].object.parent || intersects[0].object;
-                            const clickedItem = this.particleManager.items.find(item =>
-                                item.mesh === clickedMesh || item.mesh.children.includes(intersects[0].object)
-                            );
-                            if (clickedItem) STATE.focusTarget = clickedItem;
-                        } else {
-                            // If no photo is pointed at, just pick a random one
-                            const photos = this.particleManager.items.filter(i => i.type === 'PHOTO');
-                            if (photos.length > 0) {
-                                STATE.focusTarget = photos[Math.floor(Math.random() * photos.length)];
-                            }
-                        }
+                // Transition TO Pinching State
+                if (isCurrentlyPinched && !this.isPinched) {
+                    this.isPinched = true;
+                    console.log("Debug: Pinch Started.");
+                    
+                    STATE.mode = CONFIG.modes.FOCUS;
+                    this.controls.enabled = false;
+                    
+                    // Requirement: Randomly select a photo
+                    const photos = this.particleManager.items.filter(i => i.type === 'PHOTO');
+                    if (photos.length > 0) {
+                        const randomIndex = Math.floor(Math.random() * photos.length);
+                        STATE.focusTarget = photos[randomIndex];
+                        console.log(`Debug: Randomly selecting photo index ${randomIndex}.`);
                     } else {
-                        // --- Pinch is Maintained ---
-                        const deltaX = palmCenter.x - this.initialPinchX;
-                        const switchThreshold = 0.15;
+                        console.log("Debug: Pinch started but no photos to select.");
+                        STATE.focusTarget = null; // No target if no photos
+                    }
 
-                        if (deltaX > switchThreshold && !this.switchLock) {
-                            app.switchFocusedPhoto('next');
-                            this.switchLock = true; // Lock until hand returns to center
-                        } else if (deltaX < -switchThreshold && !this.switchLock) {
-                            app.switchFocusedPhoto('previous');
-                            this.switchLock = true; // Lock until hand returns to center
-                        }
-                        
-                        // Reset lock when hand returns to a neutral zone around the initial position
-                        if (Math.abs(deltaX) < 0.1) {
-                            this.switchLock = false;
-                        }
+                    // Set anchor for left/right movement
+                    this.handAnchorX = palmCenter.x;
+                    return; 
+                }
+
+                // Transition FROM Pinching State
+                if (!isCurrentlyPinched && this.isPinched) {
+                    this.isPinched = false;
+                    console.log("Debug: Pinch Released.");
+
+                    STATE.mode = CONFIG.modes.TREE;
+                    STATE.focusTarget = null;
+                    this.controls.enabled = true;
+                    return;
+                }
+
+                // --- Actions within States ---
+
+                if (this.isPinched) {
+                    // === PINCH MAINTAINED ===
+                    const currentHandX = palmCenter.x;
+                    const deltaX = currentHandX - this.handAnchorX;
+                    const threshold = 0.2; // How far to move to trigger a switch
+
+                    if (deltaX > threshold) {
+                        console.log("Debug: Switching photo: previous");
+                        app.switchFocusedPhoto('previous'); // Mirrored, so right move is previous
+                        this.handAnchorX = currentHandX; // Reset anchor
+                    } else if (deltaX < -threshold) {
+                        console.log("Debug: Switching photo: next");
+                        app.switchFocusedPhoto('next'); // Mirrored, so left move is next
+                        this.handAnchorX = currentHandX; // Reset anchor
                     }
                 } else {
-                    if (STATE.isPinching) {
-                        // --- Pinch Just Released ---
-                        STATE.isPinching = false;
-                        STATE.mode = CONFIG.modes.TREE;
-                        STATE.focusTarget = null;
-                        this.controls.enabled = true;
-                    } else {
-                        // --- No Pinch (Normal Operation) ---
-                        STATE.handRotation.x = (0.5 - palmCenter.x) * 2; 
-                        STATE.handRotation.y = (palmCenter.y - 0.5) * 2;
-                        
-                        // Mode switching based on open/closed hand
-                        const wrist = lm[0];
-                        const tips = [lm[8], lm[12], lm[16], lm[20]];
-                        let avgDist = 0;
-                        tips.forEach(t => { avgDist += Math.hypot(t.x - wrist.x, t.y - wrist.y); });
-                        avgDist /= 4;
+                    // === NOT PINCHING (IDLE) ===
+                    // Handle scene rotation
+                    STATE.handRotation.x = (0.5 - palmCenter.x) * 2;
+                    STATE.handRotation.y = (palmCenter.y - 0.5) * 2;
 
-                        if (avgDist < 0.25) { // Fist
-                            STATE.mode = CONFIG.modes.TREE;
-                        } else if (avgDist > 0.4) { // Open Palm
-                            STATE.mode = CONFIG.modes.SCATTER;
-                        }
+                    // Handle TREE/SCATTER mode
+                    const wrist = lm[0];
+                    const tips = [lm[8], lm[12], lm[16], lm[20]];
+                    let avgDist = 0;
+                    tips.forEach(t => { avgDist += Math.hypot(t.x - wrist.x, t.y - wrist.y); });
+                    avgDist /= 4;
+
+                    if (avgDist < 0.25) {
+                        STATE.mode = CONFIG.modes.TREE;
+                    } else if (avgDist > 0.4) {
+                        STATE.mode = CONFIG.modes.SCATTER;
                     }
                 }
             }
