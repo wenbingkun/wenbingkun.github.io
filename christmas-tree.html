@@ -121,6 +121,7 @@
             text-transform: uppercase;
             letter-spacing: 2px;
             outline: none;
+            min-width: 220px; /* Ensure uniform width */
         }
 
         .btn-glass:hover {
@@ -742,31 +743,14 @@
 
                 this.setupScene();
                 this.setupPostProcessing();
-                this.setupInputs();
-
+                
                 this.particles = new ParticleManager(this.scene);
                 this.vision = new VisionSystem(this.controls, this.camera, this.raycaster, this.particles);
                 
-                this.clock = new THREE.Clock();
+                // Must be called after vision is instantiated
+                this.setupInputs();
                 
-                // Init flow - 所有设备都尝试启用手势识别
-                // 用户可以选择是否允许摄像头权限
-                this.vision.init().then(() => {
-                    console.log("Vision Ready - Hand gesture control enabled");
-                    const hintText = document.getElementById('hint-text');
-                    if (hintText) {
-                        hintText.textContent = CONFIG.isMobile
-                            ? "Gesture control ON | Tap photo to enlarge"
-                            : "Use hand gestures | Tap photo to enlarge";
-                    }
-                }).catch((error) => {
-                    console.warn("Vision System unavailable:", error.message);
-                    console.log("Running in fallback mode - Use touch/mouse to interact");
-                    const hintText = document.getElementById('hint-text');
-                    if (hintText) {
-                        hintText.textContent = "Tap photo to enlarge | Drag to rotate";
-                    }
-                });
+                this.clock = new THREE.Clock();
 
                 // Loader fade out
                 const pmremGenerator = new THREE.PMREMGenerator(this.renderer);
@@ -849,6 +833,24 @@
                         document.querySelector('#ui-layer').classList.toggle('ui-hidden');
                     }
                 });
+
+                // Gesture Control Button
+                const enableGesturesBtn = document.getElementById('enable-gestures-btn');
+                const hintText = document.getElementById('hint-text');
+
+                enableGesturesBtn.addEventListener('click', async () => {
+                    try {
+                        await this.vision.init();
+                        // On success
+                        console.log("Vision Ready - Hand gesture control enabled");
+                        hintText.textContent = "Use hand gestures | Tap photo to enlarge";
+                        enableGesturesBtn.style.display = 'none';
+                    } catch (error) {
+                        console.warn("Vision System could not be initialized:", error.message);
+                        hintText.innerHTML = "Gestures failed. Please enable camera in browser settings, then refresh.";
+                    }
+                });
+
 
                 // Auto-hide UI for upload button
                 const uploadWrapper = document.querySelector('.upload-wrapper');
