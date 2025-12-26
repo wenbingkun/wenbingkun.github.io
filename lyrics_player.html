@@ -200,10 +200,12 @@
         /* 控制面板 */
         .control-panel {
             position: fixed;
-            bottom: 20px;
-            right: 20px;
-            width: 400px;
-            max-height: 80vh;
+            bottom: 28px;
+            right: 28px;
+            width: clamp(380px, 32vw, 500px);
+            max-height: 86vh;
+            font-size: 14px;
+            padding: 24px;
             /* ... 背景和滤镜样式保持不变 ... */
             
             /* 修改 transform 和 transition */
@@ -218,6 +220,10 @@
             
             /* 优化：只有在面板显示时才运行呼吸动画，减少后台消耗 */
             animation: none; 
+            
+            /* 滚动条样式 */
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,0.2) transparent;
         }
 
         /* 触发区域悬停 或 面板悬停时 */
@@ -268,44 +274,49 @@
             position: fixed;
             bottom: 0;
             right: 0;
-            width: 100px;
-            height: 100px;
+            width: 120px;
+            height: 120px;
             z-index: 999;
             cursor: pointer;
         }
 
+        /* 触发区域悬停 或 面板悬停时 或 面板激活时 */
         .trigger-zone:hover + .control-panel,
-        .control-panel:hover {
+        .control-panel:hover,
+        .control-panel.active {
             transform: translateX(0);
-            visibility: visible; /* performance: show panel */
-            animation: liquidBreathing 8s ease-in-out infinite; /* performance: only animate when visible */
+            visibility: visible;
+            /* 显示时立即变为可见 */
+            transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), visibility 0s;
+            
+            /* 只有显示时才开启动画 */
+            animation: liquidBreathing 8s ease-in-out infinite;
+            
             /* 激活状态的液态玻璃效果 */
             background: linear-gradient(
-                135deg,
-                rgba(255, 255, 255, 0.15) 0%,
-                rgba(255, 255, 255, 0.08) 25%,
-                rgba(255, 255, 255, 0.04) 50%,
-                rgba(0, 0, 0, 0.08) 75%,
-                rgba(0, 0, 0, 0.15) 100%
+                145deg,
+                rgba(255, 255, 255, 0.25) 0%,
+                rgba(255, 255, 255, 0.14) 30%,
+                rgba(255, 255, 255, 0.08) 60%,
+                rgba(0, 0, 0, 0.12) 100%
             );
-            backdrop-filter: blur(50px) saturate(2.0) brightness(1.3);
-            -webkit-backdrop-filter: blur(50px) saturate(2.0) brightness(1.3);
+            backdrop-filter: blur(40px) saturate(1.8) brightness(1.2);
+            -webkit-backdrop-filter: blur(40px) saturate(1.8) brightness(1.2);
             box-shadow: 
-                0 0 100px rgba(255, 255, 255, 0.2),
-                inset 0 1px 0 rgba(255, 255, 255, 0.4),
-                inset 0 -1px 0 rgba(0, 0, 0, 0.1),
-                0 30px 80px rgba(0, 0, 0, 0.3),
-                0 10px 40px rgba(255, 255, 255, 0.1);
+                0 20px 60px rgba(0, 0, 0, 0.35),
+                0 8px 24px rgba(0, 0, 0, 0.28),
+                inset 0 1px 0 rgba(255, 255, 255, 0.35),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.15);
         }
 
         /* 控制面板内容 */
         .panel-title {
             color: rgba(255, 255, 255, 0.95);
-            font-size: 18px;
+            font-size: 22px;
             font-weight: 700;
-            margin-bottom: 20px;
+            margin-bottom: 24px;
             text-align: center;
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            text-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
             background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
             -webkit-background-clip: text;
             background-clip: text;
@@ -313,46 +324,55 @@
         }
 
         .file-upload-group {
-            margin-bottom: 15px;
+            margin-bottom: 24px;
         }
 
         .upload-label {
             display: block;
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 12px;
-            margin-bottom: 5px;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+            margin-bottom: 10px;
+            letter-spacing: 0.1px;
         }
 
         .file-input {
             flex: 1;
-            padding: 8px;
+            padding: 0 14px;
+            height: 42px;
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 6px;
+            border-radius: 10px;
             color: #fff;
-            font-size: 12px;
+            font-size: 14px;
+            line-height: 40px;
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.1),
+                0 6px 18px rgba(0, 0, 0, 0.18);
         }
 
         .file-input::file-selector-button {
             background: rgba(255, 255, 255, 0.2);
             border: none;
             color: #fff;
-            padding: 4px 8px;
-            border-radius: 4px;
-            margin-right: 8px;
+            padding: 0 12px;
+            height: 28px;
+            border-radius: 6px;
+            margin-right: 12px;
             cursor: pointer;
+            font-size: 12px;
         }
 
         .folder-button {
-            padding: 8px 12px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 6px;
-            background: rgba(255, 255, 255, 0.1);
+            width: 42px;
+            height: 42px;
+            flex-shrink: 0;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 10px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.18), rgba(255,255,255,0.08));
             color: white;
-            font-size: 16px;
+            font-size: 20px;
             cursor: pointer;
             transition: all 0.3s ease;
-            min-width: 50px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -369,7 +389,7 @@
         }
         
         .compatibility-hint {
-            font-size: 10px;
+            font-size: 12px;
             color: rgba(255, 255, 255, 0.6);
             margin-top: 3px;
             font-style: italic;
@@ -399,42 +419,43 @@
 
         .current-song-name {
             color: #fff;
-            font-size: 14px;
+            font-size: 15px;
             font-weight: 600;
             margin-bottom: 5px;
         }
 
         .current-song-status {
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 11px;
+            color: rgba(255, 255, 255, 0.72);
+            font-size: 12px;
         }
 
         .controls-row {
             display: flex;
             align-items: center;
-            gap: 10px;
-            margin-bottom: 10px;
+            gap: 16px;
+            margin-bottom: 24px;
         }
 
         .play-button {
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            background: linear-gradient(
-                145deg,
-                rgba(255, 255, 255, 0.2) 0%,
-                rgba(255, 255, 255, 0.05) 100%
-            );
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+            width: 64px;
+            height: 64px;
+            flex-shrink: 0;
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.32);
+            background: linear-gradient(150deg, rgba(255,255,255,0.25), rgba(255,255,255,0.08));
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
             color: rgba(255, 255, 255, 0.95);
-            font-size: 16px;
+            font-size: 28px;
             cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            transition: all 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94);
             box-shadow: 
-                0 4px 12px rgba(0, 0, 0, 0.1),
-                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+                0 10px 26px rgba(0, 0, 0, 0.18),
+                inset 0 1px 0 rgba(255, 255, 255, 0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
         }
 
         .play-button:hover {
@@ -467,13 +488,14 @@
 
         .time-info {
             color: rgba(255, 255, 255, 0.8);
-            font-size: 11px;
-            min-width: 80px;
+            font-size: 13px;
+            min-width: 85px;
+            font-variant-numeric: tabular-nums;
         }
 
         .progress-container {
             flex: 1;
-            height: 8px;
+            height: 10px;
             background: linear-gradient(
                 90deg,
                 rgba(255, 255, 255, 0.1) 0%,
@@ -482,7 +504,7 @@
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
             position: relative;
             overflow: hidden;
@@ -499,7 +521,7 @@
                 rgba(255, 255, 255, 0.7) 50%,
                 rgba(255, 255, 255, 0.9) 100%
             );
-            border-radius: 6px;
+            border-radius: 8px;
             width: 0%;
             transform-origin: left;
             transition: width 0.2s ease;
@@ -538,32 +560,35 @@
 
         .speed-controls {
             display: flex;
-            gap: 5px;
+            gap: 8px;
             margin-bottom: 15px;
+            align-items: center;
         }
 
-        .speed-button, .font-size-button, .theme-button, .search-button, .play-mode-button {
-            padding: 6px 12px;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            background: linear-gradient(
-                145deg,
-                rgba(255, 255, 255, 0.15) 0%,
-                rgba(255, 255, 255, 0.05) 100%
-            );
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            color: rgba(255, 255, 255, 0.9);
-            border-radius: 8px;
+        .speed-button, .font-size-button, .theme-button, .search-button, .play-mode-button, .sync-button {
+            padding: 0 16px;
+            height: 32px;
+            border: 1px solid rgba(255, 255, 255, 0.26);
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.07));
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            color: rgba(255, 255, 255, 0.92);
+            border-radius: 16px;
             cursor: pointer;
-            font-size: 10px;
-            font-weight: 500;
-            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.2px;
+            transition: all 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94);
             box-shadow: 
-                0 2px 8px rgba(0, 0, 0, 0.1),
-                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+                0 6px 16px rgba(0, 0, 0, 0.18),
+                inset 0 1px 0 rgba(255, 255, 255, 0.22);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
         }
 
-        .speed-button:hover, .font-size-button:hover, .theme-button:hover, .search-button:hover, .play-mode-button:hover {
+        .speed-button:hover, .font-size-button:hover, .theme-button:hover, .search-button:hover, .play-mode-button:hover, .sync-button:hover {
             background: linear-gradient(
                 145deg,
                 rgba(255, 255, 255, 0.25) 0%,
@@ -576,7 +601,7 @@
                 inset 0 1px 0 rgba(255, 255, 255, 0.3);
         }
 
-        .speed-button.active, .font-size-button.active, .theme-button.active, .play-mode-button.active {
+        .speed-button.active, .font-size-button.active, .theme-button.active, .play-mode-button.active, .sync-button.active {
             background: linear-gradient(
                 145deg,
                 rgba(255, 255, 255, 0.4) 0%,
@@ -592,7 +617,8 @@
         
         .search-input {
             flex: 1;
-            padding: 8px 12px;
+            padding: 0 14px;
+            height: 38px;
             background: linear-gradient(
                 145deg,
                 rgba(255, 255, 255, 0.1) 0%,
@@ -601,9 +627,9 @@
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.25);
-            border-radius: 8px;
+            border-radius: 12px;
             color: rgba(255, 255, 255, 0.95);
-            font-size: 11px;
+            font-size: 13px;
             font-weight: 400;
             outline: none;
             transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -628,20 +654,28 @@
                 0 0 0 2px rgba(255, 255, 255, 0.1),
                 0 2px 8px rgba(255, 255, 255, 0.05);
         }
+
+        .search-button {
+            height: 38px;
+            width: 38px;
+            min-width: 38px;
+            padding: 0;
+            border-radius: 12px;
+        }
         
         .search-results {
             margin-top: 8px;
             max-height: 120px;
             overflow-y: auto;
             background: rgba(0, 0, 0, 0.8);
-            border-radius: 4px;
+            border-radius: 8px;
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
         
         .search-result-item {
-            padding: 6px 8px;
+            padding: 8px 10px;
             cursor: pointer;
-            font-size: 10px;
+            font-size: 12px;
             color: rgba(255, 255, 255, 0.8);
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
             transition: background 0.2s ease;
@@ -657,7 +691,7 @@
         
         .search-result-time {
             color: rgba(255, 255, 255, 0.5);
-            font-size: 9px;
+            font-size: 11px;
             margin-right: 8px;
         }
         
@@ -670,8 +704,8 @@
         /* 内联快捷键提示样式 */
         .shortcut-hint {
             color: rgba(255, 255, 255, 0.5);
-            font-size: 8px;
-            margin-left: 4px;
+            font-size: 10px;
+            margin-left: 6px;
             font-weight: 500;
         }
         
@@ -692,7 +726,7 @@
             margin-bottom: 8px;
             border-left: 4px solid;
             color: white;
-            font-size: 12px;
+            font-size: 14px;
             animation: slideIn 0.3s ease, fadeOut 0.3s ease 2.7s;
             animation-fill-mode: forwards;
             opacity: 0;
@@ -733,11 +767,12 @@
         .playlist-section {
             border-top: 1px solid rgba(255, 255, 255, 0.1);
             padding-top: 15px;
+            margin-top: 20px;
         }
 
         .playlist-header {
             color: rgba(255, 255, 255, 0.8);
-            font-size: 12px;
+            font-size: 14px;
             margin-bottom: 10px;
             display: flex;
             justify-content: space-between;
@@ -746,7 +781,7 @@
 
         .playlist-count {
             color: rgba(255, 255, 255, 0.5);
-            font-size: 10px;
+            font-size: 12px;
         }
 
         .playlist {
@@ -755,7 +790,7 @@
         }
 
         .playlist::-webkit-scrollbar {
-            width: 4px;
+            width: 5px;
         }
 
         .playlist::-webkit-scrollbar-track {
@@ -763,8 +798,8 @@
         }
 
         .playlist::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 2px;
+            background: rgba(255, 255, 255, 0.25);
+            border-radius: 3px;
         }
 
         .song-item {
@@ -774,7 +809,7 @@
             padding: 8px;
             margin-bottom: 4px;
             background: rgba(255, 255, 255, 0.05);
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
             transition: all 0.2s ease;
             border: 1px solid transparent;
@@ -797,15 +832,15 @@
         }
         
         .drag-handle {
-            width: 16px;
-            height: 16px;
+            width: 18px;
+            height: 18px;
             background: rgba(255, 255, 255, 0.2);
-            border-radius: 3px;
+            border-radius: 4px;
             cursor: grab;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 8px;
+            font-size: 10px;
             color: rgba(255, 255, 255, 0.5);
             transition: all 0.2s ease;
             opacity: 0.6;
@@ -884,12 +919,12 @@
         .mode-selector {
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 4px;
+            border-radius: 6px;
             color: white;
-            font-size: 9px;
-            padding: 2px 4px;
-            width: 65px;
-            height: 20px;
+            font-size: 11px;
+            padding: 4px 6px;
+            width: 70px;
+            height: 24px;
             transition: all 0.2s ease;
             cursor: pointer;
         }
@@ -927,7 +962,7 @@
         }
 
         .song-index-num {
-            font-size: 10px;
+            font-size: 12px;
             color: rgba(255, 255, 255, 0.5);
             min-width: 20px;
             text-align: center;
@@ -935,7 +970,7 @@
 
         .song-name {
             flex: 1;
-            font-size: 11px;
+            font-size: 13px;
             color: rgba(255, 255, 255, 0.8);
             white-space: nowrap;
             overflow: hidden;
@@ -948,15 +983,15 @@
         }
 
         .song-duration {
-            font-size: 10px;
+            font-size: 12px;
             color: rgba(255, 255, 255, 0.5);
-            min-width: 40px;
+            min-width: 45px;
             text-align: right;
         }
 
         .song-controls {
             display: flex;
-            gap: 4px;
+            gap: 5px;
             opacity: 0;
             transition: opacity 0.2s ease;
         }
@@ -966,14 +1001,14 @@
         }
 
         .song-control-btn {
-            width: 16px;
-            height: 16px;
+            width: 22px;
+            height: 22px;
             border: none;
             background: rgba(255, 255, 255, 0.2);
             color: #fff;
-            border-radius: 3px;
+            border-radius: 5px;
             cursor: pointer;
-            font-size: 8px;
+            font-size: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -989,14 +1024,14 @@
         }
         
         .playlist-action-btn {
-            width: 20px;
-            height: 20px;
+            width: 28px;
+            height: 28px;
             border: 1px solid rgba(255, 255, 255, 0.2);
             background: rgba(255, 255, 255, 0.1);
             color: rgba(255, 255, 255, 0.8);
-            border-radius: 3px;
+            border-radius: 6px;
             cursor: pointer;
-            font-size: 10px;
+            font-size: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -1008,18 +1043,13 @@
         }
         
         .sync-button {
-            padding: 2px 6px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            background: rgba(255, 255, 255, 0.1);
-            color: rgba(255, 255, 255, 0.8);
-            border-radius: 3px;
-            cursor: pointer;
-            font-size: 9px;
-            transition: all 0.2s ease;
+            padding: 6px 10px;
+            font-size: 12px;
+            border-radius: 12px;
         }
         
         .sync-button:hover {
-            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(0);
         }
 
         /* 空播放列表 */
@@ -1306,7 +1336,7 @@
         };
 
         // 调试日志系统
-        const DEBUG = true; // 生产环境设置为 false
+        const DEBUG = false; // 生产环境默认关闭日志
         
         function log(...args) {
             if (DEBUG) {
@@ -1323,6 +1353,35 @@
         function error(...args) {
             // 错误信息总是显示
             console.error(...args);
+        }
+
+        // 通用转义与高亮工具
+        function escapeHtml(str) {
+            return String(str).replace(/[&<>"']/g, (ch) => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            }[ch] || ch));
+        }
+
+        function escapeRegExp(str) {
+            return String(str).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+
+        function highlightText(text, query) {
+            if (!query) return escapeHtml(text);
+            const pattern = new RegExp(escapeRegExp(query), 'gi');
+            let lastIndex = 0;
+            let result = '';
+            text.replace(pattern, (match, offset) => {
+                result += escapeHtml(text.slice(lastIndex, offset));
+                result += `<span class="search-highlight">${escapeHtml(match)}</span>`;
+                lastIndex = offset + match.length;
+            });
+            result += escapeHtml(text.slice(lastIndex));
+            return result;
         }
 
         // 配置常量
@@ -1410,9 +1469,79 @@
                     this.handleVisibilityChange();
                 });
                 
+                // 加载保存的设置
+                this.loadSettings();
+                
                 this.initEventListeners();
                 this.initCursorHiding();
                 this.initDragAndDrop();
+                
+                // 初始化控制台交互 (点击锁定)
+                this.initPanelInteraction();
+            }
+
+            // 防抖函数工具
+            debounce(func, wait) {
+                let timeout;
+                return function(...args) {
+                    const context = this;
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => func.apply(context, args), wait);
+                };
+            }
+
+            // 初始化控制台交互
+            initPanelInteraction() {
+                const triggerZone = document.querySelector('.trigger-zone');
+                const controlPanel = document.querySelector('.control-panel');
+                
+                if (triggerZone && controlPanel) {
+                    triggerZone.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        controlPanel.classList.toggle('active');
+                        const isActive = controlPanel.classList.contains('active');
+                        this.showNotification(isActive ? '控制台已锁定' : '控制台自动隐藏', 'info', 1500);
+                    });
+                    
+                    // 点击控制台内部不关闭
+                    controlPanel.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                    });
+                    
+                    // 点击页面其他地方关闭控制台
+                    document.addEventListener('click', () => {
+                        if (controlPanel.classList.contains('active')) {
+                            controlPanel.classList.remove('active');
+                        }
+                    });
+                }
+            }
+
+            // 加载设置
+            loadSettings() {
+                try {
+                    const settings = JSON.parse(localStorage.getItem('led_lyrics_player_settings'));
+                    if (settings) {
+                        if (settings.theme) this.setTheme(settings.theme);
+                        if (settings.fontSize) this.setFontScale(settings.fontSize);
+                        if (settings.speed) this.setPlaybackSpeed(settings.speed);
+                        if (settings.playMode) this.setPlayMode(settings.playMode);
+                        log('已加载用户设置');
+                    }
+                } catch (e) {
+                    warn('加载设置失败:', e);
+                }
+            }
+
+            // 保存设置
+            saveSettings() {
+                const settings = {
+                    theme: this.currentTheme,
+                    fontSize: this.fontScale,
+                    speed: this.playbackSpeed,
+                    playMode: this.playMode
+                };
+                localStorage.setItem('led_lyrics_player_settings', JSON.stringify(settings));
             }
 
             // 浏览器兼容性检查
@@ -1672,6 +1801,7 @@
                 document.querySelectorAll('.speed-button').forEach(button => {
                     button.addEventListener('click', (e) => {
                         this.setPlaybackSpeed(parseFloat(e.target.dataset.speed));
+                        this.saveSettings();
                     });
                 });
                 
@@ -1679,6 +1809,7 @@
                 document.querySelectorAll('.font-size-button').forEach(button => {
                     button.addEventListener('click', (e) => {
                         this.setFontScale(parseFloat(e.target.dataset.fontSize));
+                        this.saveSettings();
                     });
                 });
                 
@@ -1686,6 +1817,7 @@
                 document.querySelectorAll('.theme-button').forEach(button => {
                     button.addEventListener('click', (e) => {
                         this.setTheme(e.target.dataset.theme);
+                        this.saveSettings();
                     });
                 });
                 
@@ -1693,6 +1825,7 @@
                 document.querySelectorAll('.play-mode-button').forEach(button => {
                     button.addEventListener('click', (e) => {
                         this.setPlayMode(e.target.dataset.mode);
+                        this.saveSettings();
                     });
                 });
                 
@@ -1702,8 +1835,13 @@
                 const searchButton = document.getElementById('searchButton');
                 const clearSearch = document.getElementById('clearSearch');
                 
+                // 使用防抖处理搜索输入
+                const debouncedSearch = this.debounce((value) => {
+                    this.searchLyrics(value);
+                }, 300);
+
                 searchInput.addEventListener('input', (e) => {
-                    this.searchLyrics(e.target.value);
+                    debouncedSearch(e.target.value);
                 });
                 
                 searchButton.addEventListener('click', () => {
@@ -2087,127 +2225,134 @@
             }
 
             updatePlaylist() {
-                // 使用requestAnimationFrame优化DOM操作
+                if (this.isPlaylistUpdatePending) return;
+                this.isPlaylistUpdatePending = true;
                 requestAnimationFrame(() => {
-                    const modeIcons = {
-                        'list': '📋',
-                        'loop': '🔁', 
-                        'single': '🔂',
-                        'random': '🔀'
-                    };
-                    this.playlistCount.textContent = `${this.songs.length} 首歌曲 ${modeIcons[this.playMode]}`;
-                    
-                    if (this.songs.length === 0) {
-                        this.playlist.innerHTML = '<div class="empty-playlist">还没有歌曲，请上传LRC文件</div>';
-                        return;
-                    }
-
-                    // 使用DocumentFragment减少重排
-                    const fragment = document.createDocumentFragment();
-                    
-                    this.songs.forEach((song, index) => {
-                        const songItem = document.createElement('div');
-                        songItem.className = `song-item ${index === this.currentSongIndex ? 'current' : ''}`;
-                        songItem.dataset.index = index;
-                        
-                        // 获取歌曲模式并显示相应图标
-                        const songMode = this.getSongMode(song);
-                        let modeIcon = '';
-                        let modeTitle = '';
-                        switch(songMode) {
-                            case 'sync':
-                                modeIcon = '🎵';
-                                modeTitle = '同步模式 (音频+歌词)';
-                                break;
-                            case 'audio':
-                                modeIcon = '🎶';
-                                modeTitle = '纯音频模式';
-                                break;
-                            case 'lyrics':
-                                modeIcon = '📝';
-                                modeTitle = '纯歌词模式';
-                                break;
-                        }
-                        
-                        songItem.innerHTML = `
-                            <div class="drag-handle" title="拖拽排序">⋮⋮</div>
-                            <div class="song-index-num">${index + 1}</div>
-                            <div class="song-mode-icon" title="${modeTitle}" style="font-size: 10px; margin-right: 4px;">${modeIcon}</div>
-                            ${this.createModeSelector(song, index)}
-                            <div class="song-name" title="${song.name}">${song.name}</div>
-                            <div class="song-duration">${this.formatTime(song.duration)}</div>
-                            <div class="song-controls">
-                                <button class="song-control-btn delete-btn" data-action="delete" data-index="${index}" title="删除">×</button>
-                            </div>
-                        `;
-                        
-                        // 设置模式属性，但不设置draggable，由拖拽手柄控制
-                        songItem.setAttribute('data-user-mode', song.userMode || 'auto');
-                        
-                        fragment.appendChild(songItem);
-                    });
-
-                    this.playlist.innerHTML = '';
-                    this.playlist.appendChild(fragment);
-
-                    // 添加事件监听器
-                    this.playlist.querySelectorAll('.song-item').forEach(item => {
-                        // 单击事件
-                        item.addEventListener('click', (e) => {
-                            // 如果点击的是删除按钮，不执行切换歌曲
-                            if (e.target.dataset.action === 'delete') {
-                                e.stopPropagation();
-                                const index = parseInt(e.target.dataset.index);
-                                this.removeSong(index);
-                                return;
-                            }
-                            
-                            // 如果点击的是拖拽手柄或模式选择器，不执行切换歌曲
-                            if (e.target.classList.contains('drag-handle') || 
-                                e.target.classList.contains('mode-selector')) {
-                                e.stopPropagation();
-                                return;
-                            }
-                            
-                            const index = parseInt(item.dataset.index);
-                            this.switchToSong(index);
-                        });
-                        
-                        // 双击事件
-                        item.addEventListener('dblclick', (e) => {
-                            // 如果点击的是删除按钮、拖拽手柄或模式选择器，不执行播放
-                            if (e.target.dataset.action === 'delete' || 
-                                e.target.classList.contains('drag-handle') ||
-                                e.target.classList.contains('mode-selector')) {
-                                return;
-                            }
-                            
-                            const index = parseInt(item.dataset.index);
-                            this.switchToSong(index);
-                            const timerId = setTimeout(() => this.play(), 100);
-                            this.addTimer(timerId);
-                        });
-                        
-                        // 模式选择器变化事件
-                        const modeSelector = item.querySelector('.mode-selector');
-                        if (modeSelector) {
-                            modeSelector.addEventListener('change', (e) => {
-                                e.stopPropagation();
-                                const songIndex = parseInt(e.target.dataset.songIndex);
-                                const newMode = e.target.value;
-                                this.changeSongMode(songIndex, newMode);
-                            });
-                        }
-                        
-                        // 拖拽事件 - 初始化拖拽手柄
-                        const dragHandle = item.querySelector('.drag-handle');
-                        if (dragHandle) {
-                            this.initSongItemDragEvents(item, dragHandle);
-                        }
-                    });
-
-                    log('播放列表更新完成，共', this.songs.length, '首歌曲');
+                    this.renderPlaylist();
+                    this.isPlaylistUpdatePending = false;
                 });
+            }
+
+            renderPlaylist() {
+                const modeIcons = {
+                    'list': '📋',
+                    'loop': '🔁', 
+                    'single': '🔂',
+                    'random': '🔀'
+                };
+                this.playlistCount.textContent = `${this.songs.length} 首歌曲 ${modeIcons[this.playMode]}`;
+                
+                if (this.songs.length === 0) {
+                    this.playlist.innerHTML = '<div class="empty-playlist">还没有歌曲，请上传LRC文件</div>';
+                    return;
+                }
+
+                // 使用DocumentFragment减少重排
+                const fragment = document.createDocumentFragment();
+                
+                this.songs.forEach((song, index) => {
+                    const songItem = document.createElement('div');
+                    songItem.className = `song-item ${index === this.currentSongIndex ? 'current' : ''}`;
+                    songItem.dataset.index = index;
+                    
+                    // 获取歌曲模式并显示相应图标
+                    const songMode = this.getSongMode(song);
+                    const safeName = escapeHtml(song.name);
+                    let modeIcon = '';
+                    let modeTitle = '';
+                    switch(songMode) {
+                        case 'sync':
+                            modeIcon = '🎵';
+                            modeTitle = '同步模式 (音频+歌词)';
+                            break;
+                        case 'audio':
+                            modeIcon = '🎶';
+                            modeTitle = '纯音频模式';
+                            break;
+                        case 'lyrics':
+                            modeIcon = '📝';
+                            modeTitle = '纯歌词模式';
+                            break;
+                    }
+                    
+                    songItem.innerHTML = `
+                        <div class="drag-handle" title="拖拽排序">⋮⋮</div>
+                        <div class="song-index-num">${index + 1}</div>
+                        <div class="song-mode-icon" title="${modeTitle}" style="font-size: 10px; margin-right: 4px;">${modeIcon}</div>
+                        ${this.createModeSelector(song, index)}
+                        <div class="song-name" title="${safeName}">${safeName}</div>
+                        <div class="song-duration">${this.formatTime(song.duration)}</div>
+                        <div class="song-controls">
+                            <button class="song-control-btn delete-btn" data-action="delete" data-index="${index}" title="删除">×</button>
+                        </div>
+                    `;
+                    
+                    // 设置模式属性，但不设置draggable，由拖拽手柄控制
+                    songItem.setAttribute('data-user-mode', song.userMode || 'auto');
+                    
+                    fragment.appendChild(songItem);
+                });
+
+                this.playlist.innerHTML = '';
+                this.playlist.appendChild(fragment);
+
+                // 添加事件监听器
+                this.playlist.querySelectorAll('.song-item').forEach(item => {
+                    // 单击事件
+                    item.addEventListener('click', (e) => {
+                        // 如果点击的是删除按钮，不执行切换歌曲
+                        if (e.target.dataset.action === 'delete') {
+                            e.stopPropagation();
+                            const index = parseInt(e.target.dataset.index);
+                            this.removeSong(index);
+                            return;
+                        }
+                        
+                        // 如果点击的是拖拽手柄或模式选择器，不执行切换歌曲
+                        if (e.target.classList.contains('drag-handle') || 
+                            e.target.classList.contains('mode-selector')) {
+                            e.stopPropagation();
+                            return;
+                        }
+                        
+                        const index = parseInt(item.dataset.index);
+                        this.switchToSong(index);
+                    });
+                    
+                    // 双击事件
+                    item.addEventListener('dblclick', (e) => {
+                        // 如果点击的是删除按钮、拖拽手柄或模式选择器，不执行播放
+                        if (e.target.dataset.action === 'delete' || 
+                            e.target.classList.contains('drag-handle') ||
+                            e.target.classList.contains('mode-selector')) {
+                            return;
+                        }
+                        
+                        const index = parseInt(item.dataset.index);
+                        this.switchToSong(index);
+                        const timerId = setTimeout(() => this.play(), 100);
+                        this.addTimer(timerId);
+                    });
+                    
+                    // 模式选择器变化事件
+                    const modeSelector = item.querySelector('.mode-selector');
+                    if (modeSelector) {
+                        modeSelector.addEventListener('change', (e) => {
+                            e.stopPropagation();
+                            const songIndex = parseInt(e.target.dataset.songIndex);
+                            const newMode = e.target.value;
+                            this.changeSongMode(songIndex, newMode);
+                        });
+                    }
+                    
+                    // 拖拽事件 - 初始化拖拽手柄
+                    const dragHandle = item.querySelector('.drag-handle');
+                    if (dragHandle) {
+                        this.initSongItemDragEvents(item, dragHandle);
+                    }
+                });
+
+                log('播放列表更新完成，共', this.songs.length, '首歌曲');
             }
 
             initSongItemDragEvents(item, dragHandle) {
@@ -2974,18 +3119,15 @@
                 }
                 
                 const resultsHtml = this.searchResults.map(result => {
-                    // 高亮搜索关键词
-                    const highlightedText = result.text.replace(
-                        new RegExp(query, 'gi'),
-                        match => `<span class="search-highlight">${match}</span>`
-                    );
+                    const highlightedText = highlightText(result.text, query);
+                    const safeTime = this.formatTime(result.time);
                     
                     return `
                         <div class="search-result-item" 
                              data-song-index="${result.songIndex}" 
                              data-lyric-index="${result.lyricIndex}"
                              data-time="${result.time}">
-                            <span class="search-result-time">${this.formatTime(result.time)}</span>
+                            <span class="search-result-time">${safeTime}</span>
                             <span class="search-result-text">${highlightedText}</span>
                         </div>
                     `;
