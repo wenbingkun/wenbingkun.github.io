@@ -262,14 +262,9 @@ main_install() {
     
     # eza - 更好的 ls (exa 的继承者)
     if ! command_exists eza; then
-        # 安装 eza
-        sudo apt install -y gpg
-        sudo mkdir -p /etc/apt/keyrings
-        wget -qO- https://raw.githubusercontent.com/eza-community/eza/main/deb.asc | sudo gpg --dearmor -o /etc/apt/keyrings/gierens.gpg
-        echo "deb [signed-by=/etc/apt/keyrings/gierens.gpg] http://deb.gierens.de stable main" | sudo tee /etc/apt/sources.list.d/gierens.list
-        sudo apt update
+        # 优先使用系统自带仓库，避免引入额外外部源
         sudo apt install -y eza || {
-            # 如果失败，尝试安装 exa
+            # 如果失败，尝试安装 exa 并建立兼容别名
             sudo apt install -y exa
             sudo ln -sf /usr/bin/exa /usr/local/bin/eza
         }
@@ -301,10 +296,32 @@ main_install() {
     # 7. 配置 Git 增强工具
     print_step "[7/9] 配置 Git 增强工具..."
     if ! command_exists delta; then
-        # 安装 delta (更好的 git diff)
-        wget -q https://github.com/dandavison/delta/releases/download/0.16.5/git-delta_0.16.5_amd64.deb
-        sudo dpkg -i git-delta_0.16.5_amd64.deb
-        rm git-delta_0.16.5_amd64.deb
+        # 安装 delta (更好的 git diff)，优先使用系统仓库
+        sudo apt install -y git-delta || {
+            # 回退到官方发布包，并进行 SHA256 校验
+            DELTA_VERSION="0.16.5"
+            DELTA_DEB="git-delta_${DELTA_VERSION}_amd64.deb"
+            DELTA_URL="https://github.com/dandavison/delta/releases/download/${DELTA_VERSION}/${DELTA_DEB}"
+            DELTA_SUMS_URL="https://github.com/dandavison/delta/releases/download/${DELTA_VERSION}/sha256sums.txt"
+
+            wget -q "${DELTA_URL}"
+            wget -q "${DELTA_SUMS_URL}"
+
+            if ! grep -q "${DELTA_DEB}" sha256sums.txt; then
+                print_error "未找到 ${DELTA_DEB} 的校验信息"
+                rm -f "${DELTA_DEB}" sha256sums.txt
+                exit 1
+            fi
+
+            sha256sum --check --ignore-missing sha256sums.txt || {
+                print_error "delta 校验失败，终止安装"
+                rm -f "${DELTA_DEB}" sha256sums.txt
+                exit 1
+            }
+
+            sudo dpkg -i "${DELTA_DEB}"
+            rm -f "${DELTA_DEB}" sha256sums.txt
+        }
         print_success "delta 安装完成"
     fi
     
