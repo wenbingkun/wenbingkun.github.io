@@ -146,7 +146,8 @@ proxy-groups:
   - {name: 🤖 人工智能, type: select, proxies: [🇺🇲 美国节点, 🇯🇵 日本节点, 🇸🇬 狮城节点, 🇬🇧 英国节点, 🔄 备用线路]}
   - {name: 🎮 游戏平台, type: fallback, url: http://www.gstatic.com/generate_204, interval: 600, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)游戏|game|gaming", proxies: [DIRECT, 🇭🇰 香港节点, 🇯🇵 日本节点, 🇸🇬 狮城节点, 🇺🇲 美国节点, 🇰🇷 韩国节点, 🌎 南美节点, 🌏 东南亚节点, 🇬🇧 英国节点, 🇪🇺 欧洲节点]}
   - {name: 👨‍💻 开发服务, type: select, proxies: [🇺🇲 美国节点, 🇸🇬 狮城节点, 🇯🇵 日本节点, 🇭🇰 香港节点, 🇬🇧 英国节点, DIRECT]}
-  
+  - {name: 💰 加密货币, type: select, proxies: [🇰🇷 韩国节点, 🇯🇵 日本节点, 🇸🇬 狮城节点, 🇺🇲 美国节点, 🇭🇰 香港节点, 🇬🇧 英国节点, 🇦🇺 澳洲节点, DIRECT]}
+
   # 科技服务策略组  
   - {name: 🍎 苹果服务, type: select, proxies: [DIRECT, 🇺🇲 美国节点, 🇭🇰 香港节点, 🇯🇵 日本节点, 🇸🇬 狮城节点]}
   - {name: 🌌 谷歌服务, type: select, proxies: [🇺🇲 美国节点, 🇸🇬 狮城节点, 🇯🇵 日本节点, 🇭🇰 香港节点, 🔄 备用线路]}
@@ -478,7 +479,123 @@ rules:
   
   # AI 服务优化（墨鱼统一规则 - 覆盖14个AI平台）
   - RULE-SET,AI,🤖 人工智能
-  
+
+  # 加密货币服务（CEX交易所 + DEX/DeFi + 行情数据 + 钱包工具）
+  # CEX 中心化交易所
+  - DOMAIN-SUFFIX,binance.com,💰 加密货币
+  - DOMAIN-SUFFIX,binance.us,💰 加密货币
+  - DOMAIN-SUFFIX,binancefuture.com,💰 加密货币
+  - DOMAIN-SUFFIX,bnbstatic.com,💰 加密货币
+  - DOMAIN-SUFFIX,okx.com,💰 加密货币
+  - DOMAIN-SUFFIX,okex.com,💰 加密货币
+  - DOMAIN-SUFFIX,okcoin.com,💰 加密货币
+  - DOMAIN-SUFFIX,bybit.com,💰 加密货币
+  - DOMAIN-SUFFIX,bybitglobal.com,💰 加密货币
+  - DOMAIN-SUFFIX,coinbase.com,💰 加密货币
+  - DOMAIN-SUFFIX,kraken.com,💰 加密货币
+  - DOMAIN-SUFFIX,bitget.com,💰 加密货币
+  - DOMAIN-SUFFIX,gate.io,💰 加密货币
+  - DOMAIN-SUFFIX,gateio.live,💰 加密货币
+  - DOMAIN-SUFFIX,kucoin.com,💰 加密货币
+  - DOMAIN-SUFFIX,htx.com,💰 加密货币
+  - DOMAIN-SUFFIX,huobi.com,💰 加密货币
+  - DOMAIN-SUFFIX,mexc.com,💰 加密货币
+  - DOMAIN-SUFFIX,bitfinex.com,💰 加密货币
+  - DOMAIN-SUFFIX,gemini.com,💰 加密货币
+  - DOMAIN-SUFFIX,bitstamp.net,💰 加密货币
+  - DOMAIN-SUFFIX,crypto.com,💰 加密货币
+  - DOMAIN-SUFFIX,bitmart.com,💰 加密货币
+  - DOMAIN-SUFFIX,phemex.com,💰 加密货币
+  - DOMAIN-SUFFIX,bitflyer.com,💰 加密货币
+  # DEX 去中心化交易所 & DeFi
+  - DOMAIN-SUFFIX,uniswap.org,💰 加密货币
+  - DOMAIN-SUFFIX,uniswap.io,💰 加密货币
+  - DOMAIN-SUFFIX,dydx.exchange,💰 加密货币
+  - DOMAIN-SUFFIX,dydx.trade,💰 加密货币
+  - DOMAIN-SUFFIX,aave.com,💰 加密货币
+  - DOMAIN-SUFFIX,curve.fi,💰 加密货币
+  - DOMAIN-SUFFIX,1inch.io,💰 加密货币
+  - DOMAIN-SUFFIX,sushi.com,💰 加密货币
+  - DOMAIN-SUFFIX,pancakeswap.finance,💰 加密货币
+  - DOMAIN-SUFFIX,gmx.io,💰 加密货币
+  - DOMAIN-SUFFIX,lido.fi,💰 加密货币
+  - DOMAIN-SUFFIX,compound.finance,💰 加密货币
+  - DOMAIN-SUFFIX,balancer.fi,💰 加密货币
+  - DOMAIN-SUFFIX,convexfinance.com,💰 加密货币
+  - DOMAIN-SUFFIX,frax.finance,💰 加密货币
+  - DOMAIN-SUFFIX,makerdao.com,💰 加密货币
+  - DOMAIN-SUFFIX,yearn.fi,💰 加密货币
+  - DOMAIN-SUFFIX,raydium.io,💰 加密货币
+  - DOMAIN-SUFFIX,orca.so,💰 加密货币
+  - DOMAIN-SUFFIX,jup.ag,💰 加密货币
+  - DOMAIN-SUFFIX,jupiter.exchange,💰 加密货币
+  - DOMAIN-SUFFIX,pendle.finance,💰 加密货币
+  - DOMAIN-SUFFIX,eigenlayer.xyz,💰 加密货币
+  - DOMAIN-SUFFIX,blur.io,💰 加密货币
+  - DOMAIN-SUFFIX,opensea.io,💰 加密货币
+  - DOMAIN-SUFFIX,x2y2.io,💰 加密货币
+  - DOMAIN-SUFFIX,looksrare.org,💰 加密货币
+  # 行情数据 & 分析
+  - DOMAIN-SUFFIX,coinmarketcap.com,💰 加密货币
+  - DOMAIN-SUFFIX,coingecko.com,💰 加密货币
+  - DOMAIN-SUFFIX,tradingview.com,💰 加密货币
+  - DOMAIN-SUFFIX,defillama.com,💰 加密货币
+  - DOMAIN-SUFFIX,dune.com,💰 加密货币
+  - DOMAIN-SUFFIX,messari.io,💰 加密货币
+  - DOMAIN-SUFFIX,glassnode.com,💰 加密货币
+  - DOMAIN-SUFFIX,nansen.ai,💰 加密货币
+  - DOMAIN-SUFFIX,artemis.xyz,💰 加密货币
+  - DOMAIN-SUFFIX,tokenterminal.com,💰 加密货币
+  - DOMAIN-SUFFIX,dexscreener.com,💰 加密货币
+  - DOMAIN-SUFFIX,dextools.io,💰 加密货币
+  - DOMAIN-SUFFIX,birdeye.so,💰 加密货币
+  - DOMAIN-SUFFIX,coinpaprika.com,💰 加密货币
+  - DOMAIN-SUFFIX,alternative.me,💰 加密货币
+  - DOMAIN-SUFFIX,cryptoquant.com,💰 加密货币
+  # 钱包 & 区块链浏览器
+  - DOMAIN-SUFFIX,metamask.io,💰 加密货币
+  - DOMAIN-SUFFIX,phantom.app,💰 加密货币
+  - DOMAIN-SUFFIX,ledger.com,💰 加密货币
+  - DOMAIN-SUFFIX,trezor.io,💰 加密货币
+  - DOMAIN-SUFFIX,trustwallet.com,💰 加密货币
+  - DOMAIN-SUFFIX,rainbow.me,💰 加密货币
+  - DOMAIN-SUFFIX,rabby.io,💰 加密货币
+  - DOMAIN-SUFFIX,zerion.io,💰 加密货币
+  - DOMAIN-SUFFIX,zapper.xyz,💰 加密货币
+  - DOMAIN-SUFFIX,etherscan.io,💰 加密货币
+  - DOMAIN-SUFFIX,solscan.io,💰 加密货币
+  - DOMAIN-SUFFIX,arbiscan.io,💰 加密货币
+  - DOMAIN-SUFFIX,bscscan.com,💰 加密货币
+  - DOMAIN-SUFFIX,polygonscan.com,💰 加密货币
+  - DOMAIN-SUFFIX,basescan.org,💰 加密货币
+  - DOMAIN-SUFFIX,optimistic.etherscan.io,💰 加密货币
+  - DOMAIN-SUFFIX,snowtrace.io,💰 加密货币
+  - DOMAIN-SUFFIX,ftmscan.com,💰 加密货币
+  # Layer2 & 跨链桥
+  - DOMAIN-SUFFIX,arbitrum.io,💰 加密货币
+  - DOMAIN-SUFFIX,optimism.io,💰 加密货币
+  - DOMAIN-SUFFIX,base.org,💰 加密货币
+  - DOMAIN-SUFFIX,polygon.technology,💰 加密货币
+  - DOMAIN-SUFFIX,starknet.io,💰 加密货币
+  - DOMAIN-SUFFIX,zksync.io,💰 加密货币
+  - DOMAIN-SUFFIX,scroll.io,💰 加密货币
+  - DOMAIN-SUFFIX,linea.build,💰 加密货币
+  - DOMAIN-SUFFIX,layerzero.network,💰 加密货币
+  - DOMAIN-SUFFIX,stargate.finance,💰 加密货币
+  - DOMAIN-SUFFIX,wormhole.com,💰 加密货币
+  - DOMAIN-SUFFIX,across.to,💰 加密货币
+  - DOMAIN-SUFFIX,hop.exchange,💰 加密货币
+  - DOMAIN-SUFFIX,synapse.network,💰 加密货币
+  # 新闻资讯 & 社区
+  - DOMAIN-SUFFIX,cointelegraph.com,💰 加密货币
+  - DOMAIN-SUFFIX,coindesk.com,💰 加密货币
+  - DOMAIN-SUFFIX,theblock.co,💰 加密货币
+  - DOMAIN-SUFFIX,decrypt.co,💰 加密货币
+  - DOMAIN-SUFFIX,blockworks.co,💰 加密货币
+  - DOMAIN-SUFFIX,foresightnews.pro,💰 加密货币
+  - DOMAIN-SUFFIX,panewslab.com,💰 加密货币
+  - DOMAIN-SUFFIX,odaily.news,💰 加密货币
+
   # 专用平台规则（按优先级顺序排列，确保精确匹配）
   
   # 特殊分组的视频平台
