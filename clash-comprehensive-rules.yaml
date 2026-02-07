@@ -1,11 +1,12 @@
 #==========================================
 # @ConfigName        全球精品机场融合配置 (优化版)
 # @Author            基于墨鱼配置 + 全球机场订阅优化
-# @UpdateTime        2025年11月优化版
-# @Function          全球节点覆盖、智能分流、游戏优化、AI服务支持
-# @ConfigVersion     3.2.0
-# @Features          🌍全球196国节点 | 🎮游戏专线 | 🤖14个AI平台 | 📋智能分流 | 📥下载优化
-# @Changelog         v3.2.0: AI规则升级(5→14平台)、新增下载优化、新增Bahamut
+# @UpdateTime        2026年2月
+# @Function          全球节点覆盖、智能分流、游戏优化、AI服务支持、加密货币专线
+# @ConfigVersion     3.3.0
+# @Features          🌍全球196国节点 | 🎮游戏专线 | 🤖14个AI平台 | 💰加密货币 | 📋智能分流 | 📥下载优化
+# @Changelog         v3.3.0: 新增加密货币策略组(100+域名)、默认韩国节点
+#                    v3.2.0: AI规则升级(5→14平台)、新增下载优化、新增Bahamut
 #==========================================
 
 # 基础配置
@@ -686,6 +687,7 @@ tun:
 # 1. DNS优化: 优先使用加密DNS (DoH/DoT)，将常规DNS作为备用，增强隐私和安全性。
 # 2. 规则精简: 移除了大量与规则集(RULE-SET)重复的域名(DOMAIN-SUFFIX)规则。
 #    这使得配置文件更简洁、高效，并依赖于社区维护的最新规则列表。
+# 3. 加密货币专线: 新增💰加密货币策略组，覆盖CEX/DEX/DeFi/行情/钱包/L2/跨链桥/资讯。
 #
 #==========================================
 # 🎯 配置说明与使用指南
@@ -699,6 +701,7 @@ tun:
 # - 🎮 游戏平台：自动筛选机场中的游戏专用节点，延迟更低，包含全球游戏热门地区
 # - 📋 智能分流：专用规则优先，避免通用规则误捕获
 # - 🤖 AI服务：支持主流AI平台独立路由选择
+# - 💰 加密货币：CEX/DEX/DeFi/行情/钱包/L2全覆盖，默认韩国节点
 # - 🌍 全球覆盖：7大洲31个国家地区节点支持
 # 
 # 🌍 全球节点覆盖：
@@ -713,11 +716,20 @@ tun:
 # 🎮 游戏优化：
 # - 游戏平台会优先使用游戏专线节点
 # - 支持Steam、Epic、PlayStation、Xbox等平台
-# 
+#
+# 💰 加密货币专线（v3.3.0新增）：
+# - 默认韩国节点，可切换至日本、新加坡、美国等
+# - CEX：Binance, OKX, Bybit, Coinbase, Kraken, Gate.io, KuCoin等
+# - DEX/DeFi：Uniswap, dYdX, Aave, Curve, GMX, Lido, Pendle等
+# - 行情数据：CoinMarketCap, CoinGecko, TradingView, DefiLlama, Dune等
+# - 钱包/浏览器：MetaMask, Phantom, Ledger, Etherscan, Solscan等
+# - L2/跨链桥：Arbitrum, Optimism, Base, zkSync, StarkNet, LayerZero等
+#
 # 📋 规则匹配优先级（重要）：
 # 🎯 专用平台规则（高优先级）：
 #   - YouTube → 谷歌服务，TikTok → 社交平台
-#   - Netflix、Disney+、Spotify、Twitch → 流媒体  
+#   - Netflix、Disney+、Spotify、Twitch → 流媒体
+#   - Binance、OKX、Uniswap等 → 加密货币
 # 🌐 通用兜底规则（低优先级）：
 #   - SocialMedia → 社交平台（捕获未知社交平台）
 #   - GlobalMedia → 流媒体（捕获未知流媒体平台）
