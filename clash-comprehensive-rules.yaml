@@ -481,6 +481,44 @@ rules:
   # AI 服务优化（墨鱼统一规则 - 覆盖14个AI平台）
   - RULE-SET,AI,🤖 人工智能
 
+  # 香港银行/券商（高优先级，优先走香港节点）
+  # 银行
+  - DOMAIN-SUFFIX,hsbc.com.hk,🇭🇰 香港节点
+  - DOMAIN-SUFFIX,hangseng.com,🇭🇰 香港节点
+  - DOMAIN-SUFFIX,bochk.com,🇭🇰 香港节点
+  - DOMAIN-SUFFIX,bea.com.hk,🇭🇰 香港节点
+  - DOMAIN-SUFFIX,dbs.com.hk,🇭🇰 香港节点
+  - DOMAIN-SUFFIX,citibank.com.hk,🇭🇰 香港节点
+  - DOMAIN-SUFFIX,standardchartered.com.hk,🇭🇰 香港节点
+  - DOMAIN-SUFFIX,ccb.com.hk,🇭🇰 香港节点
+  - DOMAIN-SUFFIX,icbcasia.com,🇭🇰 香港节点
+  - DOMAIN-SUFFIX,bankcomm.com.hk,🇭🇰 香港节点
+  - DOMAIN-SUFFIX,ncb.com.hk,🇭🇰 香港节点
+  - DOMAIN-SUFFIX,chbank.com,🇭🇰 香港节点
+  - DOMAIN-SUFFIX,cmbwinglungbank.com,🇭🇰 香港节点
+  - DOMAIN-SUFFIX,dahsing.com,🇭🇰 香港节点
+  - DOMAIN-SUFFIX,fubonbank.com.hk,🇭🇰 香港节点
+  - DOMAIN-SUFFIX,mox.com,🇭🇰 香港节点
+  - DOMAIN-SUFFIX,livibank.com,🇭🇰 香港节点
+  - DOMAIN-SUFFIX,antbank.hk,🇭🇰 香港节点
+  - DOMAIN-SUFFIX,airstarbank.com,🇭🇰 香港节点
+  - DOMAIN-SUFFIX,fusionbank.com.hk,🇭🇰 香港节点
+  - DOMAIN-SUFFIX,welab.bank,🇭🇰 香港节点
+  - DOMAIN-SUFFIX,za.group,🇭🇰 香港节点
+
+  # 券商/行情
+  - DOMAIN-SUFFIX,futunn.com,🇭🇰 香港节点
+  - DOMAIN-KEYWORD,futunn,🇭🇰 香港节点
+  - DOMAIN-SUFFIX,aastocks.com,🇭🇰 香港节点
+  - DOMAIN-SUFFIX,etnet.com.hk,🇭🇰 香港节点
+  - DOMAIN-SUFFIX,brightsmart.com,🇭🇰 香港节点
+  - DOMAIN-SUFFIX,brightsmart.com.hk,🇭🇰 香港节点
+  - DOMAIN-SUFFIX,u-smartglobal.com,🇭🇰 香港节点
+  - DOMAIN-SUFFIX,tigerbrokers.com.hk,🇭🇰 香港节点
+  - DOMAIN-SUFFIX,webull.com.hk,🇭🇰 香港节点
+  - DOMAIN-SUFFIX,interactivebrokers.hk,🇭🇰 香港节点
+  - DOMAIN-SUFFIX,ibkr.com,🇭🇰 香港节点
+
   # 加密货币服务（CEX交易所 + DEX/DeFi + 行情数据 + 钱包工具）
   # CEX 中心化交易所
   - DOMAIN-SUFFIX,binance.com,💰 加密货币
