@@ -107,7 +107,6 @@ p:    &a1 {type: http,     interval: 86400,  health-check: {enable: true, url: h
 auto: &a4 {type: url-test, lazy: true,  url: http://www.gstatic.com/generate_204, interval: 1800, tolerance: 50, timeout: 5000, use: [Sub] }
 use:  &a2 {type: select,   use: [Sub] }
 fallback: &a8 {type: fallback, lazy: true, url: http://www.gstatic.com/generate_204, interval: 1800, timeout: 5000, use: [Sub] }
-loadbalance: &a9 {type: load-balance, strategy: round-robin, url: http://www.gstatic.com/generate_204, interval: 1800, timeout: 5000, use: [Sub] }
 c:    &a6 {type: http,     behavior: classical, interval: 86400}
 d:    &a5 {type: http,     behavior: domain,    interval: 86400}
 i:    &a7 {type: http,     behavior: ipcidr,    interval: 86400}
@@ -118,12 +117,6 @@ proxy-providers:
     <<: *a1
     url: https://example.com/subscription.yaml  # 请替换为实际的机场订阅链接
     path: ./proxy_providers/sub.yaml
-    health-check:
-      enable: true
-      interval: 1800
-      lazy: true
-      url: http://www.gstatic.com/generate_204
-      timeout: 5000
     override:
       additional-prefix: "[机场]"
       additional-suffix: ""
@@ -141,7 +134,7 @@ proxy-groups:
   - {name: 📺 哔哩哔哩, type: select, proxies: [DIRECT, 🇭🇰 香港节点, 🇨🇳 台湾节点, 🇸🇬 狮城节点, 🚀 手动切换, ♻️ 自动选择]}
   - {name: 🌐 社交平台, type: select, proxies: [🇸🇬 狮城节点, 🇺🇲 美国节点, 🇭🇰 香港节点, 🇬🇧 英国节点, 🌎 南美节点, 🌏 东南亚节点, 🔄 备用线路]}
   - {name: 🤖 人工智能, type: select, proxies: [🇺🇲 美国节点, 🇯🇵 日本节点, 🇸🇬 狮城节点, 🇬🇧 英国节点, 🔄 备用线路]}
-  - {name: 🎮 游戏平台, type: fallback, lazy: true, url: http://www.gstatic.com/generate_204, interval: 1800, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)游戏|game|gaming", proxies: [DIRECT, 🇭🇰 香港节点, 🇯🇵 日本节点, 🇸🇬 狮城节点, 🇺🇲 美国节点, 🇰🇷 韩国节点, 🌎 南美节点, 🌏 东南亚节点, 🇬🇧 英国节点, 🇪🇺 欧洲节点]}
+  - {name: 🎮 游戏平台, type: select, proxies: [DIRECT, 🇭🇰 香港节点, 🇯🇵 日本节点, 🇸🇬 狮城节点, 🇺🇲 美国节点, 🇰🇷 韩国节点, 🌎 南美节点, 🌏 东南亚节点, 🇬🇧 英国节点, 🇪🇺 欧洲节点]}
   - {name: 👨‍💻 开发服务, type: select, proxies: [🇺🇲 美国节点, 🇸🇬 狮城节点, 🇯🇵 日本节点, 🇭🇰 香港节点, 🇬🇧 英国节点, DIRECT]}
   - {name: 💰 加密货币, type: select, proxies: [🇰🇷 韩国节点, 🇯🇵 日本节点, 🇸🇬 狮城节点, 🇺🇲 美国节点, 🇭🇰 香港节点, 🇬🇧 英国节点, 🇦🇺 澳洲节点, DIRECT]}
 
@@ -167,7 +160,7 @@ proxy-groups:
   
   # 亚洲地区
   - {name: 🇭🇰 香港节点, type: fallback, lazy: true, url: http://www.gstatic.com/generate_204, interval: 1800, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇭🇰|港|hk|hongkong|hong kong"}
-  - {name: 🇲🇴 澳门节点, type: fallback, lazy: true, url: http://www.gstatic.com/generate_204, interval: 1800, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇲🇴|澳门|macao|macau|mo"}
+  - {name: 🇲🇴 澳门节点, type: fallback, lazy: true, url: http://www.gstatic.com/generate_204, interval: 1800, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇲🇴|澳门|macao|macau"}
   - {name: 🇨🇳 台湾节点, type: fallback, lazy: true, url: http://www.gstatic.com/generate_204, interval: 1800, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇹🇼|台|tw|taiwan"}
   - {name: 🇯🇵 日本节点, type: fallback, lazy: true, url: http://www.gstatic.com/generate_204, interval: 1800, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇯🇵|日本|jp|japan"}
   - {name: 🇰🇷 韩国节点, type: fallback, lazy: true, url: http://www.gstatic.com/generate_204, interval: 1800, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇰🇷|韩国|kr|korea"}
@@ -190,7 +183,7 @@ proxy-groups:
   - {name: 🏝️ 大洋洲节点, type: fallback, lazy: true, url: http://www.gstatic.com/generate_204, interval: 1800, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇫🇯|🇵🇬|🇳🇨|🇵🇫|🇼🇸|🇹🇴|🇻🇺|🇸🇧|🇰🇮|🇳🇷|🇹🇻|🇵🇼|🇫🇲|🇲🇭|🇬🇺|🇦🇸|🇲🇵|🇨🇰|🇳🇺|🇵🇳|🇹🇰|🇼🇫|斐济|巴布亚新几内亚|新喀里多尼亚|法属波利尼西亚|萨摩亚|汤加|瓦努阿图|所罗门群岛|基里巴斯|瑙鲁|图瓦卢|帕劳|密克罗尼西亚|马绍尔群岛|关岛|美属萨摩亚|北马里亚纳|库克群岛|纽埃|皮特凯恩群岛|托克劳|瓦利斯和富图纳|\bfj\b|\bpg\b|\bnc\b|\bpf\b|\bws\b|\bto\b|\bvu\b|\bsb\b|\bki\b|\bnr\b|\btv\b|\bpw\b|\bfm\b|\bmh\b|\bgu\b|\bas\b|\bmp\b|\bck\b|\bnu\b|\bpn\b|\btk\b|\bwf\b|\bfiji\b|\bpapua\b|\bnewcaledonia\b|\bpolynesia\b|\bsamoa\b|\btonga\b|\bvanuatu\b|\bsolomon\b|\bkiribati\b|\bnauru\b|\btuvalu\b|\bpalau\b|\bmicronesia\b|\bmarshall\b|\bguam\b|\bamericansamoa\b|\bmarianas\b|\bcook\b|\bniue\b|\bpitcairn\b|\btokelau\b|\bwallis\b|\bfutuna\b"}
   
   # 欧洲联合节点组（用于游戏等服务）
-  - {name: 🇪🇺 欧洲节点, type: fallback, lazy: true, url: http://www.gstatic.com/generate_204, interval: 1800, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇬🇧|🇫🇷|🇩🇪|🇳🇱|🇮🇹|🇪🇸|🇨🇭|🇷🇺|🇩🇰|🇳🇴|🇸🇪|🇫🇮|🇨🇿|🇵🇱|🇧🇪|🇦🇹|🇭🇺|🇸🇰|🇸🇮|🇭🇷|🇧🇦|🇷🇸|🇲🇪|🇲🇰|🇦🇱|🇧🇬|🇷🇴|🇺🇦|🇧🇾|🇱🇹|🇱🇻|🇪🇪|🇮🇸|🇮🇪|🇵🇹|🇬🇷|🇲🇹|🇨🇾|🇱🇺|🇲🇨|🇦🇩|🇸🇲|🇻🇦|🇱🇮|🇲🇩|🇬🇪|🇦🇲|🇦🇿|英|法国|德国|荷兰|意大利|西班牙|瑞士|俄罗斯|丹麦|挪威|瑞典|芬兰|捷克|波兰|比利时|奥地利|匈牙利|斯洛伐克|斯洛文尼亚|克罗地亚|波黑|塞尔维亚|黑山|马其顿|阿尔巴尼亚|保加利亚|罗马尼亚|乌克兰|白俄罗斯|立陶宛|拉脱维亚|爱沙尼亚|冰岛|爱尔兰|葡萄牙|希腊|马耳他|塞浦路斯|卢森堡|摩纳哥|安道尔|圣马力诺|梵蒂冈|列支敦士登|摩尔多瓦|格鲁吉亚|亚美尼亚|阿塞拜疆|\buk\b|\bfr\b|\bde\b|\bnl\b|\bit\b|\bes\b|\bch\b|\bru\b|\bdk\b|\bno\b|\bse\b|\bfi\b|\bcz\b|\bpl\b|\bbe\b|\bat\b|\bhu\b|\bsk\b|\bsi\b|\bhr\b|\bba\b|\brs\b|\bme\b|\bmk\b|\bal\b|\bbg\b|\bro\b|\bua\b|\bby\b|\blt\b|\blv\b|\bee\b|\bis\b|\bie\b|\bpt\b|\bgr\b|\bmt\b|\bcy\b|\blu\b|\bmc\b|\bad\b|\bsm\b|\bva\b|\bli\b|\bmd\b|\bge\b|\bam\b|\baz\b|\bbritain\b|\bfrance\b|\bgermany\b|\bnetherlands\b|\bitaly\b|\bspain\b|\bswitzerland\b|\brussia\b|\bdenmark\b|\bnorway\b|\bsweden\b|\bfinland\b|\bczech\b|\bpoland\b|\bbelgium\b|\baustria\b|\bhungary\b|\bslovakia\b|\bslovenia\b|\bcroatia\b|\bbosnia\b|\bserbia\b|\bmontenegro\b|\bmacedonia\b|\balbania\b|\bbulgaria\b|\bromania\b|\bukraine\b|\bbelarus\b|\blithuania\b|\blatvia\b|\bestonia\b|\biceland\b|\bireland\b|\bportugal\b|\bgreece\b|\bmalta\b|\bcyprus\b|\bluxembourg\b|\bmonaco\b|\bandorra\b|\bsanmarino\b|\bvatican\b|\bliechtenstein\b|\bmoldova\b|\bgeorgia\b|\barmenia\b|\bazerbaijan\b"}
+  - {name: 🇪🇺 欧洲节点, type: fallback, lazy: true, url: http://www.gstatic.com/generate_204, interval: 1800, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇬🇧|🇫🇷|🇩🇪|🇳🇱|🇮🇹|🇪🇸|🇨🇭|🇷🇺|🇩🇰|🇳🇴|🇸🇪|🇫🇮|🇨🇿|🇵🇱|🇧🇪|🇦🇹|🇭🇺|🇸🇰|🇸🇮|🇭🇷|🇧🇦|🇷🇸|🇲🇪|🇲🇰|🇦🇱|🇧🇬|🇷🇴|🇺🇦|🇧🇾|🇱🇹|🇱🇻|🇪🇪|🇮🇸|🇮🇪|🇵🇹|🇬🇷|🇲🇹|🇨🇾|🇱🇺|🇲🇨|🇦🇩|🇸🇲|🇻🇦|🇱🇮|🇲🇩|🇬🇪|🇦🇲|🇦🇿|英|法国|德国|荷兰|意大利|西班牙|瑞士|俄罗斯|丹麦|挪威|瑞典|芬兰|捷克|波兰|比利时|奥地利|匈牙利|斯洛伐克|斯洛文尼亚|克罗地亚|波黑|塞尔维亚|黑山|马其顿|阿尔巴尼亚|保加利亚|罗马尼亚|乌克兰|白俄罗斯|立陶宛|拉脱维亚|爱沙尼亚|冰岛|爱尔兰|葡萄牙|希腊|马耳他|塞浦路斯|卢森堡|摩纳哥|安道尔|圣马力诺|梵蒂冈|列支敦士登|摩尔多瓦|格鲁吉亚|亚美尼亚|阿塞拜疆|\buk\b|\bfr\b|\bde\b|\bnl\b|\bch\b|\bru\b|\bdk\b|\bse\b|\bfi\b|\bcz\b|\bpl\b|\bhu\b|\bsk\b|\bsi\b|\bhr\b|\bba\b|\brs\b|\bmk\b|\bal\b|\bbg\b|\bro\b|\bua\b|\bby\b|\blt\b|\blv\b|\bpt\b|\bgr\b|\bmt\b|\bcy\b|\blu\b|\bad\b|\bsm\b|\bva\b|\bmd\b|\baz\b|\bbritain\b|\bfrance\b|\bgermany\b|\bnetherlands\b|\bitaly\b|\bspain\b|\bswitzerland\b|\brussia\b|\bdenmark\b|\bnorway\b|\bsweden\b|\bfinland\b|\bczech\b|\bpoland\b|\bbelgium\b|\baustria\b|\bhungary\b|\bslovakia\b|\bslovenia\b|\bcroatia\b|\bbosnia\b|\bserbia\b|\bmontenegro\b|\bmacedonia\b|\balbania\b|\bbulgaria\b|\bromania\b|\bukraine\b|\bbelarus\b|\blithuania\b|\blatvia\b|\bestonia\b|\biceland\b|\bireland\b|\bportugal\b|\bgreece\b|\bmalta\b|\bcyprus\b|\bluxembourg\b|\bmonaco\b|\bandorra\b|\bsanmarino\b|\bvatican\b|\bliechtenstein\b|\bmoldova\b|\bgeorgia\b|\barmenia\b|\bazerbaijan\b"}
   
   # 中东地区
   - {name: 🕌 中东节点, type: fallback, lazy: true, url: http://www.gstatic.com/generate_204, interval: 1800, tolerance: 50, timeout: 5000, use: [Sub], filter: "(?i)🇦🇪|🇸🇦|🇹🇷|🇮🇷|🇮🇶|🇮🇱|🇵🇸|🇯🇴|🇱🇧|🇸🇾|🇰🇼|🇶🇦|🇧🇭|🇴🇲|🇾🇪|阿联酋|沙特|土耳其|伊朗|伊拉克|以色列|巴勒斯坦|约旦|黎巴嫩|叙利亚|科威特|卡塔尔|巴林|阿曼|也门|\bae\b|\bsa\b|\btr\b|\bir\b|\biq\b|\bil\b|\bps\b|\bjo\b|\blb\b|\bsy\b|\bkw\b|\bqa\b|\bbh\b|\bom\b|\bye\b|\bemirates\b|\bsaudi\b|\bturkey\b|\biran\b|\biraq\b|\bisrael\b|\bpalestine\b|\bjordan\b|\blebanon\b|\bsyria\b|\bkuwait\b|\bqatar\b|\bbahrain\b|\boman\b|\byemen\b"}
@@ -436,7 +429,7 @@ rule-providers:
 
   # 国内直连优化规则集
   ChinaDirect:
-    <<: *a6
+    <<: *a5
     url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/direct.txt"
     path: ./ruleset/ChinaDirect.yaml
     
@@ -447,17 +440,12 @@ rule-providers:
     
   # 基础规则
   ProxyLite:
-    <<: *a6
+    <<: *a5
     url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/proxy.txt"
     path: ./ruleset/ProxyLite.yaml
     
-  ChinaASN:
-    <<: *a7
-    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/cncidr.txt"
-    path: ./ruleset/ChinaASN.yaml
-    
   Lan:
-    <<: *a6
+    <<: *a7
     url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/lancidr.txt"
     path: ./ruleset/Lan.yaml
 
@@ -504,7 +492,6 @@ rules:
 
   # 券商/行情
   - DOMAIN-SUFFIX,futunn.com,🇭🇰 香港节点
-  - DOMAIN-KEYWORD,futunn,🇭🇰 香港节点
   - DOMAIN-SUFFIX,aastocks.com,🇭🇰 香港节点
   - DOMAIN-SUFFIX,etnet.com.hk,🇭🇰 香港节点
   - DOMAIN-SUFFIX,brightsmart.com,🇭🇰 香港节点
@@ -603,7 +590,6 @@ rules:
   - DOMAIN-SUFFIX,bscscan.com,💰 加密货币
   - DOMAIN-SUFFIX,polygonscan.com,💰 加密货币
   - DOMAIN-SUFFIX,basescan.org,💰 加密货币
-  - DOMAIN-SUFFIX,optimistic.etherscan.io,💰 加密货币
   - DOMAIN-SUFFIX,snowtrace.io,💰 加密货币
   - DOMAIN-SUFFIX,ftmscan.com,💰 加密货币
   # Layer2 & 跨链桥
@@ -662,12 +648,6 @@ rules:
   # 科技服务
   - RULE-SET,Apple,🍎 苹果服务
   - RULE-SET,Google,🌌 谷歌服务
-  - DOMAIN-SUFFIX,microsoft.com,Ⓜ️ 微软服务
-  - DOMAIN-SUFFIX,windowsupdate.com,Ⓜ️ 微软服务
-  - DOMAIN-SUFFIX,update.microsoft.com,Ⓜ️ 微软服务
-  - DOMAIN-SUFFIX,windows.com,Ⓜ️ 微软服务
-  - DOMAIN-SUFFIX,office.com,Ⓜ️ 微软服务
-  - DOMAIN-SUFFIX,live.com,Ⓜ️ 微软服务
   - RULE-SET,Microsoft,Ⓜ️ 微软服务
   
   # 开发者平台优化（组合规则 - 6个平台）
@@ -781,9 +761,8 @@ tun:
 # 🌐 节点容错机制：
 # - Fallback模式：主节点故障时自动切换到备用节点
 # - 故障转移组：🌐 故障转移，所有节点统一管理
-# - 负载均衡组：⚖️ 负载均衡，分散流量压力
 # - 备用线路组：🔄 备用线路，多重保障
-# - 健康检查：每5分钟检测，超时5秒自动切换
+# - 健康检查：每30分钟检测，超时5秒自动切换
 # 
 # 🎯 订阅容错机制：
 # - 自动过滤：排除无效、过期、测试节点
@@ -807,7 +786,7 @@ tun:
 # 2️⃣ 主要节点故障：
 #    - Fallback自动切换到同地区其他节点
 #    - 使用"🌐 故障转移"统一管理
-#    - 临时切换到"⚖️ 负载均衡"分散压力
+#    - 临时切换到"🔄 备用线路"分散压力
 # 
 # 3️⃣ 整个地区节点故障：
 #    - 策略组中的"🔄 备用线路"选项
@@ -846,9 +825,8 @@ tun:
 # 说明：使用墨鱼维护的统一AI规则，覆盖更全面，自动更新
 # 
 # ⚙️ 高级设置：
-# - 自动健康检查：每10分钟检测节点可用性
+# - 自动健康检查：每30分钟检测节点可用性
 # - 故障切换：节点故障时自动切换到备用节点
-# - 负载均衡：支持多节点负载均衡
 # 
 # 🔧 自定义选项：
 # - 可根据需要调整各地区节点的检测间隔
@@ -857,9 +835,8 @@ tun:
 #
 # 💡 使用建议：
 # 1. 首次使用建议选择"自动选择"，让系统自动选择最优节点
-# 2. 游戏时优先使用"游戏专线"或对应地区的游戏节点
+# 2. 游戏时选择"🎮 游戏平台"或对应地区节点
 # 3. 流媒体观看时选择对应服务的优化节点
-# 4. 需要稳定IP时选择"家宽优选"
-# 5. 特殊需求时可使用"星链网络"或"5G网络"
+# 4. 遇到问题可切换"🔄 备用线路"或"🌐 故障转移"
 #
 #==========================================
