@@ -3,9 +3,10 @@
 # @Author            基于墨鱼配置 + 全球机场订阅优化
 # @UpdateTime        2026年3月
 # @Function          全球节点覆盖、智能分流、游戏优化、AI服务支持、加密货币专线
-# @ConfigVersion     3.4.0
+# @ConfigVersion     3.5.0
 # @Features          🌍全球196国节点 | 🎮游戏专线 | 🤖14个AI平台 | 💰加密货币 | 📋智能分流 | 📥下载优化
-# @Changelog         v3.4.0: 新增中亚节点组、补全欧/非/洋/美区域filter、修复DNS(respect-rules/sniffer)
+# @Changelog         v3.5.0: 新增 Google Antigravity IDE 规则(antigravity.google + cloudcode-pa API)
+#                    v3.4.0: 新增中亚节点组、补全欧/非/洋/美区域filter、修复DNS(respect-rules/sniffer)
 #                    v3.3.0: 新增加密货币策略组(100+域名)、默认韩国节点
 #                    v3.2.0: AI规则升级(5→14平台)、新增下载优化、新增Bahamut
 #==========================================
@@ -661,6 +662,11 @@ rules:
   
   # 科技服务
   - RULE-SET,Apple,🍎 苹果服务
+
+  # Google Antigravity IDE（AI 编程助手，优先于通用 Google 规则捕获）
+  - DOMAIN-SUFFIX,antigravity.google,👨‍💻 开发服务
+  - DOMAIN-KEYWORD,cloudcode-pa,👨‍💻 开发服务
+
   - RULE-SET,Google,🌌 谷歌服务
   - RULE-SET,Microsoft,Ⓜ️ 微软服务
   
