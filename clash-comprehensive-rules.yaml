@@ -3,9 +3,10 @@
 # @Author            基于墨鱼配置 + 全球机场订阅优化
 # @UpdateTime        2026年3月
 # @Function          全球节点覆盖、智能分流、游戏优化、AI服务支持、加密货币专线
-# @ConfigVersion     3.5.1
-# @Features          🌍全球196国节点 | 🎮游戏专线 | 🤖14个AI平台 | 💰加密货币 | 📋智能分流 | 📥下载优化
-# @Changelog         v3.5.1: 修复 Antigravity 规则覆盖(KEYWORD替换SUFFIX，移至AI规则前，覆盖.goog TLD)
+# @ConfigVersion     3.5.2
+# @Features          🌍全球196国节点 | 🎮游戏专线 | 🤖16个AI平台 | 💰加密货币 | 📋智能分流 | 📥下载优化
+# @Changelog         v3.5.2: Antigravity→🤖AI(调研确认AI-first定位)；补充Windsurf/Codeium规则
+#                    v3.5.1: 修复 Antigravity 规则覆盖(KEYWORD替换SUFFIX，移至AI规则前，覆盖.goog TLD)
 #                    v3.5.0: 新增 Google Antigravity IDE 规则(antigravity.google + cloudcode-pa API)
 #                    v3.4.0: 新增中亚节点组、补全欧/非/洋/美区域filter、修复DNS(respect-rules/sniffer)
 #                    v3.3.0: 新增加密货币策略组(100+域名)、默认韩国节点
@@ -478,9 +479,13 @@ rules:
   - RULE-SET,Hijacking,🛡️ 安全防护
   - RULE-SET,Malware,🛡️ 安全防护
   
-  # Google Antigravity IDE（优先于 AI/Google 规则集，覆盖 .google/.goog/googleapis 所有变体）
-  - DOMAIN-KEYWORD,antigravity,👨‍💻 开发服务
-  - DOMAIN-KEYWORD,cloudcode-pa,👨‍💻 开发服务
+  # AI IDE 补充规则（ddgksf2013 AI 规则集未收录，手动补齐）
+  # Google Antigravity IDE（覆盖 .google/.goog/googleapis 所有变体）
+  - DOMAIN-KEYWORD,antigravity,🤖 人工智能
+  - DOMAIN-KEYWORD,cloudcode-pa,🤖 人工智能
+  # Windsurf IDE（原 Codeium）
+  - DOMAIN-SUFFIX,codeium.com,🤖 人工智能
+  - DOMAIN-SUFFIX,windsurf.com,🤖 人工智能
 
   # AI 服务优化（墨鱼统一规则 - 覆盖14个AI平台）
   - RULE-SET,AI,🤖 人工智能
