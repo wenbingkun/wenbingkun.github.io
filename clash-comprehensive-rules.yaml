@@ -3,9 +3,12 @@
 # @Author            基于墨鱼配置 + 全球机场订阅优化
 # @UpdateTime        2026年3月
 # @Function          全球节点覆盖、智能分流、游戏优化、AI服务支持、加密货币专线
-# @ConfigVersion     3.5.2
-# @Features          🌍全球196国节点 | 🎮游戏专线 | 🤖16个AI平台 | 💰加密货币 | 📋智能分流 | 📥下载优化
-# @Changelog         v3.5.2: Antigravity→🤖AI(调研确认AI-first定位)；补充Windsurf/Codeium规则
+# @ConfigVersion     3.6.0
+# @Features          🌍全球196国节点 | 🎮游戏专线 | 🤖AI平台 | 💰加密货币 | 📋智能分流 | 📥下载优化 | 🎙️商务协作
+# @Changelog         v3.6.0: 新增🎙️商务协作分组(Slack/Zoom/Notion/Figma)；补全AI(HuggingFace/Groq等)；
+#                             补全流媒体(HBO/Hulu/Crunchyroll/DAZN)；补全社交(LinkedIn/Pinterest)；
+#                             补全开发生态(npm/PyPI/Homebrew/VSCode/JetBrains)；修复base.org误判
+#                    v3.5.2: Antigravity→🤖AI(调研确认AI-first定位)；补充Windsurf/Codeium规则
 #                    v3.5.1: 修复 Antigravity 规则覆盖(KEYWORD替换SUFFIX，移至AI规则前，覆盖.goog TLD)
 #                    v3.5.0: 新增 Google Antigravity IDE 规则(antigravity.google + cloudcode-pa API)
 #                    v3.4.0: 新增中亚节点组、补全欧/非/洋/美区域filter、修复DNS(respect-rules/sniffer)
@@ -154,10 +157,11 @@ proxy-groups:
   - {name: 👨‍💻 开发服务, type: select, proxies: [🇺🇲 美国节点, 🇸🇬 狮城节点, 🇯🇵 日本节点, 🇭🇰 香港节点, 🇬🇧 英国节点, DIRECT]}
   - {name: 💰 加密货币, type: select, proxies: [🇰🇷 韩国节点, 🇯🇵 日本节点, 🇸🇬 狮城节点, 🇺🇲 美国节点, 🇭🇰 香港节点, 🇬🇧 英国节点, 🇦🇺 澳洲节点, DIRECT]}
 
-  # 科技服务策略组  
+  # 科技服务策略组
   - {name: 🍎 苹果服务, type: select, proxies: [DIRECT, 🇺🇲 美国节点, 🇭🇰 香港节点, 🇯🇵 日本节点, 🇸🇬 狮城节点]}
   - {name: 🌌 谷歌服务, type: select, proxies: [🇺🇲 美国节点, 🇸🇬 狮城节点, 🇯🇵 日本节点, 🇭🇰 香港节点, 🔄 备用线路]}
   - {name: Ⓜ️ 微软服务, type: select, proxies: [🇺🇲 美国节点, 🇭🇰 香港节点, 🇸🇬 狮城节点, DIRECT]}
+  - {name: 🎙️ 商务协作, type: select, proxies: [🇺🇲 美国节点, 🇸🇬 狮城节点, 🇯🇵 日本节点, 🇭🇰 香港节点, DIRECT]}
   
   # 国内服务策略组
   - {name: 🇨🇳 国内服务, type: select, proxies: [DIRECT, 🇭🇰 香港节点, 🇨🇳 台湾节点]}
@@ -302,6 +306,26 @@ rule-providers:
     url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/BiliBili/BiliBili.yaml"
     path: ./ruleset/BiliBili.yaml
 
+  HBO:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/HBO/HBO.yaml"
+    path: ./ruleset/HBO.yaml
+
+  Hulu:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Hulu/Hulu.yaml"
+    path: ./ruleset/Hulu.yaml
+
+  Crunchyroll:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Crunchyroll/Crunchyroll.yaml"
+    path: ./ruleset/Crunchyroll.yaml
+
+  DAZN:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/DAZN/DAZN.yaml"
+    path: ./ruleset/DAZN.yaml
+
   # 巴哈姆特动漫规则集（台湾动漫平台）
   Bahamut:
     <<: *a6
@@ -313,6 +337,17 @@ rule-providers:
     <<: *a6
     url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Download/Download.yaml"
     path: ./ruleset/Download.yaml
+
+  # 商务协作规则集
+  Slack:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Slack/Slack.yaml"
+    path: ./ruleset/Slack.yaml
+
+  Zoom:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Zoom/Zoom.yaml"
+    path: ./ruleset/Zoom.yaml
 
   # 社交平台规则集（专用规则优先，避免被SocialMedia通用规则误捕获）
   Telegram:
@@ -354,6 +389,16 @@ rule-providers:
     <<: *a6
     url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/SocialMedia/SocialMedia.yaml"
     path: ./ruleset/SocialMedia.yaml
+
+  LinkedIn:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/LinkedIn/LinkedIn.yaml"
+    path: ./ruleset/LinkedIn.yaml
+
+  Pinterest:
+    <<: *a6
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Pinterest/Pinterest.yaml"
+    path: ./ruleset/Pinterest.yaml
 
   # 科技服务
   Apple:
@@ -486,6 +531,13 @@ rules:
   # Windsurf IDE（原 Codeium）
   - DOMAIN-SUFFIX,codeium.com,🤖 人工智能
   - DOMAIN-SUFFIX,windsurf.com,🤖 人工智能
+  # AI 新兴平台（规则集未收录，手动补齐）
+  - DOMAIN-SUFFIX,huggingface.co,🤖 人工智能
+  - DOMAIN-SUFFIX,groq.com,🤖 人工智能
+  - DOMAIN-SUFFIX,together.ai,🤖 人工智能
+  - DOMAIN-SUFFIX,replicate.com,🤖 人工智能
+  - DOMAIN-SUFFIX,runwayml.com,🤖 人工智能
+  - DOMAIN-SUFFIX,elevenlabs.io,🤖 人工智能
 
   # AI 服务优化（墨鱼统一规则 - 覆盖14个AI平台）
   - RULE-SET,AI,🤖 人工智能
@@ -620,7 +672,7 @@ rules:
   # Layer2 & 跨链桥
   - DOMAIN-SUFFIX,arbitrum.io,💰 加密货币
   - DOMAIN-SUFFIX,optimism.io,💰 加密货币
-  - DOMAIN-SUFFIX,base.org,💰 加密货币
+  - DOMAIN,base.org,💰 加密货币
   - DOMAIN-SUFFIX,polygon.technology,💰 加密货币
   - DOMAIN-SUFFIX,starknet.io,💰 加密货币
   - DOMAIN-SUFFIX,zksync.io,💰 加密货币
@@ -643,12 +695,19 @@ rules:
   - DOMAIN-SUFFIX,odaily.news,💰 加密货币
 
   # 专用平台规则（按优先级顺序排列，确保精确匹配）
-  
+
+  # 商务协作（高优先级，避免被通用规则误捕获）
+  - RULE-SET,Slack,🎙️ 商务协作
+  - RULE-SET,Zoom,🎙️ 商务协作
+  - DOMAIN-SUFFIX,notion.so,🎙️ 商务协作
+  - DOMAIN-SUFFIX,figma.com,🎙️ 商务协作
+  - DOMAIN-SUFFIX,linear.app,🎙️ 商务协作
+
   # 特殊分组的视频平台
   - RULE-SET,YouTube,🌌 谷歌服务
   - RULE-SET,BiliBili,📺 哔哩哔哩
   - RULE-SET,Bahamut,🎬 流媒体
-  
+
   # 社交平台专用规则（避免被通用规则误捕获）
   - RULE-SET,TikTok,🌐 社交平台
   - RULE-SET,Telegram,🌐 社交平台
@@ -657,7 +716,9 @@ rules:
   - RULE-SET,Discord,🌐 社交平台
   - RULE-SET,Facebook,🌐 社交平台
   - RULE-SET,Reddit,🌐 社交平台
-  
+  - RULE-SET,LinkedIn,🌐 社交平台
+  - RULE-SET,Pinterest,🌐 社交平台
+
   # 流媒体平台专用规则（避免被GlobalMedia误捕获）
   - RULE-SET,Netflix,🎬 流媒体
   - RULE-SET,Disney,🎬 流媒体
@@ -665,7 +726,11 @@ rules:
   - RULE-SET,Twitch,🎬 流媒体
   - RULE-SET,AppleTV,🎬 流媒体
   - RULE-SET,PrimeVideo,🎬 流媒体
-  
+  - RULE-SET,HBO,🎬 流媒体
+  - RULE-SET,Hulu,🎬 流媒体
+  - RULE-SET,Crunchyroll,🎬 流媒体
+  - RULE-SET,DAZN,🎬 流媒体
+
   # 通用兜底规则（放在最后，避免抢夺专用规则流量）
   - RULE-SET,SocialMedia,🌐 社交平台
   - RULE-SET,GlobalMedia,🎬 流媒体
@@ -682,7 +747,17 @@ rules:
   - RULE-SET,StackOverflow,👨‍💻 开发服务
   - RULE-SET,Cloudflare,👨‍💻 开发服务
   - RULE-SET,Developer,👨‍💻 开发服务
-  
+  # 包管理器与开发生态（规则集未收录）
+  - DOMAIN-SUFFIX,npmjs.com,👨‍💻 开发服务
+  - DOMAIN-SUFFIX,pypi.org,👨‍💻 开发服务
+  - DOMAIN-SUFFIX,python.org,👨‍💻 开发服务
+  - DOMAIN-SUFFIX,brew.sh,👨‍💻 开发服务
+  - DOMAIN-SUFFIX,formulae.brew.sh,👨‍💻 开发服务
+  - DOMAIN-SUFFIX,marketplace.visualstudio.com,👨‍💻 开发服务
+  - DOMAIN-SUFFIX,vscode.dev,👨‍💻 开发服务
+  - DOMAIN-SUFFIX,jetbrains.com,👨‍💻 开发服务
+  - DOMAIN-SUFFIX,plugins.jetbrains.com,👨‍💻 开发服务
+
   # 腾讯服务
   - RULE-SET,Tencent,🇨🇳 国内服务
 
