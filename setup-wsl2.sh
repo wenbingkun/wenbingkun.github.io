@@ -18,6 +18,9 @@
 
 set -e  # 遇到错误立即退出
 
+MINIMAL_INSTALL=false
+FORCE_INSTALL=false
+
 # 颜色定义
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -179,7 +182,7 @@ main_install() {
     
     # 2. 安装 Zsh
     print_step "[2/10] 安装 Zsh..."
-    if ! command_exists zsh; then
+    if [ "$FORCE_INSTALL" = true ] || ! command_exists zsh; then
         sudo apt install -y zsh
         print_success "Zsh 安装完成"
     else
@@ -188,6 +191,9 @@ main_install() {
     
     # 3. 安装 Oh-My-Zsh
     print_step "[3/10] 安装 Oh-My-Zsh..."
+    if [ "$FORCE_INSTALL" = true ] && [ -d "$HOME/.oh-my-zsh" ]; then
+        rm -rf "$HOME/.oh-my-zsh"
+    fi
     if [ ! -d "$HOME/.oh-my-zsh" ]; then
         # 使用国内镜像加速
         REMOTE="https://gitee.com/mirrors/oh-my-zsh.git"
@@ -208,6 +214,9 @@ main_install() {
     # 4. 安装 Powerlevel10k 主题
     print_step "[4/10] 安装 Powerlevel10k 主题..."
     P10K_DIR="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k"
+    if [ "$FORCE_INSTALL" = true ] && [ -d "$P10K_DIR" ]; then
+        rm -rf "$P10K_DIR"
+    fi
     if [ ! -d "$P10K_DIR" ]; then
         git clone --depth=1 https://gitee.com/romkatv/powerlevel10k.git "$P10K_DIR" || \
         git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "$P10K_DIR"
@@ -221,6 +230,9 @@ main_install() {
     
     # zsh-autosuggestions
     AUTOSUGGESTIONS_DIR="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions"
+    if [ "$FORCE_INSTALL" = true ] && [ -d "$AUTOSUGGESTIONS_DIR" ]; then
+        rm -rf "$AUTOSUGGESTIONS_DIR"
+    fi
     if [ ! -d "$AUTOSUGGESTIONS_DIR" ]; then
         git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions "$AUTOSUGGESTIONS_DIR"
         print_success "zsh-autosuggestions 安装完成"
@@ -228,6 +240,9 @@ main_install() {
     
     # zsh-syntax-highlighting
     SYNTAX_DIR="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting"
+    if [ "$FORCE_INSTALL" = true ] && [ -d "$SYNTAX_DIR" ]; then
+        rm -rf "$SYNTAX_DIR"
+    fi
     if [ ! -d "$SYNTAX_DIR" ]; then
         git clone --depth=1 https://github.com/zsh-users/zsh-syntax-highlighting "$SYNTAX_DIR"
         print_success "zsh-syntax-highlighting 安装完成"
@@ -235,6 +250,9 @@ main_install() {
     
     # zsh-completions
     COMPLETIONS_DIR="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-completions"
+    if [ "$FORCE_INSTALL" = true ] && [ -d "$COMPLETIONS_DIR" ]; then
+        rm -rf "$COMPLETIONS_DIR"
+    fi
     if [ ! -d "$COMPLETIONS_DIR" ]; then
         git clone --depth=1 https://github.com/zsh-users/zsh-completions "$COMPLETIONS_DIR"
         print_success "zsh-completions 安装完成"
@@ -244,14 +262,17 @@ main_install() {
     print_step "[6/10] 安装现代化命令行工具..."
     
     # fzf - 模糊搜索
-    if ! command_exists fzf; then
+    if [ "$FORCE_INSTALL" = true ] && [ -d "$HOME/.fzf" ]; then
+        rm -rf "$HOME/.fzf"
+    fi
+    if [ ! -d "$HOME/.fzf" ]; then
         git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
         ~/.fzf/install --all --no-bash --no-fish
         print_success "fzf 安装完成"
     fi
     
     # bat - 更好的 cat
-    if ! command_exists bat; then
+    if [ "$FORCE_INSTALL" = true ] || ! command_exists bat; then
         sudo apt install -y bat
         # Ubuntu/Debian 上 bat 可能被安装为 batcat
         if command_exists batcat && ! command_exists bat; then
@@ -261,7 +282,7 @@ main_install() {
     fi
     
     # eza - 更好的 ls (exa 的继承者)
-    if ! command_exists eza; then
+    if [ "$FORCE_INSTALL" = true ] || ! command_exists eza; then
         # 优先使用系统自带仓库，避免引入额外外部源
         sudo apt install -y eza || {
             # 如果失败，尝试安装 exa 并建立兼容别名
@@ -272,30 +293,36 @@ main_install() {
     fi
     
     # fd - 更好的 find
-    if ! command_exists fd; then
+    if [ "$FORCE_INSTALL" = true ] || ! command_exists fd; then
         sudo apt install -y fd-find
         sudo ln -sf /usr/bin/fdfind /usr/local/bin/fd
         print_success "fd 安装完成"
     fi
     
     # ripgrep - 更好的 grep
-    if ! command_exists rg; then
+    if [ "$FORCE_INSTALL" = true ] || ! command_exists rg; then
         sudo apt install -y ripgrep
         print_success "ripgrep 安装完成"
     fi
     
     # autojump - 目录快速跳转
-    if ! command_exists autojump; then
+    if [ "$FORCE_INSTALL" = true ] || ! command_exists autojump; then
         sudo apt install -y autojump
         print_success "autojump 安装完成"
     fi
     
     # 其他实用工具
-    sudo apt install -y htop ncdu tldr jq tree duf neofetch
+    if [ "$MINIMAL_INSTALL" = true ]; then
+        print_info "最小化安装模式：跳过附加实用工具"
+    else
+        sudo apt install -y htop ncdu tldr jq tree duf neofetch
+    fi
     
     # 7. 配置 Git 增强工具
     print_step "[7/9] 配置 Git 增强工具..."
-    if ! command_exists delta; then
+    if [ "$MINIMAL_INSTALL" = true ]; then
+        print_info "最小化安装模式：跳过 delta 安装"
+    elif [ "$FORCE_INSTALL" = true ] || ! command_exists delta; then
         # 安装 delta (更好的 git diff)，优先使用系统仓库
         sudo apt install -y git-delta || {
             # 回退到官方发布包，并进行 SHA256 校验
@@ -330,7 +357,9 @@ main_install() {
     FONT_DIR="$HOME/.local/share/fonts"
     mkdir -p "$FONT_DIR"
     
-    if [ ! -f "$FONT_DIR/MesloLGS NF Regular.ttf" ]; then
+    if [ "$MINIMAL_INSTALL" = true ]; then
+        print_info "最小化安装模式：跳过 Nerd Fonts 安装"
+    elif [ "$FORCE_INSTALL" = true ] || [ ! -f "$FONT_DIR/MesloLGS NF Regular.ttf" ]; then
         # 下载 MesloLGS NF 字体（Powerlevel10k 推荐）
         wget -q -P "$FONT_DIR" https://github.com/romkatv/powerlevel10k-media/raw/master/MesloLGS%20NF%20Regular.ttf
         wget -q -P "$FONT_DIR" https://github.com/romkatv/powerlevel10k-media/raw/master/MesloLGS%20NF%20Bold.ttf
@@ -866,8 +895,8 @@ show_help() {
     echo "选项:"
     echo "  -h, --help      显示帮助信息"
     echo "  -d, --diagnose  诊断当前环境"
-    echo "  -m, --minimal   最小化安装（跳过开发工具）"
-    echo "  -f, --force     强制重新安装所有组件"
+    echo "  -m, --minimal   最小化安装（跳过附加工具、delta 和字体）"
+    echo "  -f, --force     强制重新安装已存在的组件"
     echo ""
     echo "示例:"
     echo "  $0              # 标准安装"
@@ -929,7 +958,7 @@ main() {
     echo -e "  ${CYAN}cat/less${NC}      - 语法高亮的文件查看"
     
     echo -e "\n${BLUE}提示：运行 ${CYAN}$0 --diagnose${NC} 可以查看详细环境状态${NC}"
-    echo -e "${BLUE}Wiki: https://github.com/your-repo/wsl2-setup${NC}"
+    echo -e "${BLUE}Repo: https://github.com/wenbingkun/wenbingkun.github.io${NC}"
 }
 
 # 脚本入口

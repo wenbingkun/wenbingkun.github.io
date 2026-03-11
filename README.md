@@ -1,236 +1,219 @@
 # wenbingkun.github.io
 
-这是一个集合了个人主页及各种实用工具的仓库。
+个人主页与若干独立工具页面的集合仓库。
 
----
+当前仓库保留 3 类内容：
+- GitHub Pages 主页
+- 2 个可直接打开的前端页面
+- Windows / WSL 环境配置脚本
 
-## 目录
-- [wenbingkun.github.io](#wenbingkungithubio)
-  - [主页（index.html）](#主页indexhtml)
-  - [项目列表](#项目列表)
-    - [🐈 cat-test（cat-test.html）](#-cat-testcat-testhtml)
-    - [🎲 lottery-app（lovecan-lottery.html）](#-lottery-applovecan-lotteryhtml)
-    - [🎵 music-player（lyrics_player.html）](#-music-playerlyrics_playerhtml)
-    - [🌐 clash-comprehensive-rules.yaml](#-clash-comprehensive-rulesyaml)
-    - [📱 quantumultx-comprehensive.conf](#-quantumultx-comprehensiveconf)
-    - [⚡ setup-pwsh.ps1](#-setup-pwshps1)
-    - [🐧 setup-wsl2.sh](#-setup-wsl2sh)
-    - [🔧 fix-wsl2.sh](#-fix-wsl2sh)
-  - [适用场景](#适用场景)
-  - [更新日志](#更新日志)
-  - [技术支持](#技术支持)
-- [免责声明](#免责声明)
+原先放在这里的歌词播放器与代理配置，已经拆分到独立仓库维护。
 
----
+## 当前内容
 
-## 主页（index.html）
-这是一个展示个人信息、联系方式以及所有集成工具的入口页面。
-- **个人介绍**: 开发者 & 创作者，喜欢用代码创造有趣的东西，热爱音乐与DT。
-- **联系方式**: 邮箱 (`wenbingkun666@gmail.com`), GitHub (`wenbingkun`)。
+### 页面
+- `index.html`
+  - 个人主页与项目导航页。
+  - 包含当前仓库页面入口，以及已拆分项目的 GitHub 外链。
+- `cat-test.html`
+  - 猫咪性格测试页面。
+  - 通过长按触发测试，结果会写入浏览器 `localStorage`。
+- `lovecan-lottery.html`
+  - 座位抽奖页面。
+  - 适合现场活动或小型放映活动的随机抽奖场景。
 
----
+### 脚本
+- `setup-wsl2.sh`
+  - 面向 WSL2 Ubuntu 的一键环境初始化脚本。
+  - 会安装大量软件，并重写 `~/.zshrc`。
+- `fix-wsl2.sh`
+  - 面向已有 WSL2 / Zsh 环境的修复脚本。
+  - 也会重写 `~/.zshrc`。
+- `setup-pwsh.ps1`
+  - 面向 PowerShell 7 的环境增强脚本。
+  - 会修改 PowerShell Profile，并安装模块或 Windows 软件。
 
-## 项目列表
+### 静态文件
+- `favicon.svg`
+- `CNAME`
 
-### 🐈 cat-test（cat-test.html）
-- 一款有趣的猫咪性格测试网页应用，用于测测用户属于哪种类型的猫咪。
-- **核心功能**:
-  - 模拟性格测试：通过长按交互，随机生成六种预设猫咪性格中的一种。
-  - 结果持久化：测试结果自动保存在浏览器本地，刷新页面结果依然存在。
-  - 重复测试：支持用户随时选择“重新测试”。
-- **亮点特色**:
-  - ✨ **交互式体验**: 采用创新的长按操作触发测试，配合圆形进度条动态反馈。
-  - 📱 **响应式设计**: 支持移动端和桌面端，界面简洁可爱，优化触控体验。
-  - 🔊 **多媒体反馈**: 测试完成时伴随悦耳的Web Audio音效提示。
-  - 🎨 **视觉动画**: 包含结果页面的浮动动画和流畅过渡效果，提升趣味性。
-- **技术栈**:
-  - `Vanilla JavaScript`: 轻量级，无框架依赖。
-  - `Tailwind CSS`: 快速构建现代UI样式。
-- **使用方法**:
-  1. 在浏览器中打开 `cat-test.html` 文件。
-  2. 长按屏幕中心的圆形区域3秒，即可获得专属的猫咪性格测试结果。
+## 已拆分项目
 
-### 🎲 lottery-app（lovecan-lottery.html）
-- LOVECAN重映 - 幸运弦迷抽奖工具，一个为影院座位设计的互动抽奖应用。
-- **核心功能**:
-  - 📐 **自定义座位布局**: 通过文本配置轻松定义影院座位图。
-  - 🏆 **多人数抽奖**: 可设置中奖人数，支持同时抽取多名幸运观众。
-  - 🎬 **动画揭晓**: 炫酷的座位闪烁动画和纸屑效果，增加抽奖的趣味性和仪式感。
-  - 🖼️ **背景自定义**: 支持拖拽或上传图片自定义抽奖背景。
-- **使用方法**:
-  1. 打开 `lovecan-lottery.html` 文件。
-  2. 在左上角文本框中编辑座位布局（`o` 为座位，`-` 为过道）。
-  3. 设置中奖人数。
-  4. 点击“加载/重置”按钮更新座位图。
-  5. 点击“开始抽奖”按钮，等待中奖者动画揭晓。
-  6. 可点击右侧的🎨按钮更换背景图。
+- `led-lyrics-player`
+  - GitHub: https://github.com/wenbingkun/led-lyrics-player
+- `proxy-config`
+  - GitHub: https://github.com/wenbingkun/proxy-config
 
-### 🎵 music-player（lyrics_player.html）
-- 一款专为LED演出大屏设计的歌词显示器，支持LRC歌词与音频同步播放。
-- **核心功能**:
-  - 🎤 **歌词音画同步**: 支持LRC歌词文件和音频文件（MP3/WAV等）的精准同步播放。
-  - 📺 **大屏显示优化**: 歌词界面简洁，字体大而清晰，适合投影到大型屏幕。
-  - 📑 **歌词/音频管理**: 支持拖拽上传单个或多个歌词/音频文件，亦可选择整个文件夹批量导入。
-  - ⏯️ **多模式播放**: 支持列表播放、列表循环、单曲循环、随机播放等多种模式。
-- **特色亮点**:
-  - 🎨 **多主题切换**: 内置经典、黄金、蓝色、彩虹等多种歌词显示主题。
-  - 🔠 **字体大小调整**: 支持实时调整歌词字体大小，适应不同观演距离。
-  - 🔍 **歌词搜索**: 提供歌词内容搜索功能，快速定位到歌曲的特定段落。
-  - ⏱️ **同步校准**: 允许微调歌词与音频的时间偏移，确保完美的同步体验。
-  - 💾 **播放列表导入导出**: 方便保存和分享您的歌曲列表。
-  - 🎬 **快捷键操作**: 支持键盘快捷键控制播放、暂停、快进快退、切换歌曲、调整字号和主题等。
-- **使用方法**:
-  1. 在浏览器中打开 `lyrics_player.html` 文件。
-  2. 通过拖拽或点击控制面板中的按钮，上传LRC歌词文件和音频文件。
-  3. 根据需要设置播放速度、字体大小、主题和播放模式。
-  4. 点击播放按钮开始演出，歌词将同步显示。
-  5. 可使用快捷键进行更便捷的操作（例如：空格键播放/暂停，T 切换主题，+/- 调整字号）。
+## 仓库结构
 
-### 🌐 clash-comprehensive-rules.yaml
-- **全球精品机场融合配置 - 地理全覆盖版**
-- **版本**: v3.1.0 | **更新**: 2025年7月
-- **核心特色**:
-  - 🌍 **全球196国节点覆盖**: 支持全球所有可能的代理节点国家，无死角覆盖。
-  - 🏝️ **7大洲完整覆盖**: 细致分类亚洲18国、欧洲50国、南美33国、大洋洲24国、中东15国、非洲54国、北美2国。
-  - 🚀 **零维护成本**: 新增节点自动归入对应地区组，无需手动干预。
-  - 🤖 **AI服务支持**: 针对OpenAI、Claude、Gemini、Copilot、Perplexity等14个主流AI平台优化。
-  - 🎮 **游戏专线**: 自动筛选低延迟游戏专用节点，优化游戏体验。
-  - 📋 **智能分流架构**: 专用规则优先，避免通用规则误捕获，确保流量精确路由。
-  - ⬇️ **下载优化**: 针对BT/PT/磁力链接等下载流量进行直连优化，避免占用代理资源。
-  - 📺 **流媒体解锁**: 支持Netflix、Disney+、YouTube、巴哈姆特等主流流媒体平台。
-- **地理全覆盖**:
-  - 🌏 **东南亚**: 马来西亚、泰国、越南、菲律宾、印尼、印度等18国。
-  - 🇪🇺 **欧洲**: 英国、法国、德国、俄罗斯等50国。
-  - 🌎 **南美**: 巴西、阿根廷、智利、墨西哥等33国。
-  - 🏝️ **大洋洲**: 澳大利亚、新西兰以及22个太平洋岛国。
-  - 🕌 **中东**: 阿联酋、沙特、土耳其、伊朗等15国。
-  - 🌍 **非洲**: 南非、埃及、尼日利亚、肯尼亚等54国。
-- **技术亮点**:
-  - **一劳永逸**: 提供地理全覆盖解决方案，确保节点不遗漏。
-  - **精细分组**: 地理逻辑清晰，符合用户认知习惯，方便管理。
-  - **多重容错**: 内置DNS和节点故障转移机制，提高代理稳定性。
-- **使用方法**:
-  1. 下载对应的YAML配置文件。
-  2. **替换文件中的机场订阅链接** (`https://example.com/subscription.yaml`) 为您的实际订阅地址。
-  3. 将修改后的文件导入到Clash客户端。
-  4. 根据需要选择对应的代理组或策略。
+```text
+.
+├── index.html
+├── cat-test.html
+├── lovecan-lottery.html
+├── setup-wsl2.sh
+├── fix-wsl2.sh
+├── setup-pwsh.ps1
+├── favicon.svg
+├── CNAME
+└── README.md
+```
 
-### 📱 quantumultx-comprehensive.conf
-- **QuantumultX 全功能代理配置**
-- **版本**: v1.0.0 | **更新**: 2025年9月
-- **核心特色**:
-  - 🌍 **继承Clash全球覆盖**: 完整移植Clash配置的196国节点支持能力。
-  - 🛡️ **多源规则集成**: 聚合 blackmatrix7、墨鱼规则、iRingo 等多个高质量规则源。
-  - 🔄 **自动更新机制**: 规则每12-24小时自动更新，确保规则库始终最新。
-  - 🎯 **精准分流**: 针对AI服务、流媒体、游戏等场景进行优化路由。
-  - 🚫 **强力去广告**: 集成多重广告拦截规则，有效净化网络环境。
-  - 🔓 **VIP功能解锁**: 包含主流应用的部分会员功能增强。
-  - 🚀 **性能优化**: 调整更新频率，优化策略组设置，提升运行效率。
-- **规则来源**:
-  - 📊 **blackmatrix7**: 每日更新的iOS规则脚本集。
-  - 🐙 **墨鱼规则**: ddgksf2013重写规则库。
-  - 🍎 **iRingo**: 针对Apple服务地区解锁增强。
-  - 🛠️ **sve1r规则**: 补充性QuantumultX规则集。
-  - 🔒 **隐私保护**: 包含Hijacking、Privacy等安全规则。
-- **功能模块**:
-  - 🌐 **智能DNS**: 支持DoH/DoT，实现境内外分流与加密解析。
-  - 🎮 **游戏优化**: 专为Steam、Epic、PlayStation等平台设计。
-  - 📱 **应用增强**: 微信、QQ、淘宝等应用的功能优化。
-  - 🎬 **流媒体**: Netflix、Disney+、YouTube Premium等全球流媒体解锁。
-  - 💰 **去广告**: 全面拦截开屏广告、应用内广告。
-- **使用方法**:
-  1. 下载 `quantumultx-comprehensive.conf` 配置文件。
-  2. **在 `[server_remote]` 部分，将 "https://你的机场订阅链接" 替换为您的实际机场订阅地址**。
-  3. 导入到QuantumultX应用中。
-  4. 启用所需的重写规则和分流规则。
-  5. 根据网络环境选择合适的策略组。
+## 使用方式
 
-### ⚡ setup-pwsh.ps1
-- **PowerShell 7 现代化环境一键配置工具**
-- **功能**: 全自动配置 Windows PowerShell 7 的现代化开发环境。
-- **特色**:
-  - ✓ **PowerShell 7**: 安装最新版 PowerShell，提供更强大的Shell体验。
-  - ✓ **oh-my-posh + Terminal-Icons**: 命令行终端美观化，支持丰富的Git状态显示和文件图标。
-  - ✓ **PSReadLine**: 强大的智能补全与历史搜索功能。
-  - ✓ **Posh-Git**: 深度集成Git，提供分支信息、状态提示等。
-  - ✓ **z 模块**: 智能目录快速跳转工具，提高导航效率。
-  - ✓ **Scoop Completion**: 为Scoop包管理器提供命令自动补全。
-- **使用方法**:
-  1. 确保已安装 PowerShell 7。
-  2. 在 PowerShell 7 环境中，运行脚本：`.\setup-pwsh.ps1`。
-- **支持参数**:
-  - `-Force`: 强制重写配置文件。
-  - `-Diagnose`: 运行环境诊断，检查各组件状态。
-  - `-Minimal`: 最小化安装，跳过部分可选组件。
+### 直接打开页面
 
-### 🐧 setup-wsl2.sh
-- **WSL2 Ubuntu 现代化开发环境一键配置脚本**
-- **功能**: 全自动配置 WSL2 Ubuntu 的现代化开发环境。
-- **特色**:
-  - 🚀 **Zsh + Oh-My-Zsh + Powerlevel10k**: 打造美观且功能强大的现代化Shell环境。
-  - 🔍 **现代化命令行工具**: 自动安装 `fzf`(模糊搜索), `bat`(更好的cat), `eza`(更好的ls), `fd`(更好的find), `ripgrep`(更好的grep)。
-  - 🎯 **智能补全**: 配置 `zsh-autosuggestions` 和 `zsh-syntax-highlighting`，提升命令输入效率。
-  - 📍 **目录快速跳转**: 集成 `autojump/z`，实现智能目录跳转。
-  - 🌐 **WSL2 与 Windows 互操作优化**: 配置路径别名，方便在WSL2中调用Windows应用及访问Windows目录。
-  - 🛠️ **开发环境支持**: 提供Node.js/Python/Go等开发环境的配置基础。
-- **使用方法**:
-  1. 在WSL2 Ubuntu终端中，运行脚本：`bash setup-wsl2.sh`。
-- **支持参数**:
-  - `--diagnose`: 诊断当前环境，检查已安装组件。
-  - `--minimal`: 最小化安装，跳过部分开发工具。
-  - `--force`: 强制重新安装所有组件。
+这是一个无构建步骤的静态仓库，大多数内容可以直接在浏览器中打开：
 
-### 🔧 fix-wsl2.sh
-- **WSL2 环境快速修复与优化工具**
-- **功能**: 用于补充缺失的组件，修复常见的 WSL2 环境问题，并优化现有配置。
-- **适用场景**: 已有 WSL2 环境的快速修复和性能优化。
-- **特色**:
-  - 🔧 **缺失组件安装**: 自动安装 `fzf` 等可能缺失的模糊搜索工具。
-  - 🔌 **Zsh 插件补充**: 补充安装 `zsh-autosuggestions` 和 `zsh-syntax-highlighting` 等常用 Zsh 插件。
-  - 🎨 **主题配置**: 确保 Powerlevel10k 主题正确安装与配置。
-  - ⚡ **Zsh 配置优化**: 优化 `.zshrc` 文件，确保各项功能正确加载和运行。
-  - 🔗 **Node.js 别名修复**: 解决 `nodejs` 命令在某些环境下需要输入 `nodejs` 而非 `node` 的问题。
-- **使用方法**:
-  1. 在WSL2 Ubuntu终端中，运行脚本：`bash fix-wsl2.sh`。
+- `index.html`
+- `cat-test.html`
+- `lovecan-lottery.html`
 
----
+如果只是预览页面，直接双击 HTML 文件即可。
 
-## 适用场景
-本仓库内的工具和配置适用于以下用户和场景：
-- 🌐 **全球用户**: 代理配置支持全球196个国家和地区。
-- 🤖 **AI/开发**: 代理配置支持主流AI服务独立路由，优化GitHub、GitLab等开发平台访问。
-- 🎬 **流媒体**: 代理配置针对Netflix、Disney+、YouTube等流媒体平台优化。
-- 🎮 **游戏玩家**: 代理配置提供Steam、Epic、PlayStation等游戏平台支持。
-- ⚙️ **运维/开发**: PowerShell和WSL2脚本提供一键式现代化开发环境配置及优化。
-- 📱 **iOS用户**: QuantumultX配置专为iOS平台设计，支持Siri快捷指令。
-- ♻️ **零维护**: 代理配置设计为节点新增删除无需手动修改，自动生效。
+### 本地启动静态服务器
 
----
+如果你更习惯通过本地 HTTP 访问，可以在仓库根目录执行：
 
-## 更新日志
+```bash
+python3 -m http.server 8000
+```
 
-### clash-comprehensive-rules.yaml 更新日志 (v3.1.0 - 2025年7月)
-- ✅ 实现地理全覆盖方案，支持全球196个国家和地区。
-- ✅ 新增大洋洲代理组，完善太平洋岛国覆盖。
-- ✅ 零维护成本设计，节点新增删除无需手动配置。
-- ✅ 优化地区代理组架构，按七大洲科学分类。
-- ✅ 修复地区匹配冲突问题（澳洲→澳门，日本→尼日利亚等）。
+然后访问：
 
-### quantumultx-comprehensive.conf 更新日志 (v1.0.0 - 2025年9月)
-- ✅ 完整移植Clash配置功能到QuantumultX格式。
-- ✅ 集成多源规则库：blackmatrix7、墨鱼规则、iRingo等。
-- ✅ 实现自动更新机制，规则每12-24小时更新。
-- ✅ 优化iOS设备性能，支持Siri快捷指令集成。
-- ✅ 强化去广告和隐私保护功能。
+```text
+http://localhost:8000/
+```
 
----
+## 页面说明
 
-## 技术支持
+### `index.html`
 
-如有任何建议或问题，欢迎通过以下方式联系：
-- 📧 **邮箱**: wenbingkun666@gmail.com 
-- 🔗 **GitHub**: [wenbingkun](https://github.com/wenbingkun)
+- 定位：个人主页与项目导航
+- 特点：单文件、无构建、可直接部署到 GitHub Pages
+- 依赖：本地 `favicon.svg`，以及两个 GitHub 仓库外链
 
----
+### `cat-test.html`
 
-> **免责声明**: 本项目仅供学习交流使用，请遵守当地法律法规。代理服务请选择合规的服务提供商。
+- 定位：轻量互动测试页
+- 主要行为：
+  - 长按 3 秒生成结果
+  - 结果缓存到 `localStorage`
+  - 支持重新测试
+- 依赖：
+  - Tailwind CDN
+  - Google Fonts
+
+### `lovecan-lottery.html`
+
+- 定位：座位抽奖页
+- 主要行为：
+  - 根据座位布局生成座位图
+  - 支持多人抽奖
+  - 支持本地背景图上传
+  - 带动画和开奖弹窗
+- 依赖：
+  - 外部背景图
+  - Google Fonts
+
+## 脚本说明
+
+### `setup-wsl2.sh`
+
+适用场景：
+- 新的 WSL2 Ubuntu 环境
+- 想一次性安装 Zsh、Oh-My-Zsh、Powerlevel10k 和常用命令行工具
+
+执行方式：
+
+```bash
+bash setup-wsl2.sh
+```
+
+可用参数：
+
+```bash
+bash setup-wsl2.sh --help
+bash setup-wsl2.sh --diagnose
+```
+
+注意：
+- 脚本包含 `sudo apt`、`git clone`、`wget`、`chsh` 等操作。
+- 会备份并重写 `~/.zshrc`。
+- `--minimal` 会跳过附加命令行工具、`delta` 和 Nerd Fonts。
+- `--force` 会重新拉取 / 重装已存在的组件。
+
+### `fix-wsl2.sh`
+
+适用场景：
+- 已有 WSL2 + Zsh 环境，但缺少部分插件或主题
+- 需要快速重建一份预设的 `~/.zshrc`
+
+执行方式：
+
+```bash
+bash fix-wsl2.sh
+```
+
+注意：
+- 脚本会备份并重写 `~/.zshrc`。
+- 更适合已经安装过 Oh-My-Zsh 的环境，不适合把它当成全新初始化脚本。
+- 脚本最后会等待交互确认，决定是否立即切换到 `zsh`。
+
+### `setup-pwsh.ps1`
+
+适用场景：
+- Windows PowerShell 7 环境增强
+- 需要安装 `oh-my-posh`、`PSReadLine`、`Posh-Git`、`Terminal-Icons` 等
+
+执行方式：
+
+```powershell
+pwsh -File .\setup-pwsh.ps1
+```
+
+诊断模式：
+
+```powershell
+pwsh -File .\setup-pwsh.ps1 -Diagnose
+```
+
+注意：
+- 脚本会写入或追加 `$PROFILE`。
+- 会调用 `winget` 和 `Install-Module`。
+- `-Minimal` 当前只会跳过部分可选安装，不是严格意义上的“最小安装模式”。
+
+## 维护说明
+
+如果你修改了页面：
+- 直接在浏览器手动验证页面是否正常加载
+- 检查桌面端和移动端布局
+- 检查是否引入了新的外部依赖
+
+如果你修改了脚本：
+- 至少做语法检查
+- 再确认脚本描述、参数和实际行为是否一致
+- 对会覆盖用户配置的操作，在文档里明确写出
+
+## 已知注意事项
+
+- `cat-test.html` 与 `lovecan-lottery.html` 不是完全离线页面，依赖外部 CDN / 字体 / 图片资源。
+- 两个环境脚本都会覆盖用户的 Shell 配置文件，运行前应自行确认备份策略。
+
+## 手动检查建议
+
+- 打开 `index.html`，确认主页入口和外链正常
+- 打开 `cat-test.html`，确认长按、结果展示和重新测试正常
+- 打开 `lovecan-lottery.html`，确认座位生成、抽奖动画和背景上传正常
+- 对脚本先执行帮助或诊断模式，再决定是否实际运行
+
+## 联系方式
+
+- Email: `wenbingkun666@gmail.com`
+- GitHub: https://github.com/wenbingkun
+
+## 免责声明
+
+本仓库内容仅供学习和个人使用。
+
+运行脚本前请自行审阅内容，确认它会修改哪些系统配置、Shell 配置和代理设置；涉及网络下载、系统安装或系统代理的行为，请根据自己的环境与合规要求决定是否执行。

@@ -432,12 +432,12 @@ $profileContent += @"
 
 # 常用别名
 Set-Alias -Name ll -Value Get-ChildItem
-Set-Alias -Name la -Value 'Get-ChildItem -Force'
 Set-Alias -Name which -Value Get-Command
 Set-Alias -Name grep -Value Select-String
 Set-Alias -Name vim -Value notepad -ErrorAction SilentlyContinue
 
 # 实用函数
+function la { Get-ChildItem -Force @args }
 function touch { param(`$file) New-Item -ItemType File -Path `$file -Force | Out-Null }
 function reload { . `$PROFILE; Write-Host "✓ 配置已重载" -ForegroundColor Green }
 function mkcd { param(`$path) New-Item -ItemType Directory -Path `$path -Force; Set-Location `$path }

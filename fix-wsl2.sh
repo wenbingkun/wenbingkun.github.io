@@ -19,6 +19,20 @@ echo -e "${CYAN}╔════════════════════�
 echo -e "${CYAN}║   WSL2 环境快速修复与优化           ║${NC}"
 echo -e "${CYAN}╚══════════════════════════════════════╝${NC}"
 
+ZSH_ROOT="$HOME/.oh-my-zsh"
+ZSH_CUSTOM_DIR="${ZSH_CUSTOM:-$ZSH_ROOT/custom}"
+
+# 0. 检查 Oh-My-Zsh 基础环境
+echo -e "\n${BLUE}[0/4]${NC} 检查 Oh-My-Zsh 环境..."
+if [ ! -d "$ZSH_ROOT" ]; then
+    echo "  未检测到 Oh-My-Zsh，正在补装..."
+    git clone --depth=1 https://github.com/ohmyzsh/ohmyzsh.git "$ZSH_ROOT"
+    echo -e "${GREEN}✓${NC} Oh-My-Zsh 安装完成"
+else
+    echo -e "${GREEN}✓${NC} Oh-My-Zsh 已安装"
+fi
+mkdir -p "$ZSH_CUSTOM_DIR/plugins" "$ZSH_CUSTOM_DIR/themes"
+
 # 1. 安装缺失的 fzf
 echo -e "\n${BLUE}[1/4]${NC} 安装 fzf (模糊搜索工具)..."
 if ! command -v fzf >/dev/null 2>&1; then
@@ -33,24 +47,24 @@ fi
 echo -e "\n${BLUE}[2/4]${NC} 检查 Zsh 插件..."
 
 # zsh-autosuggestions
-if [ ! -d "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions" ]; then
+if [ ! -d "$ZSH_CUSTOM_DIR/plugins/zsh-autosuggestions" ]; then
     echo "  安装 zsh-autosuggestions..."
     git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions \
-        "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions"
+        "$ZSH_CUSTOM_DIR/plugins/zsh-autosuggestions"
     echo -e "${GREEN}  ✓${NC} zsh-autosuggestions 安装完成"
 fi
 
 # zsh-syntax-highlighting
-if [ ! -d "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting" ]; then
+if [ ! -d "$ZSH_CUSTOM_DIR/plugins/zsh-syntax-highlighting" ]; then
     echo "  安装 zsh-syntax-highlighting..."
     git clone --depth=1 https://github.com/zsh-users/zsh-syntax-highlighting \
-        "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting"
+        "$ZSH_CUSTOM_DIR/plugins/zsh-syntax-highlighting"
     echo -e "${GREEN}  ✓${NC} zsh-syntax-highlighting 安装完成"
 fi
 
 # 3. 安装 Powerlevel10k 主题
 echo -e "\n${BLUE}[3/4]${NC} 检查 Powerlevel10k 主题..."
-P10K_DIR="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k"
+P10K_DIR="$ZSH_CUSTOM_DIR/themes/powerlevel10k"
 if [ ! -d "$P10K_DIR" ]; then
     echo "  安装 Powerlevel10k..."
     git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "$P10K_DIR"
