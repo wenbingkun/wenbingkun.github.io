@@ -576,8 +576,10 @@ rules:
   - DOMAIN-SUFFIX,u-smartglobal.com,🇭🇰 香港节点
   - DOMAIN-SUFFIX,tigerbrokers.com.hk,🇭🇰 香港节点
   - DOMAIN-SUFFIX,webull.com.hk,🇭🇰 香港节点
+  - DOMAIN-SUFFIX,interactivebrokers.com,🇭🇰 香港节点
   - DOMAIN-SUFFIX,interactivebrokers.hk,🇭🇰 香港节点
   - DOMAIN-SUFFIX,ibkr.com,🇭🇰 香港节点
+  - DOMAIN-SUFFIX,ibkrcampus.com,🇭🇰 香港节点
 
   # 加密货币服务（CEX交易所 + DEX/DeFi + 行情数据 + 钱包工具）
   # CEX 中心化交易所
