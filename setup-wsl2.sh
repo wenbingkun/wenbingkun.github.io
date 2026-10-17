@@ -21,6 +21,10 @@ set -e  # 遇到错误立即退出
 MINIMAL_INSTALL=false
 FORCE_INSTALL=false
 
+XDG_CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
+XDG_STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}"
+ZSH_CONFIG_DIR="$XDG_CONFIG_DIR/zsh"
+
 # 颜色定义
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -154,7 +158,18 @@ diagnose_environment() {
     else
         print_info "Docker 未安装"
     fi
-    
+
+    # WSL 网络与代理
+    echo -e "\n${YELLOW}[WSL 网络]${NC}"
+    if command_exists wslinfo; then
+        print_info "网络模式: $(wslinfo --networking-mode 2>/dev/null)"
+    fi
+    if [ -n "${http_proxy:-${HTTP_PROXY:-}}" ]; then
+        print_success "代理: ${http_proxy:-$HTTP_PROXY}"
+    else
+        print_info "当前会话未设置代理（可用 proxyon 开启）"
+    fi
+
     echo -e "\n${CYAN}========== 诊断完成 ==========${NC}"
 }
 
@@ -167,7 +182,7 @@ main_install() {
     print_step "检测到系统: $OS $VER"
     
     # 1. 更新系统包
-    print_step "[1/10] 更新系统包..."
+    print_step "[1/9] 更新系统包..."
     if [ "$OS" = "ubuntu" ] || [ "$OS" = "debian" ]; then
         sudo apt update && sudo apt upgrade -y
         # 安装基础工具
@@ -181,7 +196,7 @@ main_install() {
     print_success "系统包更新完成"
     
     # 2. 安装 Zsh
-    print_step "[2/10] 安装 Zsh..."
+    print_step "[2/9] 安装 Zsh..."
     if [ "$FORCE_INSTALL" = true ] || ! command_exists zsh; then
         sudo apt install -y zsh
         print_success "Zsh 安装完成"
@@ -190,7 +205,7 @@ main_install() {
     fi
     
     # 3. 安装 Oh-My-Zsh
-    print_step "[3/10] 安装 Oh-My-Zsh..."
+    print_step "[3/9] 安装 Oh-My-Zsh..."
     if [ "$FORCE_INSTALL" = true ] && [ -d "$HOME/.oh-my-zsh" ]; then
         rm -rf "$HOME/.oh-my-zsh"
     fi
@@ -212,7 +227,7 @@ main_install() {
     fi
     
     # 4. 安装 Powerlevel10k 主题
-    print_step "[4/10] 安装 Powerlevel10k 主题..."
+    print_step "[4/9] 安装 Powerlevel10k 主题..."
     P10K_DIR="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k"
     if [ "$FORCE_INSTALL" = true ] && [ -d "$P10K_DIR" ]; then
         rm -rf "$P10K_DIR"
@@ -226,7 +241,7 @@ main_install() {
     fi
     
     # 5. 安装 Zsh 插件
-    print_step "[5/10] 安装 Zsh 插件..."
+    print_step "[5/9] 安装 Zsh 插件..."
     
     # zsh-autosuggestions
     AUTOSUGGESTIONS_DIR="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions"
@@ -259,7 +274,7 @@ main_install() {
     fi
     
     # 6. 安装现代化命令行工具
-    print_step "[6/10] 安装现代化命令行工具..."
+    print_step "[6/9] 安装现代化命令行工具..."
     
     # fzf - 模糊搜索
     if [ "$FORCE_INSTALL" = true ] && [ -d "$HOME/.fzf" ]; then
@@ -267,9 +282,19 @@ main_install() {
     fi
     if [ ! -d "$HOME/.fzf" ]; then
         git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
-        ~/.fzf/install --all --no-bash --no-fish
+        ~/.fzf/install --bin
         print_success "fzf 安装完成"
     fi
+    mkdir -p "$ZSH_CONFIG_DIR"
+    cat > "$ZSH_CONFIG_DIR/fzf.zsh" << 'EOF'
+# Setup fzf
+# ---------
+if [[ ! "$PATH" == *$HOME/.fzf/bin* ]]; then
+  PATH="${PATH:+${PATH}:}$HOME/.fzf/bin"
+fi
+
+source <(fzf --zsh)
+EOF
     
     # bat - 更好的 cat
     if [ "$FORCE_INSTALL" = true ] || ! command_exists bat; then
@@ -377,7 +402,24 @@ main_install() {
     
     # 备份现有配置
     backup_file "$HOME/.zshrc"
-    
+    backup_file "$HOME/.zshenv"
+
+    # 工具状态统一放到 XDG 目录
+    mkdir -p "$XDG_STATE_DIR/zsh" "$XDG_STATE_DIR/less" "$XDG_STATE_DIR/wget" \
+        "$XDG_CONFIG_DIR/wget" "$ZSH_CONFIG_DIR"
+    echo "hsts-file = $XDG_STATE_DIR/wget/hsts" > "$XDG_CONFIG_DIR/wget/wgetrc"
+
+    cat > "$HOME/.zshenv" << 'EOF'
+[ -s "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
+
+# Oh My Zsh initializes completion with the configured cache path.
+skip_global_compinit=1
+
+# Keep tool state out of $HOME.
+export LESSHISTFILE="${XDG_STATE_HOME:-$HOME/.local/state}/less/history"
+export WGETRC="${XDG_CONFIG_HOME:-$HOME/.config}/wget/wgetrc"
+EOF
+
     # 创建新的 .zshrc
     cat > "$HOME/.zshrc" << 'EOF'
 # ╔══════════════════════════════════════╗
@@ -417,6 +459,12 @@ plugins=(
 zstyle ':omz:update' mode auto
 zstyle ':omz:update' frequency 7
 
+# Keep generated shell data out of the home directory.
+mkdir -p -- "${XDG_CACHE_HOME:-$HOME/.cache}/zsh" "${XDG_STATE_HOME:-$HOME/.local/state}/zsh"
+ZSH_COMPDUMP="${XDG_CACHE_HOME:-$HOME/.cache}/zsh/.zcompdump-${HOST%%.*}-${ZSH_VERSION}"
+HISTFILE="${XDG_STATE_HOME:-$HOME/.local/state}/zsh/history"
+ZSHZ_DATA="${XDG_STATE_HOME:-$HOME/.local/state}/zsh/z"
+
 # 加载 Oh-My-Zsh
 source $ZSH/oh-my-zsh.sh
 
@@ -430,7 +478,8 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
 fi
 
 # 加载 P10k 配置
-[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+POWERLEVEL9K_CONFIG_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/zsh/p10k.zsh"
+[[ ! -f "$POWERLEVEL9K_CONFIG_FILE" ]] || source "$POWERLEVEL9K_CONFIG_FILE"
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # 🔧 环境变量
@@ -444,8 +493,7 @@ export EDITOR='vim'
 export VISUAL='vim'
 
 # 语言环境
-export LANG=en_US.UTF-8
-export LC_ALL=en_US.UTF-8
+export LANG=C.UTF-8
 
 # Man pages 高亮
 export LESS_TERMCAP_mb=$'\e[1;32m'
@@ -528,8 +576,8 @@ sysinfo() {
 # 🚀 FZF 配置
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-if [ -f ~/.fzf.zsh ]; then
-    source ~/.fzf.zsh
+if [ -f "${XDG_CONFIG_HOME:-$HOME/.config}/zsh/fzf.zsh" ]; then
+    source "${XDG_CONFIG_HOME:-$HOME/.config}/zsh/fzf.zsh"
     
     # FZF 默认选项
     export FZF_DEFAULT_OPTS="
@@ -560,11 +608,6 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
 
-# Node.js 别名（如果已安装）
-if command -v nodejs >/dev/null 2>&1; then
-    alias node='nodejs'
-fi
-
 # Python
 if command -v python3 >/dev/null 2>&1; then
     export PYTHONDONTWRITEBYTECODE=1
@@ -582,6 +625,49 @@ fi
 [ -s "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 🌐 代理派生（唯一来源：Windows 透传的代理环境）
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+typeset -g _proxy_http="${http_proxy:-${HTTP_PROXY:-}}"
+typeset -g _proxy_https="${https_proxy:-${HTTPS_PROXY:-$_proxy_http}}"
+typeset -g _proxy_no="${no_proxy:-${NO_PROXY:-}}"
+
+if [[ -n "$_proxy_http" ]]; then
+  export HTTP_PROXY="$_proxy_http" http_proxy="$_proxy_http"
+  export HTTPS_PROXY="$_proxy_https" https_proxy="$_proxy_https"
+  export ALL_PROXY="${all_proxy:-${ALL_PROXY:-$_proxy_http}}" all_proxy="${all_proxy:-${ALL_PROXY:-$_proxy_http}}"
+
+  if [[ -n "$_proxy_no" ]]; then
+    export NO_PROXY="$_proxy_no" no_proxy="$_proxy_no"
+  else
+    unset NO_PROXY no_proxy
+  fi
+
+  # Gradle / JVM 代理从上游环境动态派生，不再在 WSL 内硬编码。
+  typeset -g _proxy_host="${${_proxy_http#*://}%:*}"
+  typeset -g _proxy_port="${${_proxy_http##*:}%/}"
+  export GRADLE_OPTS="-Dhttp.proxyHost=$_proxy_host -Dhttp.proxyPort=$_proxy_port -Dhttps.proxyHost=$_proxy_host -Dhttps.proxyPort=$_proxy_port -Dhttp.nonProxyHosts='localhost|127.*|10.*|192.168.*|172.16.*|172.17.*|172.18.*|172.19.*|172.20.*|172.21.*|172.22.*|172.23.*|172.24.*|172.25.*|172.26.*|172.27.*|172.28.*|172.29.*|172.30.*|172.31.*'"
+else
+  unset HTTP_PROXY HTTPS_PROXY ALL_PROXY NO_PROXY
+  unset http_proxy https_proxy all_proxy no_proxy GRADLE_OPTS
+fi
+
+# 手动快速切换：proxyon [端口] 指向 Windows 上的 Clash（默认 Clash Verge 端口 7897）
+# mirrored 网络模式与 Windows 共用 127.0.0.1；NAT 模式需在 Clash 中开启"允许局域网连接"
+proxyon() {
+  local host="127.0.0.1"
+  if [[ "$(wslinfo --networking-mode 2>/dev/null)" != "mirrored" ]]; then
+    host="$(ip route show default | awk '{print $3; exit}')"
+  fi
+  local p="http://$host:${1:-7897}"
+  export HTTP_PROXY="$p" http_proxy="$p" HTTPS_PROXY="$p" https_proxy="$p" ALL_PROXY="$p" all_proxy="$p"
+  echo "✅ 本会话代理已开启: $p"
+}
+proxyoff() {
+  unset HTTP_PROXY HTTPS_PROXY ALL_PROXY NO_PROXY http_proxy https_proxy all_proxy no_proxy GRADLE_OPTS
+  echo "⛔ 本会话代理已关闭"
+}
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # 🔌 WSL2 特定配置
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -597,230 +683,11 @@ alias notepad='notepad.exe'
 # 获取 Windows 用户目录
 export WINHOME="/mnt/c/Users/$(cmd.exe /c 'echo %USERNAME%' 2>/dev/null | tr -d '\r')"
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# 🌐 Clash 代理检测和配置
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-# 获取 Windows 主机 IP
-get_windows_host_ip() {
-    # 方法1: 通过路由表获取
-    local host_ip=$(ip route show | grep -i default | awk '{print $3}' | head -1)
-    if [ -n "$host_ip" ] && [ "$host_ip" != "0.0.0.0" ]; then
-        echo "$host_ip"
-        return 0
-    fi
-    
-    # 方法2: 通过 /etc/resolv.conf 获取
-    host_ip=$(grep -oP "(?<=nameserver\s)(\d+\.){3}\d+" /etc/resolv.conf | head -1)
-    if [ -n "$host_ip" ]; then
-        echo "$host_ip"
-        return 0
-    fi
-    
-    # 默认值
-    echo "172.16.0.1"
-}
-
-# 检测 Clash 配置文件
-detect_clash_config() {
-    local config_paths=(
-        "$WINHOME/.config/clash/config.yaml"
-        "$WINHOME/.config/clash/config.yml" 
-        "$WINHOME/Documents/clash/config.yaml"
-        "/mnt/c/Users/*/.config/clash/config.yaml"
-    )
-    
-    for path in "${config_paths[@]}"; do
-        if [ -f "$path" ] 2>/dev/null; then
-            echo "$path"
-            return 0
-        fi
-    done
-    
-    return 1
-}
-
-# 解析 Clash 配置获取端口
-parse_clash_ports() {
-    local config_file="$1"
-    local http_port socks_port controller_port
-    
-    if [ -f "$config_file" ]; then
-        # 解析 HTTP 代理端口
-        http_port=$(grep -E "^port\s*:" "$config_file" | sed -E 's/port\s*:\s*([0-9]+).*/\1/')
-        
-        # 解析 SOCKS 代理端口
-        socks_port=$(grep -E "^socks-port\s*:" "$config_file" | sed -E 's/socks-port\s*:\s*([0-9]+).*/\1/')
-        
-        # 解析控制器端口
-        controller_port=$(grep -E "^external-controller\s*:" "$config_file" | sed -E 's/.*:([0-9]+).*/\1/')
-        
-        # 输出结果
-        echo "HTTP_PORT=${http_port:-7890}"
-        echo "SOCKS_PORT=${socks_port:-7891}"
-        echo "CONTROLLER_PORT=${controller_port:-9090}"
-        return 0
-    fi
-    
-    # 默认端口
-    echo "HTTP_PORT=7890"
-    echo "SOCKS_PORT=7891" 
-    echo "CONTROLLER_PORT=9090"
-    return 1
-}
-
-# 测试端口连通性
-test_port() {
-    local host="$1"
-    local port="$2"
-    local timeout=3
-    
-    if command -v nc >/dev/null 2>&1; then
-        nc -z -w$timeout "$host" "$port" 2>/dev/null
-    elif command -v timeout >/dev/null 2>&1; then
-        timeout $timeout bash -c "</dev/tcp/$host/$port" 2>/dev/null
-    else
-        # 使用 curl 作为备选
-        curl -s --connect-timeout $timeout "http://$host:$port" >/dev/null 2>&1
-    fi
-}
-
-# Clash 代理检测主函数
-clash_check() {
-    local show_details=false
-    local auto_configure=false
-    
-    # 解析参数
-    while [[ $# -gt 0 ]]; do
-        case $1 in
-            -d|--details) show_details=true; shift ;;
-            -a|--auto) auto_configure=true; shift ;;
-            *) shift ;;
-        esac
-    done
-    
-    echo -e "\n🔍 正在检测 Clash 代理状态..."
-    
-    # 获取 Windows 主机 IP
-    local host_ip=$(get_windows_host_ip)
-    echo "🖥️  Windows 主机 IP: $host_ip"
-    
-    # 检测配置文件
-    local config_file
-    config_file=$(detect_clash_config)
-    if [ $? -eq 0 ]; then
-        echo "📄 找到配置文件: $(basename "$config_file")"
-        eval $(parse_clash_ports "$config_file")
-    else
-        echo "⚠️  未找到 Clash 配置文件，使用默认端口"
-        HTTP_PORT=7890
-        SOCKS_PORT=7891
-        CONTROLLER_PORT=9090
-    fi
-    
-    if [ "$show_details" = true ]; then
-        echo -e "\n📋 配置详情:"
-        echo "   HTTP 代理端口: $HTTP_PORT"
-        echo "   SOCKS 代理端口: $SOCKS_PORT" 
-        echo "   控制器端口: $CONTROLLER_PORT"
-    fi
-    
-    # 测试端口连通性
-    local http_active=false
-    local socks_active=false
-    local controller_active=false
-    
-    echo -e "\n🔌 测试端口连通性..."
-    
-    if test_port "$host_ip" "$HTTP_PORT"; then
-        echo "✅ HTTP 代理端口 $HTTP_PORT 已开启"
-        http_active=true
-    else
-        echo "❌ HTTP 代理端口 $HTTP_PORT 未响应"
-    fi
-    
-    if test_port "$host_ip" "$SOCKS_PORT"; then
-        echo "✅ SOCKS 代理端口 $SOCKS_PORT 已开启"
-        socks_active=true
-    else
-        echo "❌ SOCKS 代理端口 $SOCKS_PORT 未响应"
-    fi
-    
-    if test_port "$host_ip" "$CONTROLLER_PORT"; then
-        echo "✅ 控制器端口 $CONTROLLER_PORT 已开启"
-        echo "   管理界面: http://$host_ip:$CONTROLLER_PORT/ui"
-        controller_active=true
-    else
-        echo "❌ 控制器端口 $CONTROLLER_PORT 未响应"
-    fi
-    
-    # 自动配置代理
-    if [ "$auto_configure" = true ] && [ "$http_active" = true ]; then
-        echo -e "\n🔧 正在配置代理环境变量..."
-        
-        export HTTP_PROXY="http://$host_ip:$HTTP_PORT"
-        export HTTPS_PROXY="http://$host_ip:$HTTP_PORT"
-        export ALL_PROXY="http://$host_ip:$HTTP_PORT"
-        export http_proxy="$HTTP_PROXY"
-        export https_proxy="$HTTPS_PROXY" 
-        export all_proxy="$ALL_PROXY"
-        
-        # 设置 Git 代理
-        git config --global http.proxy "$HTTP_PROXY"
-        git config --global https.proxy "$HTTPS_PROXY"
-        
-        echo "✅ 代理环境变量已配置"
-        echo "   HTTP_PROXY: $HTTP_PROXY"
-        echo "   HTTPS_PROXY: $HTTPS_PROXY"
-        
-        # 测试代理连接
-        echo -e "\n🌐 测试代理连接..."
-        if curl -s --connect-timeout 10 --max-time 10 -o /dev/null -w "%{http_code}" "https://www.google.com" | grep -q "200"; then
-            echo "✅ 代理连接测试成功"
-        else
-            echo "⚠️  代理连接测试失败，请检查 Clash 规则配置"
-        fi
-    fi
-    
-    # 返回状态
-    if [ "$http_active" = true ] || [ "$socks_active" = true ]; then
-        return 0
-    else
-        return 1
-    fi
-}
-
-# 重置代理设置
-clash_reset() {
-    echo "🔄 正在重置代理设置..."
-    
-    # 清除环境变量
-    unset HTTP_PROXY HTTPS_PROXY ALL_PROXY
-    unset http_proxy https_proxy all_proxy
-    
-    # 清除 Git 代理配置
-    git config --global --unset http.proxy 2>/dev/null
-    git config --global --unset https.proxy 2>/dev/null
-    
-    echo "✅ 代理设置已重置"
-}
-
-# 自动启用代理
-clash_start() {
-    echo "🚀 自动检测并配置 Clash 代理..."
-    clash_check --auto
-}
-
 # 快速导航到 Windows 目录
 alias winhome="cd $WINHOME"
 alias desktop="cd $WINHOME/Desktop"
 alias downloads="cd $WINHOME/Downloads"
 alias documents="cd $WINHOME/Documents"
-
-# Clash 代理管理别名
-alias clash-check='clash_check'
-alias clash-start='clash_start'
-alias clash-reset='clash_reset'
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # 🎨 自动补全增强
@@ -851,22 +718,14 @@ fi
 # 欢迎信息
 echo ""
 echo "  🚀 WSL2 Modern Shell | 📍 autojump/z | 🔍 fzf | 🦇 bat | 📁 eza"
-echo "  💡 输入 'sysinfo' 查看系统信息 | 'p10k configure' 配置主题 | 'clash-check' 检测代理"
+echo "  💡 输入 'sysinfo' 查看系统信息 | 'p10k configure' 配置主题 | 'proxyon' 开启代理"
 echo ""
-
-# 自动检测 Clash 代理（静默检测）
-if command -v curl >/dev/null 2>&1; then
-    host_ip=$(get_windows_host_ip 2>/dev/null)
-    if [ -n "$host_ip" ] && test_port "$host_ip" "7890" 2>/dev/null; then
-        echo "🌐 检测到 Clash 代理正在运行，输入 'clash-start' 自动配置"
-    fi
-fi
 EOF
     
     print_success "配置文件生成完成"
     
-    # 生成 .p10k.zsh (如果不存在)
-    if [ ! -f "$HOME/.p10k.zsh" ]; then
+    # 生成 p10k.zsh (如果不存在)
+    if [ ! -f "$ZSH_CONFIG_DIR/p10k.zsh" ]; then
         print_info "首次运行时将自动配置 Powerlevel10k 主题"
     fi
     
