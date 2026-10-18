@@ -44,7 +44,7 @@ bash setup-wsl2.sh --force     # 重新拉取 / 重装已存在的组件
 会做的事：
 - `sudo apt` 安装 Zsh、bat、eza、fd、ripgrep、autojump、htop、duf 等，`chsh` 切换默认 Shell。
 - 克隆 Oh-My-Zsh、Powerlevel10k、zsh-autosuggestions / syntax-highlighting / completions、fzf。
-- **备份并重写** `~/.zshrc` 和 `~/.zshenv`。
+- **备份并重写** `~/.zshrc`、`~/.zshenv`、`~/.config/zsh/fzf.zsh` 和 `~/.config/wget/wgetrc`（备份为同目录 `*.backup.<时间戳>`）。
 - 配置文件与状态遵循 XDG：
   - p10k 配置：`~/.config/zsh/p10k.zsh`
   - fzf 集成：`~/.config/zsh/fzf.zsh`
@@ -52,8 +52,8 @@ bash setup-wsl2.sh --force     # 重新拉取 / 重装已存在的组件
   - less / wget 状态：`~/.local/state/{less,wget}/`
 
 代理：
-- 若 Windows 透传了 `http_proxy` 等环境变量，`.zshrc` 会统一派生大小写变量与 `GRADLE_OPTS`。
-- `proxyon [端口]` / `proxyoff` 只影响当前会话，默认端口 7897（Clash Verge）。
+- 若 Windows 透传了 `http_proxy` 等环境变量，`.zshrc` 会统一派生大小写变量与 `GRADLE_OPTS` 中的 JVM 代理参数（保留其中原有的非代理参数）。
+- `proxyon [端口]` / `proxyoff` 只影响当前会话，默认端口 7897（Clash Verge）；切换时同步更新 / 移除 `GRADLE_OPTS` 的代理参数。
   - `networkingMode=mirrored` 时指向 `127.0.0.1`；
   - NAT 模式时指向默认网关（宿主机），需在 Clash 中开启"允许局域网连接"。
 
@@ -68,7 +68,7 @@ pwsh -File .\setup-pwsh.ps1 -Minimal   # 跳过部分可选安装
 
 会做的事：
 - 通过 `winget` 安装 oh-my-posh，通过 `Install-Module` 安装 PSReadLine、Terminal-Icons、Posh-Git、z、scoop-completion。
-- 写入 `$PROFILE`：已有本脚本生成的配置时询问是否覆盖，否则追加；写入前先备份。
+- 写入 `$PROFILE`：已有本脚本生成的配置时询问是否覆盖，否则追加；`-Force` 直接覆盖。已有 `$PROFILE` 时一律先备份为 `$PROFILE.backup.<时间戳>`。
 - 代理：`proxy-on [地址]` / `proxy-off` / `proxy-status`，只修改当前会话环境变量，不写注册表系统代理。
 
 ## 维护说明

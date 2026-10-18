@@ -520,16 +520,22 @@ Write-Host ""
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 "@
 
-# 写入配置
+# 写入配置：已有 $PROFILE 一律先备份（包括 -Force）
+if (Test-Path $PROFILE) {
+    $backupPath = "$PROFILE.backup.$(Get-Date -Format 'yyyyMMddHHmmss')"
+    try {
+        Copy-Item -Path $PROFILE -Destination $backupPath -Force -ErrorAction Stop
+    } catch {
+        Write-Step "  ✗ 备份失败，未修改 `$PROFILE: $($_.Exception.Message)" "Error"
+        exit 1
+    }
+    Write-Step "  ✓ 已备份到: $(Split-Path -Leaf $backupPath)" "Success"
+}
+
 if ($Force -or -not (Test-Path $PROFILE)) {
     Set-Content -Path $PROFILE -Value $profileContent -Encoding UTF8
     Write-Step "  ✓ 配置已写入" "Success"
 } else {
-    # 备份
-    $backupPath = "$PROFILE.backup.$(Get-Date -Format 'yyyyMMddHHmmss')"
-    Copy-Item -Path $PROFILE -Destination $backupPath -Force
-    Write-Step "  ✓ 已备份到: $(Split-Path -Leaf $backupPath)" "Success"
-    
     # 检查是否覆盖
     $existingContent = Get-Content $PROFILE -Raw
     if ($existingContent -match "PowerShell 7 现代化增强配置|PowerShell 增强配置") {

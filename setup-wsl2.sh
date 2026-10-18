@@ -286,6 +286,7 @@ main_install() {
         print_success "fzf 安装完成"
     fi
     mkdir -p "$ZSH_CONFIG_DIR"
+    backup_file "$ZSH_CONFIG_DIR/fzf.zsh"
     cat > "$ZSH_CONFIG_DIR/fzf.zsh" << 'EOF'
 # Setup fzf
 # ---------
@@ -407,6 +408,7 @@ EOF
     # 工具状态统一放到 XDG 目录
     mkdir -p "$XDG_STATE_DIR/zsh" "$XDG_STATE_DIR/less" "$XDG_STATE_DIR/wget" \
         "$XDG_CONFIG_DIR/wget" "$ZSH_CONFIG_DIR"
+    backup_file "$XDG_CONFIG_DIR/wget/wgetrc"
     echo "hsts-file = $XDG_STATE_DIR/wget/hsts" > "$XDG_CONFIG_DIR/wget/wgetrc"
 
     cat > "$HOME/.zshenv" << 'EOF'
@@ -631,6 +633,28 @@ typeset -g _proxy_http="${http_proxy:-${HTTP_PROXY:-}}"
 typeset -g _proxy_https="${https_proxy:-${HTTPS_PROXY:-$_proxy_http}}"
 typeset -g _proxy_no="${no_proxy:-${NO_PROXY:-}}"
 
+# Gradle / JVM 代理参数随当前 http_proxy 派生；保留 GRADLE_OPTS 里的非代理参数。
+# 启动时与 proxyon / proxyoff 共用，避免切换后 JVM 仍指向旧端口。
+_proxy_sync_jvm() {
+  # 按去引号后的内容识别代理 token，其余 token 原样保留（含引号）
+  local -a opts
+  local tok
+  for tok in ${(z)GRADLE_OPTS}; do
+    [[ "${(Q)tok}" == -Dhttp(s|).proxy(Host|Port)=* || "${(Q)tok}" == -Dhttp.nonProxyHosts=* ]] || opts+=("$tok")
+  done
+  local p="${http_proxy:-${HTTP_PROXY:-}}"
+  if [[ -n "$p" ]]; then
+    local host="${${p#*://}%:*}" port="${${p##*:}%/}"
+    opts+=(-Dhttp.proxyHost=$host -Dhttp.proxyPort=$port -Dhttps.proxyHost=$host -Dhttps.proxyPort=$port
+      "-Dhttp.nonProxyHosts='localhost|127.*|10.*|192.168.*|172.16.*|172.17.*|172.18.*|172.19.*|172.20.*|172.21.*|172.22.*|172.23.*|172.24.*|172.25.*|172.26.*|172.27.*|172.28.*|172.29.*|172.30.*|172.31.*'")
+  fi
+  if (( ${#opts} )); then
+    export GRADLE_OPTS="${(j: :)opts}"
+  else
+    unset GRADLE_OPTS
+  fi
+}
+
 if [[ -n "$_proxy_http" ]]; then
   export HTTP_PROXY="$_proxy_http" http_proxy="$_proxy_http"
   export HTTPS_PROXY="$_proxy_https" https_proxy="$_proxy_https"
@@ -642,14 +666,11 @@ if [[ -n "$_proxy_http" ]]; then
     unset NO_PROXY no_proxy
   fi
 
-  # Gradle / JVM 代理从上游环境动态派生，不再在 WSL 内硬编码。
-  typeset -g _proxy_host="${${_proxy_http#*://}%:*}"
-  typeset -g _proxy_port="${${_proxy_http##*:}%/}"
-  export GRADLE_OPTS="-Dhttp.proxyHost=$_proxy_host -Dhttp.proxyPort=$_proxy_port -Dhttps.proxyHost=$_proxy_host -Dhttps.proxyPort=$_proxy_port -Dhttp.nonProxyHosts='localhost|127.*|10.*|192.168.*|172.16.*|172.17.*|172.18.*|172.19.*|172.20.*|172.21.*|172.22.*|172.23.*|172.24.*|172.25.*|172.26.*|172.27.*|172.28.*|172.29.*|172.30.*|172.31.*'"
 else
   unset HTTP_PROXY HTTPS_PROXY ALL_PROXY NO_PROXY
-  unset http_proxy https_proxy all_proxy no_proxy GRADLE_OPTS
+  unset http_proxy https_proxy all_proxy no_proxy
 fi
+_proxy_sync_jvm
 
 # 手动快速切换：proxyon [端口] 指向 Windows 上的 Clash（默认 Clash Verge 端口 7897）
 # mirrored 网络模式与 Windows 共用 127.0.0.1；NAT 模式需在 Clash 中开启"允许局域网连接"
@@ -660,10 +681,12 @@ proxyon() {
   fi
   local p="http://$host:${1:-7897}"
   export HTTP_PROXY="$p" http_proxy="$p" HTTPS_PROXY="$p" https_proxy="$p" ALL_PROXY="$p" all_proxy="$p"
+  _proxy_sync_jvm
   echo "✅ 本会话代理已开启: $p"
 }
 proxyoff() {
-  unset HTTP_PROXY HTTPS_PROXY ALL_PROXY NO_PROXY http_proxy https_proxy all_proxy no_proxy GRADLE_OPTS
+  unset HTTP_PROXY HTTPS_PROXY ALL_PROXY NO_PROXY http_proxy https_proxy all_proxy no_proxy
+  _proxy_sync_jvm
   echo "⛔ 本会话代理已关闭"
 }
 
